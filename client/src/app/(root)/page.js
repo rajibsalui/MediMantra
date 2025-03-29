@@ -224,7 +224,7 @@ export default function HomePage() {
               Comprehensive Healthcare Solutions
             </h2>
             <p className="text-muted-foreground">
-              MediBot offers a complete suite of digital healthcare tools to
+              Mediमंत्र offers a complete suite of digital healthcare tools to
               help you manage your health efficiently.
             </p>
           </div>
@@ -295,7 +295,7 @@ export default function HomePage() {
           <div className="text-center max-w-2xl mx-auto mb-16">
             <Badge className="mb-4">Simple Process</Badge>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-              How MediBot Works
+              How Mediमंत्र Works
             </h2>
             <p className="text-muted-foreground">
               Get started in minutes with our simple and intuitive process
@@ -390,7 +390,7 @@ export default function HomePage() {
             </h2>
             <p className="text-muted-foreground">
               Hear from patients and doctors who have transformed their
-              healthcare experience with MediBot
+              healthcare experience with Mediमंत्र
             </p>
           </div>
 
@@ -398,7 +398,7 @@ export default function HomePage() {
             {[
               {
                 quote:
-                  "MediBot has revolutionized how I manage my chronic condition. I can easily track my symptoms and share reports with my doctor.",
+                  "Mediमंत्र has revolutionized how I manage my chronic condition. I can easily track my symptoms and share reports with my doctor.",
                 name: "Sarah Johnson",
                 role: "Patient",
                 rating: 5,

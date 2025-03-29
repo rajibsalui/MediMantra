@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "MediBot - Your Medical Assistant",
+  title: "Mediमंत्र - Your Medical Assistant",
   description: "AI-powered medical assistant for healthcare professionals",
 };
 

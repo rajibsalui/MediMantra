@@ -41,7 +41,7 @@ export default function ContactPage() {
               Get in Touch
             </h1>
             <p className="mt-4 max-w-3xl mx-auto text-xl">
-              Have questions about MediBot? Our team is here to help you 24/7.
+              Have questions about Mediमंत्र? Our team is here to help you 24/7.
             </p>
           </div>
         </div>
@@ -165,8 +165,8 @@ export default function ContactPage() {
                   </div>
                   <div className="ml-4">
                     <p className="text-lg font-medium text-gray-900">Email</p>
-                    <p className="text-gray-600">support@medibot.com</p>
-                    <p className="text-gray-600">info@medibot.com</p>
+                    <p className="text-gray-600">support@Mediमंत्र.com</p>
+                    <p className="text-gray-600">info@Mediमंत्र.com</p>
                   </div>
                 </div>
                 
@@ -237,23 +237,23 @@ export default function ContactPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900">Frequently Asked Questions</h2>
-          <p className="mt-4 text-xl text-gray-600">Find answers to common questions about MediBot</p>
+          <p className="mt-4 text-xl text-gray-600">Find answers to common questions about Mediमंत्र</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-3">What is MediBot?</h3>
-            <p className="text-gray-600">MediBot is an advanced AI-powered healthcare assistant designed to provide medical information, appointment scheduling, medication reminders, and health monitoring services.</p>
+            <h3 className="text-xl font-bold text-gray-800 mb-3">What is Mediमंत्र?</h3>
+            <p className="text-gray-600">Mediमंत्र is an advanced AI-powered healthcare assistant designed to provide medical information, appointment scheduling, medication reminders, and health monitoring services.</p>
           </div>
           
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-3">How do I schedule a demo?</h3>
-            <p className="text-gray-600">You can schedule a MediBot demo by filling out the contact form on this page or by calling our customer service team at +1 (800) 123-4567.</p>
+            <p className="text-gray-600">You can schedule a Mediमंत्र demo by filling out the contact form on this page or by calling our customer service team at +1 (800) 123-4567.</p>
           </div>
           
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-3">Is MediBot HIPAA compliant?</h3>
-            <p className="text-gray-600">Yes, MediBot is fully HIPAA compliant. We take patient privacy and data security seriously, implementing industry-leading encryption and security protocols.</p>
+            <h3 className="text-xl font-bold text-gray-800 mb-3">Is Mediमंत्र HIPAA compliant?</h3>
+            <p className="text-gray-600">Yes, Mediमंत्र is fully HIPAA compliant. We take patient privacy and data security seriously, implementing industry-leading encryption and security protocols.</p>
           </div>
           
           <div className="bg-white rounded-xl shadow-lg p-6">
@@ -267,7 +267,7 @@ export default function ContactPage() {
       <div className="bg-blue-600 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold">Ready to transform your healthcare experience?</h2>
-          <p className="mt-4 text-xl">Join thousands of satisfied users who have made MediBot their healthcare companion.</p>
+          <p className="mt-4 text-xl">Join thousands of satisfied users who have made Mediमंत्र their healthcare companion.</p>
           <div className="mt-8">
             <Link 
               href="/demo" 

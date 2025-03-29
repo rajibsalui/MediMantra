@@ -52,7 +52,7 @@ export default function About() {
     {
       name: "Dr. Amara Okafor",
       role: "Clinical Validation Lead",
-      bio: "Epidemiologist and public health expert ensuring Medibot's recommendations align with evidence-based guidelines."
+      bio: "Epidemiologist and public health expert ensuring Mediमंत्र's recommendations align with evidence-based guidelines."
     }
   ];
 
@@ -60,12 +60,12 @@ export default function About() {
   const scrollContent = [
     {
       title: "Clinical Validation",
-      description: "Every recommendation and piece of information provided by Medibot undergoes rigorous verification by our team of healthcare professionals, ensuring alignment with the latest medical guidelines and research.",
+      description: "Every recommendation and piece of information provided by Mediमंत्र undergoes rigorous verification by our team of healthcare professionals, ensuring alignment with the latest medical guidelines and research.",
       content: <div className="h-full w-full bg-gradient-to-br from-blue-50 to-teal-50 rounded-xl flex items-center justify-center p-8">
         <div className="flex flex-col items-center">
           <span className="text-6xl mb-4">🔬</span>
           <h4 className="text-blue-800 font-semibold text-lg">99.2% Accuracy Rate</h4>
-          <p className="text-sm text-blue-700 text-center mt-2">In clinical validation studies comparing Medibot's assessments with physician diagnoses</p>
+          <p className="text-sm text-blue-700 text-center mt-2">In clinical validation studies comparing Mediमंत्र's assessments with physician diagnoses</p>
         </div>
       </div>
     },
@@ -82,7 +82,7 @@ export default function About() {
     },
     {
       title: "Accessibility & Inclusion",
-      description: "Medibot is designed following WCAG 2.1 AAA standards, featuring voice navigation, screen reader optimization, and support for 45+ languages to ensure healthcare information is accessible to everyone.",
+      description: "Mediमंत्र is designed following WCAG 2.1 AAA standards, featuring voice navigation, screen reader optimization, and support for 45+ languages to ensure healthcare information is accessible to everyone.",
       content: <div className="h-full w-full bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl flex items-center justify-center p-8">
         <div className="flex flex-col items-center">
           <span className="text-6xl mb-4">♿</span>
@@ -102,7 +102,7 @@ export default function About() {
       >
         <div className="p-4 max-w-7xl mx-auto relative z-10 w-full pt-20 md:pt-32">
           <h1 className="text-4xl md:text-7xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-teal-600">
-            About Medibot
+            About Mediमंत्र
           </h1>
           <p className="mt-6 md:text-xl text-center text-gray-600 max-w-3xl mx-auto font-light leading-relaxed">
             Advanced AI healthcare assistant helping millions make better health decisions every day
@@ -131,12 +131,12 @@ export default function About() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div>
             <TextGenerateEffect
-              words="Medibot leverages advanced artificial intelligence to provide personalized healthcare guidance based on your unique health profile. Our AI assistant combines clinical knowledge with the latest medical research to help you make informed decisions about your wellbeing."
+              words="Mediमंत्र leverages advanced artificial intelligence to provide personalized healthcare guidance based on your unique health profile. Our AI assistant combines clinical knowledge with the latest medical research to help you make informed decisions about your wellbeing."
               className="text-lg leading-relaxed text-gray-700"
             />
             <p className="mt-6 text-gray-600">
               Founded in 2023 by a team of physicians, AI researchers, and healthcare specialists, 
-              Medibot aims to make quality healthcare information accessible to everyone while supporting
+              Mediमंत्र aims to make quality healthcare information accessible to everyone while supporting
               medical professionals in delivering more efficient and personalized care.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -233,7 +233,7 @@ export default function About() {
             Comprehensive Health Support
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Medibot combines medical expertise with advanced technology to provide these core services
+            Mediमंत्र combines medical expertise with advanced technology to provide these core services
           </p>
         </div>
         <HoverEffect items={features} />
@@ -248,7 +248,7 @@ export default function About() {
             <div className="md:w-2/3">
               <h3 className="text-2xl font-bold text-blue-800 mb-4">Advanced Natural Language Processing</h3>
               <p className="text-gray-600 mb-6">
-                Our proprietary NLP engine allows Medibot to understand complex medical descriptions in everyday language. 
+                Our proprietary NLP engine allows Mediमंत्र to understand complex medical descriptions in everyday language. 
                 Trained on millions of medical records and scientific papers, it can interpret symptoms, recognize patterns, 
                 and generate insights with remarkable accuracy.
               </p>
@@ -310,7 +310,7 @@ export default function About() {
           Our Medical Standards
         </h2>
         <p className="text-gray-600 max-w-2xl mx-auto text-center mb-16">
-          Medibot adheres to the highest standards in healthcare technology to deliver reliable, accurate, and secure assistance
+          Mediमंत्र adheres to the highest standards in healthcare technology to deliver reliable, accurate, and secure assistance
         </p>
         <div className="h-[30rem] md:h-[40rem]">
           <StickyScroll content={scrollContent} />
@@ -329,7 +329,7 @@ export default function About() {
             <div className="md:w-3/4">
               <h2 className="text-2xl font-bold mb-4 text-blue-800">Medical Disclaimer</h2>
               <p className="text-gray-700">
-                While Medibot provides valuable health information and guidance based on the latest medical knowledge, 
+                While Mediमंत्र provides valuable health information and guidance based on the latest medical knowledge, 
                 it is not a substitute for professional medical advice, diagnosis, or treatment. Always consult with qualified 
                 healthcare providers for medical concerns and before making decisions about your health.
               </p>
@@ -363,7 +363,7 @@ export default function About() {
             Get in Touch
           </h2>
           <p className="text-xl text-center text-gray-700 mb-8 max-w-2xl">
-            Have questions about how Medibot can support your health journey?
+            Have questions about how Mediमंत्र can support your health journey?
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-12">
@@ -372,8 +372,8 @@ export default function About() {
                 <span className="text-blue-600 text-xl">📧</span>
               </div>
               <h3 className="font-medium text-gray-800 mb-2">Email Us</h3>
-              <a href="mailto:support@medibot.ai" className="text-blue-600 hover:underline text-sm">
-                support@medibot.ai
+              <a href="mailto:support@Mediमंत्र.ai" className="text-blue-600 hover:underline text-sm">
+                support@Mediमंत्र.ai
               </a>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-md text-center">
