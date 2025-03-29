@@ -11,3 +11,5 @@ logs
 
 # Dependencies
 node_modules/
+
+index.js
