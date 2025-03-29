@@ -7,111 +7,160 @@ const patientSchema = new mongoose.Schema({
     required: true
   },
   dateOfBirth: {
-    type: Date,
-    required: [true, "Date of birth is required"]
+    type: Date
   },
   gender: {
     type: String,
-    enum: ['male', 'female', 'other', 'prefer-not-to-say'],
-    required: [true, "Gender is required"]
+    enum: ['male', 'female', 'other', 'prefer-not-to-say', '']
   },
   bloodGroup: {
     type: String,
-    enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown'],
+    enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'unknown', ''],
     default: 'unknown'
   },
   height: {
-    type: Number, // in cm
-    default: null
+    value: Number,
+    unit: {
+      type: String,
+      enum: ['cm', 'ft', ''],
+      default: 'cm'
+    }
   },
   weight: {
-    type: Number, // in kg
-    default: null
-  },
-  allergies: [{
-    type: String,
-    trim: true
-  }],
-  chronicConditions: [{
-    type: String,
-    trim: true
-  }],
-  currentMedications: [{
-    name: String,
-    dosage: String,
-    frequency: String,
-    startDate: Date,
-    endDate: Date
-  }],
-  emergencyContact: {
-    name: {
+    value: Number,
+    unit: {
       type: String,
-      required: [true, "Emergency contact name is required"]
-    },
-    relationship: {
-      type: String,
-      required: [true, "Relationship is required"]
-    },
-    phone: {
-      type: String,
-      required: [true, "Emergency contact phone is required"]
+      enum: ['kg', 'lb', ''],
+      default: 'kg'
     }
   },
   address: {
     street: {
       type: String,
-      required: [true, "Street address is required"]
+      required: function() {
+        // Only required if any other address field is provided
+        return this.address && (
+          this.address.city || 
+          this.address.state || 
+          this.address.zipCode
+        );
+      }
     },
     city: {
       type: String,
-      required: [true, "City is required"]
+      required: function() {
+        return this.address && (
+          this.address.street || 
+          this.address.state || 
+          this.address.zipCode
+        );
+      }
     },
     state: {
       type: String,
-      required: [true, "State is required"]
+      required: function() {
+        return this.address && (
+          this.address.street || 
+          this.address.city || 
+          this.address.zipCode
+        );
+      }
     },
     zipCode: {
       type: String,
-      required: [true, "ZIP code is required"]
+      required: function() {
+        return this.address && (
+          this.address.street || 
+          this.address.city || 
+          this.address.state
+        );
+      }
     },
     country: {
       type: String,
-      default: 'India'
+      default: 'United States'
     }
+  },
+  contactPreference: {
+    type: String,
+    enum: ['email', 'phone', 'both'],
+    default: 'email'
+  },
+  emergencyContact: {
+    name: {
+      type: String,
+      required: function() {
+        // Only required if any other emergency contact field is provided
+        return this.emergencyContact && (
+          this.emergencyContact.phone || 
+          this.emergencyContact.relationship
+        );
+      }
+    },
+    phone: {
+      type: String,
+      required: function() {
+        return this.emergencyContact && (
+          this.emergencyContact.name || 
+          this.emergencyContact.relationship
+        );
+      }
+    },
+    relationship: {
+      type: String,
+      required: function() {
+        return this.emergencyContact && (
+          this.emergencyContact.name || 
+          this.emergencyContact.phone
+        );
+      }
+    }
+  },
+  allergies: [String],
+  chronicConditions: [String],
+  currentMedications: [String],
+  familyMedicalHistory: [String],
+  surgicalHistory: [String],
+  immunizationHistory: [String],
+  preferredPharmacy: {
+    name: String,
+    address: String,
+    phone: String
   },
   insuranceInfo: {
     provider: String,
     policyNumber: String,
-    expiryDate: Date,
-    coverageDetails: String
+    groupNumber: String,
+    primaryInsured: String,
+    relationship: String,
+    coverageStartDate: Date,
+    coverageEndDate: Date
   },
-  familyHistory: [{
-    condition: String,
-    relationship: String
-  }],
-  lifestyle: {
-    smokingStatus: {
-      type: String,
-      enum: ['never', 'former', 'current', 'unknown'],
-      default: 'unknown'
-    },
-    alcoholConsumption: {
-      type: String,
-      enum: ['none', 'occasional', 'moderate', 'heavy', 'unknown'],
-      default: 'unknown'
-    },
-    exerciseFrequency: {
-      type: String,
-      enum: ['none', 'light', 'moderate', 'heavy', 'unknown'],
-      default: 'unknown'
-    },
-    dietType: String
-  }
+  primaryCarePhysician: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Doctor'
+  },
+  profileCompleted: {
+    type: Boolean,
+    default: false
+  },
+  lastCheckup: Date,
+  medicalRecords: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'MedicalRecord'
+  }]
 }, { timestamps: true });
 
-// Method to calculate age based on date of birth
-patientSchema.methods.getAge = function() {
+// Add indexes for efficient queries
+patientSchema.index({ user: 1 }, { unique: true });
+patientSchema.index({ dateOfBirth: 1 });
+patientSchema.index({ primaryCarePhysician: 1 });
+patientSchema.index({ 'allergies': 1 });
+
+// Virtual for age calculation
+patientSchema.virtual('age').get(function() {
   if (!this.dateOfBirth) return null;
+  
   const today = new Date();
   const birthDate = new Date(this.dateOfBirth);
   let age = today.getFullYear() - birthDate.getFullYear();
@@ -122,19 +171,29 @@ patientSchema.methods.getAge = function() {
   }
   
   return age;
+});
+
+// Method to check if patient profile is complete
+patientSchema.methods.isProfileComplete = function() {
+  const requiredFields = [
+    'dateOfBirth', 
+    'gender', 
+    'address.street',
+    'address.city', 
+    'address.state', 
+    'address.zipCode',
+    'emergencyContact.name',
+    'emergencyContact.phone'
+  ];
+  
+  for (const field of requiredFields) {
+    const value = field.split('.').reduce((obj, path) => obj && obj[path], this);
+    if (!value) return false;
+  }
+  
+  return true;
 };
 
-// Method to calculate BMI if height and weight are available
-patientSchema.methods.calculateBMI = function() {
-  if (!this.height || !this.weight) return null;
-  // BMI = weight(kg) / (height(m))^2
-  const heightInMeters = this.height / 100;
-  return (this.weight / (heightInMeters * heightInMeters)).toFixed(2);
-};
+const Patient = mongoose.model('Patient', patientSchema);
 
-// Static method to find patients with specific chronic conditions
-patientSchema.statics.findByChronicCondition = function(condition) {
-  return this.find({ chronicConditions: { $regex: new RegExp(condition, 'i') } });
-};
-
-export default mongoose.model('Patient', patientSchema);
+export default Patient;
