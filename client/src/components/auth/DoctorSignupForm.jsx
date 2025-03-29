@@ -1,826 +1,939 @@
-"use client";
+"use client"
+import React, { useState, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { toast, Toaster } from 'react-hot-toast';
 
-import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-// import { ScrollArea } from "@/components/ui/scroll-area";
-// import { Card, CardContent } from "@/components/ui/card";
-// import { Badge } from "@/components/ui/badge";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import {
-//   Command,
-//   CommandInput,
-//   CommandList,
-//   CommandGroup,
-//   CommandItem,
-// } from "@/components/ui/command";
-import { BackgroundBeams } from "../ui/aceternity/background-beams";
-import { SparklesCore } from "../ui/aceternity/sparkles";
-// import { LampContainer } from "../ui/aceternity/lamp";
-import { 
-  Loader2, 
-  CalendarIcon, 
-  Eye, 
-  EyeOff, 
-  ArrowLeft, 
-  ArrowRight, 
-  Upload, 
-  Check, 
-  Clock, 
-  Plus, 
-  X, 
-  FileText, 
-  Award,
-  MapPin,
-  GraduationCap
-} from "lucide-react";
-
-const steps = [
-  { id: "step-1", name: "Personal Information" },
-  { id: "step-2", name: "Professional Information" },
-  { id: "step-3", name: "Account Setup" },
-  { id: "step-4", name: "Review" },
-];
-
-export default function DoctorSignupForm() {
+const DoctorSignupForm = () => {
   const router = useRouter();
-  const [step, setStep] = useState(0);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [profileImage, setProfileImage] = useState(null);
   const fileInputRef = useRef(null);
-
-  const formSchema = z.object({
-    firstName: z.string().min(2, { message: "First name is required" }),
-    lastName: z.string().min(2, { message: "Last name is required" }),
-    email: z.string().email({ message: "Please enter a valid email" }),
-    phone: z.string().min(10, { message: "Please enter a valid phone number" }),
-    dateOfBirth: z.date({ required_error: "Date of birth is required" }),
-    gender: z.string({ required_error: "Please select your gender" }),
-    address: z.string().min(5, { message: "Address is required" }),
-    city: z.string().min(2, { message: "City is required" }),
-    state: z.string().min(2, { message: "State is required" }),
-    zipCode: z.string().min(5, { message: "Zip code is required" }),
-    qualifications: z.string().min(5, { message: "Qualifications are required" }),
-    specialties: z.string().min(5, { message: "Specialties are required" }),
-    experience: z.number().min(1, { message: "Experience is required" }),
-    password: z.string().min(8, { message: "Password must be at least 8 characters" }),
-    confirmPassword: z.string().min(8, { message: "Please confirm your password" }),
-    acceptTerms: z.boolean().refine((val) => val === true, { message: "You must accept the terms and conditions" }),
-  }).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
+  
+  // Form state with all doctor fields - updated to match requirements
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    dateOfBirth: undefined,
+    gender: "",
+    address: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    profileImage: null,
+    qualifications: "",
+    specialties: "",
+    experience: 0,
+    registrationNumber: "",
+    hospitalAffiliations: "",
+    consultationFee: "",
+    availableHours: "",
+    password: "",
+    confirmPassword: "",
+    role: "doctor",
+    acceptTerms: false
   });
-
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      dateOfBirth: undefined,
-      gender: "",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      qualifications: "",
-      specialties: "",
-      experience: 0,
-      password: "",
-      confirmPassword: "",
-      acceptTerms: false,
-    },
-    mode: "onChange",
-  });
-
-  const nextStep = async () => {
-    let fieldsToValidate = [];
+  
+  // UI state
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 4;
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
+  
+  // Error state
+  const [errors, setErrors] = useState({});
+  
+  // Handle input change
+  const handleChange = (e) => {
+    const { name, value, checked, type } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : type === 'number' ? Number(value) : value
+    });
     
-    switch (step) {
-      case 0:
-        fieldsToValidate = ["firstName", "lastName", "email", "phone", "dateOfBirth", "gender", "address", "city", "state", "zipCode"];
-        break;
-      case 1:
-        fieldsToValidate = ["qualifications", "specialties", "experience"];
-        break;
-      case 2:
-        fieldsToValidate = ["password", "confirmPassword", "acceptTerms"];
-        break;
-    }
-    
-    const result = await form.trigger(fieldsToValidate);
-    if (!result) return;
-    
-    if (step < steps.length - 1) {
-      setStep(step + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    // Clear error when field is modified
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
     }
   };
 
-  const prevStep = () => {
-    if (step > 0) {
-      setStep(step - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
+  // Handle profile image upload
   const handleProfileImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setProfileImage(URL.createObjectURL(file));
+      setFormData({
+        ...formData,
+        profileImage: file
+      });
+      setProfileImagePreview(URL.createObjectURL(file));
     }
   };
-
-  const onSubmit = async (data) => {
+  
+  // Navigate between form steps
+  const nextStep = () => {
+    if (validateCurrentStep()) {
+      setCurrentStep(currentStep + 1);
+      window.scrollTo(0, 0);
+    } else {
+      toast.error('Please complete all required fields correctly');
+    }
+  };
+  
+  const prevStep = () => {
+    setCurrentStep(currentStep - 1);
+    window.scrollTo(0, 0);
+  };
+  
+  // Validate current step fields
+  const validateCurrentStep = () => {
+    const newErrors = {};
+    
+    if (currentStep === 1) {
+      // Personal information validation
+      if (!formData.firstName.trim()) {
+        newErrors.firstName = 'First name is required';
+      }
+      
+      if (!formData.lastName.trim()) {
+        newErrors.lastName = 'Last name is required';
+      }
+      
+      if (!formData.email) {
+        newErrors.email = 'Email is required';
+      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        newErrors.email = 'Email is invalid';
+      }
+      
+      if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/[^\d]/g, ''))) {
+        newErrors.phone = 'Please enter a valid 10-digit phone number';
+      }
+      
+      if (!formData.dateOfBirth) {
+        newErrors.dateOfBirth = 'Date of birth is required';
+      }
+      
+      if (!formData.gender) {
+        newErrors.gender = 'Please select your gender';
+      }
+    } 
+    else if (currentStep === 2) {
+      // Address validation
+      if (!formData.address.trim()) {
+        newErrors.address = 'Address is required';
+      }
+      
+      if (!formData.city.trim()) {
+        newErrors.city = 'City is required';
+      }
+      
+      if (!formData.state.trim()) {
+        newErrors.state = 'State is required';
+      }
+      
+      if (!formData.zipCode.trim()) {
+        newErrors.zipCode = 'ZIP code is required';
+      } else if (!/^[1-9][0-9]{5}$/.test(formData.zipCode.trim())) {
+        newErrors.zipCode = 'Please enter a valid 6-digit PIN code';
+      }
+    }
+    else if (currentStep === 3) {
+      // Professional information validation
+      if (!formData.qualifications.trim()) {
+        newErrors.qualifications = 'Qualifications are required';
+      }
+      
+      if (!formData.specialties.trim()) {
+        newErrors.specialties = 'Specialties are required';
+      }
+      
+      if (!formData.experience) {
+        newErrors.experience = 'Years of experience is required';
+      }
+      
+      if (!formData.registrationNumber.trim()) {
+        newErrors.registrationNumber = 'Registration number is required';
+      }
+    }
+    else if (currentStep === 4) {
+      // Password and terms validation
+      if (!formData.password) {
+        newErrors.password = 'Password is required';
+      } else if (formData.password.length < 8) {
+        newErrors.password = 'Password must be at least 8 characters';
+      } else if (!/(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])/.test(formData.password)) {
+        newErrors.password = 'Password must include uppercase, lowercase, number, and special character';
+      }
+      
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your password';
+      } else if (formData.confirmPassword !== formData.password) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
+      
+      if (!formData.acceptTerms) {
+        newErrors.acceptTerms = 'You must agree to the terms and conditions';
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
+  // Validate all form fields before submission
+  const validateForm = () => {
+    const requiredFields = [
+      'firstName', 'lastName', 'email', 'dateOfBirth', 'gender',
+      'address', 'city', 'state', 'zipCode', 
+      'qualifications', 'specialties', 'experience', 'registrationNumber',
+      'password', 'confirmPassword'
+    ];
+    
+    const newErrors = {};
+    
+    requiredFields.forEach(field => {
+      if (!formData[field] || (typeof formData[field] === 'string' && !formData[field].trim())) {
+        newErrors[field] = `${field.replace(/([A-Z])/g, ' $1').replace(/^\w/, c => c.toUpperCase())} is required`;
+      }
+    });
+    
+    // Email validation
+    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+    
+    // Phone validation
+    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/[^\d]/g, ''))) {
+      newErrors.phone = 'Please enter a valid 10-digit phone number';
+    }
+    
+    // PIN code validation
+    if (formData.zipCode && !/^[1-9][0-9]{5}$/.test(formData.zipCode)) {
+      newErrors.zipCode = 'Please enter a valid 6-digit PIN code';
+    }
+    
+    // Password validation
+    if (formData.password && formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    } else if (formData.password && 
+              !/(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])/.test(formData.password)) {
+      newErrors.password = 'Password must include uppercase, lowercase, number, and special character';
+    }
+    
+    // Password matching
+    if (formData.confirmPassword && formData.confirmPassword !== formData.password) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+    
+    // Terms agreement
+    if (!formData.acceptTerms) {
+      newErrors.acceptTerms = 'You must agree to the terms and conditions';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('Please complete all required fields correctly');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Form data submitted:", data);
-      router.push("/signup-success");
+      // Create form data for file upload
+      const formDataForSubmit = new FormData();
+      
+      // Append all text fields
+      Object.keys(formData).forEach(key => {
+        if (key !== 'profileImage' && key !== 'confirmPassword') {
+          formDataForSubmit.append(key, formData[key]);
+        }
+      });
+      
+      // Append profile image if exists
+      if (formData.profileImage) {
+        formDataForSubmit.append('profileImage', formData.profileImage);
+      }
+      
+      // Replace with your API endpoint
+      const response = await axios.post('/api/auth/doctor-signup', formDataForSubmit, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      toast.success('Account created! Welcome to MediMantra. Your account is pending approval.');
+      
+      // Redirect to login page or dashboard using Next.js router
+      router.push('/doctor-signup-success');
     } catch (error) {
-      console.error("Signup failed:", error);
+      const errorMessage = error.response?.data?.message || 'Failed to create account. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-
-  return (
-    <div className="relative min-h-screen w-full bg-slate-950 flex flex-col items-center justify-center py-10">
-      <BackgroundBeams className="z-0" />
-      <div className="container relative z-10 mx-auto px-4 py-10">
-        <div className="mx-auto max-w-4xl">
-          <div className="mb-8 text-center">
-            <Link href="/" className="inline-block mb-6">
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                MediBot
-              </span>
-            </Link>
-            <h2 className="text-3xl font-bold text-white mb-2">
-              Create Your Doctor Account
-            </h2>
-            {/* <div className="w-full h-8">
-              <SparklesCore
-                id="tsparticlesfull"
-                background="transparent"
-                minSize={0.6}
-                maxSize={1.4}
-                particleDensity={60}
-                className="w-full h-full"
-                particleColor="#FFFFFF"
-              />
-            </div> */}
-          </div>
-
-          <div className="mb-8">
-            <div className="flex justify-between">
-              {steps.map((s, i) => (
-                <div
-                  key={s.id}
-                  className={`flex-1 text-center ${
-                    i !== steps.length - 1
-                      ? "border-b-2 border-gray-700 relative"
-                      : ""
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center text-sm font-medium border-2 ${
-                      step >= i
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "border-gray-700 text-gray-400"
-                    }`}
-                  >
-                    {step > i ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      i + 1
-                    )}
-                  </div>
-                  <div
-                    className={`mt-2 text-xs ${
-                      step >= i ? "text-blue-300" : "text-gray-500"
-                    }`}
-                  >
-                    {s.name}
-                  </div>
-                  {i !== steps.length - 1 && (
-                    <div
-                      className={`absolute top-4 left-1/2 right-0 h-0.5 transform -translate-y-1/2 ${
-                        step > i ? "bg-blue-600" : "bg-gray-700"
-                      }`}
-                      style={{ width: "calc(100% - 2rem)" }}
-                    ></div>
-                  )}
-                </div>
-              ))}
+  
+  // Toggle password visibility
+  const togglePassword = () => setShowPassword(!showPassword);
+  const toggleConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
+  
+  // Progress indicator
+  const renderProgressBar = () => {
+    return (
+      <div className="w-full mb-6">
+        <div className="flex mb-2 justify-between">
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <div 
+              key={i} 
+              className={`step-item ${i + 1 <= currentStep ? 'active' : ''}`}
+            >
+              <div className={`step-counter ${i + 1 === currentStep ? 'current' : i + 1 < currentStep ? 'completed' : ''}`}>
+                {i + 1 < currentStep ? '✓' : i + 1}
+              </div>
+              <div className="step-name text-xs mt-1">
+                {i === 0 ? 'Personal' : 
+                 i === 1 ? 'Address' : 
+                 i === 2 ? 'Professional' : 'Account'}
+              </div>
             </div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl"
+          ))}
+        </div>
+        <div className="w-full bg-gray-200 h-1 rounded-full">
+          <div 
+            className="bg-blue-600 h-1 rounded-full transition-all duration-300"
+            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+    );
+  };
+  
+  // Render step navigation buttons
+  const renderStepButtons = () => {
+    return (
+      <div className="flex justify-between mt-8">
+        {currentStep > 1 && (
+          <button
+            type="button"
+            onClick={prevStep}
+            className="btn btn-outline px-6"
           >
-            <Form {...form}>
-              <form className="space-y-6">
-                <AnimatePresence mode="wait">
-                  {step === 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
-                      key="step-1"
-                    >
-                      <div className="flex items-center justify-center mb-6">
-                        <div 
-                          className="relative w-24 h-24 bg-slate-800 rounded-full overflow-hidden cursor-pointer border-2 border-dashed border-slate-700 hover:border-blue-500 transition-colors"
-                          onClick={() => fileInputRef.current.click()}
-                        >
-                          {profileImage ? (
-                            <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="flex flex-col items-center justify-center h-full">
-                              <Upload className="h-6 w-6 text-slate-400" />
-                              <span className="text-xs text-slate-400 mt-1">Upload</span>
-                            </div>
-                          )}
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleProfileImageChange}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="firstName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-200">First name</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Enter your first name"
-                                  className="bg-slate-800 border-slate-700 text-white"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage className="text-red-400" />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="lastName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-200">Last name</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Enter your last name"
-                                  className="bg-slate-800 border-slate-700 text-white"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage className="text-red-400" />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-200">Email</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="email"
-                                  placeholder="you@example.com"
-                                  className="bg-slate-800 border-slate-700 text-white"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage className="text-red-400" />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-200">Phone number</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="tel"
-                                  placeholder="(123) 456-7890"
-                                  className="bg-slate-800 border-slate-700 text-white"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage className="text-red-400" />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="dateOfBirth"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                              <FormLabel className="text-slate-200">Date of birth</FormLabel>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant={"outline"}
-                                      className={`w-full pl-3 text-left font-normal bg-slate-800 border-slate-700 text-white ${
-                                        !field.value ? "text-slate-400" : ""
-                                      }`}
-                                    >
-                                      {field.value ? (
-                                        format(field.value, "PPP")
-                                      ) : (
-                                        <span>Pick a date</span>
-                                      )}
-                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                      date > new Date() || date < new Date("1900-01-01")
-                                    }
-                                    initialFocus
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage className="text-red-400" />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="gender"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-200">Gender</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                                    <SelectValue placeholder="Select gender" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="male">Male</SelectItem>
-                                  <SelectItem value="female">Female</SelectItem>
-                                  <SelectItem value="other">Other</SelectItem>
-                                  <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage className="text-red-400" />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="address"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-slate-200">Address</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="Enter your address"
-                                className="bg-slate-800 border-slate-700 text-white"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage className="text-red-400" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="city"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-200">City</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="City"
-                                  className="bg-slate-800 border-slate-700 text-white"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage className="text-red-400" />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="state"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-200">State</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="State"
-                                  className="bg-slate-800 border-slate-700 text-white"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage className="text-red-400" />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="zipCode"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-200">Zip Code</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Zip code"
-                                  className="bg-slate-800 border-slate-700 text-white"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage className="text-red-400" />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {step === 1 && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
-                      key="step-2"
-                    >
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Professional Information</h3>
-                        <p className="text-slate-400">Provide details about your qualifications and specialties.</p>
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="qualifications"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-slate-200">Qualifications</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="List your qualifications..."
-                                className="bg-slate-800 border-slate-700 text-white resize-none min-h-[100px]"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage className="text-red-400" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="specialties"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-slate-200">Specialties</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="List your specialties..."
-                                className="bg-slate-800 border-slate-700 text-white resize-none min-h-[100px]"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage className="text-red-400" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="experience"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-slate-200">Years of Experience</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number"
-                                placeholder="Enter your years of experience"
-                                className="bg-slate-800 border-slate-700 text-white"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage className="text-red-400" />
-                          </FormItem>
-                        )}
-                      />
-                    </motion.div>
-                  )}
-
-                  {step === 2 && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
-                      key="step-3"
-                    >
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Create Your Account</h3>
-                        <p className="text-slate-400">Set up your login details to access your doctor portal.</p>
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="password"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-slate-200">Password</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input 
-                                  type={showPassword ? "text" : "password"}
-                                  placeholder="Create a secure password"
-                                  className="bg-slate-800 border-slate-700 text-white pr-10"
-                                  {...field} 
-                                />
-                                <button
-                                  type="button"
-                                  className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-200"
-                                  onClick={() => setShowPassword(!showPassword)}
-                                >
-                                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                </button>
-                              </div>
-                            </FormControl>
-                            <p className="text-xs text-slate-400 mt-1">
-                              Must be at least 8 characters and include a number or special character
-                            </p>
-                            <FormMessage className="text-red-400" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-slate-200">Confirm Password</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input 
-                                  type={showPassword ? "text" : "password"}
-                                  placeholder="Confirm your password"
-                                  className="bg-slate-800 border-slate-700 text-white pr-10"
-                                  {...field} 
-                                />
-                              </div>
-                            </FormControl>
-                            <FormMessage className="text-red-400" />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="acceptTerms"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-6">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel className="text-sm text-slate-200">
-                                I agree to the{" "}
-                                <Link href="/terms" className="text-blue-400 hover:underline">
-                                  Terms of Service
-                                </Link>{" "}
-                                and{" "}
-                                <Link href="/privacy" className="text-blue-400 hover:underline">
-                                  Privacy Policy
-                                </Link>
-                              </FormLabel>
-                              <FormMessage className="text-red-400" />
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="mt-6 pt-4 border-t border-slate-800">
-                        <div className="bg-slate-800 p-4 rounded-lg">
-                          <h4 className="text-sm font-medium text-white mb-2">What happens next?</h4>
-                          <ul className="list-disc text-xs text-slate-400 pl-5 space-y-1">
-                            <li>After registering, you'll receive a verification email</li>
-                            <li>Click the verification link to activate your account</li>
-                            <li>Once verified, you can log in and access your doctor portal</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {step === 3 && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
-                      key="step-4"
-                    >
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-white">Review Your Information</h3>
-                        <p className="text-slate-400">Please verify all details before completing your registration.</p>
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="bg-slate-800 p-5 rounded-lg">
-                          <h4 className="text-md font-medium text-blue-400 mb-3">Personal Information</h4>
-                          <div className="grid grid-cols-2 gap-y-3 gap-x-6 text-sm">
-                            <div>
-                              <span className="text-slate-400 block">Name</span>
-                              <span className="text-white">
-                                {form.watch("firstName")} {form.watch("lastName")}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block">Email</span>
-                              <span className="text-white">{form.watch("email")}</span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block">Phone</span>
-                              <span className="text-white">{form.watch("phone")}</span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block">Date of Birth</span>
-                              <span className="text-white">
-                                {form.watch("dateOfBirth") ? format(form.watch("dateOfBirth"), "PPP") : "Not provided"}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block">Gender</span>
-                              <span className="text-white capitalize">{form.watch("gender") || "Not provided"}</span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block">Address</span>
-                              <span className="text-white">
-                                {form.watch("address")}, {form.watch("city")}, {form.watch("state")} {form.watch("zipCode")}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-slate-800 p-5 rounded-lg">
-                          <h4 className="text-md font-medium text-blue-400 mb-3">Professional Information</h4>
-                          <div className="space-y-4 text-sm">
-                            <div>
-                              <span className="text-slate-400 block">Qualifications</span>
-                              <span className="text-white">
-                                {form.watch("qualifications") || "Not provided"}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block">Specialties</span>
-                              <span className="text-white">
-                                {form.watch("specialties") || "Not provided"}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-slate-400 block">Experience</span>
-                              <span className="text-white">
-                                {form.watch("experience") || "Not provided"} years
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="flex justify-between pt-6 border-t border-slate-800">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={prevStep}
-                    disabled={step === 0 || isLoading}
-                    className="bg-transparent border-slate-700 text-slate-200 hover:bg-slate-800"
-                  >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back
-                  </Button>
-                  {step < steps.length - 1 ? (
-                    <Button 
-                      type="button"
-                      onClick={nextStep}
-                      className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600"
-                    >
-                      Continue
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  ) : (
-                    <Button 
-                      type="button"
-                      onClick={form.handleSubmit(onSubmit)}
-                      disabled={isLoading}
-                      className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          Complete Registration
-                          <Check className="ml-2 h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </form>
-            </Form>
-          </motion.div>
+            Previous
+          </button>
+        )}
+        
+        <div className={`${currentStep > 1 ? 'ml-auto' : ''}`}>
+          {currentStep < totalSteps ? (
+            <button
+              type="button"
+              onClick={nextStep}
+              className="btn btn-primary px-6"
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className={`btn btn-primary px-6 ${isLoading ? 'loading' : ''}`}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Creating Account...' : 'Create Account'}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+  
+  // Step 1: Personal Information
+  const renderPersonalInfoStep = () => {
+    return (
+      <>
+        <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
+        
+        {/* Profile Image Upload */}
+        <div className="mb-6 flex flex-col items-center">
+          <div 
+            onClick={() => fileInputRef.current.click()}
+            className="w-32 h-32 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden hover:border-blue-500 transition-colors"
+          >
+            {profileImagePreview ? (
+              <img src={profileImagePreview} alt="Profile Preview" className="w-full h-full object-cover" />
+            ) : (
+              <div className="text-center p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span className="text-xs text-gray-500 mt-1 block">Upload Photo</span>
+              </div>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleProfileImageChange}
+          />
+          <span className="text-xs text-gray-500 mt-2">Click to upload profile photo</span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">First Name*</span>
+            </label>
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              placeholder="Your first name"
+              className={`input input-bordered bg-white w-full ${errors.firstName ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            {errors.firstName && (
+              <label className="label">
+                <span className="label-text-alt text-red-500">{errors.firstName}</span>
+              </label>
+            )}
+          </div>
           
-          <div className="mt-6 text-center">
-            <p className="text-slate-400">
-              Already have an account?{" "}
-              <Link
-                href="/login"
-                className="font-medium text-blue-400 hover:text-blue-300"
-              >
-                Sign in
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">Last Name*</span>
+            </label>
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              placeholder="Your last name"
+              className={`input input-bordered bg-white w-full ${errors.lastName ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            {errors.lastName && (
+              <label className="label">
+                <span className="label-text-alt text-red-500">{errors.lastName}</span>
+              </label>
+            )}
+          </div>
+        </div>
+        
+        <div className="form-control w-full mt-2">
+          <label className="label">
+            <span className="label-text text-gray-700 font-medium">Email*</span>
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Your email address"
+            className={`input input-bordered bg-white w-full ${errors.email ? 'input-error border-red-300' : 'border-gray-200'}`}
+          />
+          {errors.email && (
+            <label className="label">
+              <span className="label-text-alt text-red-500">{errors.email}</span>
+            </label>
+          )}
+        </div>
+        
+        <div className="form-control w-full mt-2">
+          <label className="label">
+            <span className="label-text text-gray-700 font-medium">Phone Number*</span>
+          </label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            placeholder="Your phone number"
+            className={`input input-bordered bg-white w-full ${errors.phone ? 'input-error border-red-300' : 'border-gray-200'}`}
+          />
+          {errors.phone && (
+            <label className="label">
+              <span className="label-text-alt text-red-500">{errors.phone}</span>
+            </label>
+          )}
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">Date of Birth*</span>
+            </label>
+            <input
+              type="date"
+              name="dateOfBirth"
+              value={formData.dateOfBirth || ''}
+              onChange={handleChange}
+              className={`input input-bordered bg-white w-full ${errors.dateOfBirth ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            {errors.dateOfBirth && (
+              <label className="label">
+                <span className="label-text-alt text-red-500">{errors.dateOfBirth}</span>
+              </label>
+            )}
+          </div>
+          
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">Gender*</span>
+            </label>
+            <select
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              className={`select select-bordered bg-white w-full ${errors.gender ? 'select-error border-red-300' : 'border-gray-200'}`}
+            >
+              <option value="" disabled>Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="prefer-not-to-say">Prefer not to say</option>
+            </select>
+            {errors.gender && (
+              <label className="label">
+                <span className="label-text-alt text-red-500">{errors.gender}</span>
+              </label>
+            )}
+          </div>
+        </div>
+      </>
+    );
+  };
+  
+  const renderAddressStep = () => {
+    return (
+      <>
+        <h3 className="text-lg font-semibold mb-4">Address Information</h3>
+        
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text text-gray-700 font-medium">Address*</span>
+          </label>
+          <input
+            type="text"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            placeholder="Street address"
+            className={`input input-bordered bg-white w-full ${errors.address ? 'input-error border-red-300' : 'border-gray-200'}`}
+          />
+          {errors.address && (
+            <label className="label">
+              <span className="label-text-alt text-red-500">{errors.address}</span>
+            </label>
+          )}
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">City*</span>
+            </label>
+            <input
+              type="text"
+              name="city"
+              value={formData.city}
+              onChange={handleChange}
+              placeholder="City"
+              className={`input input-bordered bg-white w-full ${errors.city ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            {errors.city && (
+              <label className="label">
+                <span className="label-text-alt text-red-500">{errors.city}</span>
+              </label>
+            )}
+          </div>
+          
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">State*</span>
+            </label>
+            <input
+              type="text"
+              name="state"
+              value={formData.state}
+              onChange={handleChange}
+              placeholder="State"
+              className={`input input-bordered bg-white w-full ${errors.state ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            {errors.state && (
+              <label className="label">
+                <span className="label-text-alt text-red-500">{errors.state}</span>
+              </label>
+            )}
+          </div>
+        </div>
+        
+        <div className="form-control w-full mt-2">
+          <label className="label">
+            <span className="label-text text-gray-700 font-medium">PIN Code*</span>
+          </label>
+          <input
+            type="text"
+            name="zipCode"
+            value={formData.zipCode}
+            onChange={handleChange}
+            placeholder="6-digit PIN code"
+            className={`input input-bordered bg-white w-full ${errors.zipCode ? 'input-error border-red-300' : 'border-gray-200'}`}
+          />
+          {errors.zipCode && (
+            <label className="label">
+              <span className="label-text-alt text-red-500">{errors.zipCode}</span>
+            </label>
+          )}
+        </div>
+      </>
+    );
+  };
+  
+  const renderProfessionalInfoStep = () => {
+    return (
+      <>
+        <h3 className="text-lg font-semibold mb-4">Professional Information</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">Qualifications*</span>
+            </label>
+            <input
+              type="text"
+              name="qualifications"
+              value={formData.qualifications}
+              onChange={handleChange}
+              placeholder="e.g., MBBS, MD, MS"
+              className={`input input-bordered bg-white w-full ${errors.qualifications ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            {errors.qualifications && (
+              <label className="label">
+                <span className="label-text-alt text-red-500">{errors.qualifications}</span>
+              </label>
+            )}
+          </div>
+          
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">Specialties*</span>
+            </label>
+            <input
+              type="text"
+              name="specialties"
+              value={formData.specialties}
+              onChange={handleChange}
+              placeholder="e.g., Cardiology, Pediatrics"
+              className={`input input-bordered bg-white w-full ${errors.specialties ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            {errors.specialties && (
+              <label className="label">
+                <span className="label-text-alt text-red-500">{errors.specialties}</span>
+              </label>
+            )}
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">Years of Experience*</span>
+            </label>
+            <input
+              type="number"
+              name="experience"
+              value={formData.experience}
+              onChange={handleChange}
+              min="0"
+              placeholder="Years of practice"
+              className={`input input-bordered bg-white w-full ${errors.experience ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            {errors.experience && (
+              <label className="label">
+                <span className="label-text-alt text-red-500">{errors.experience}</span>
+              </label>
+            )}
+          </div>
+          
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">Registration Number*</span>
+            </label>
+            <input
+              type="text"
+              name="registrationNumber"
+              value={formData.registrationNumber}
+              onChange={handleChange}
+              placeholder="Medical council registration"
+              className={`input input-bordered bg-white w-full ${errors.registrationNumber ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            {errors.registrationNumber && (
+              <label className="label">
+                <span className="label-text-alt text-red-500">{errors.registrationNumber}</span>
+              </label>
+            )}
+          </div>
+        </div>
+        
+        <div className="form-control w-full mt-2">
+          <label className="label">
+            <span className="label-text text-gray-700 font-medium">Hospital Affiliations</span>
+          </label>
+          <input
+            type="text"
+            name="hospitalAffiliations"
+            value={formData.hospitalAffiliations}
+            onChange={handleChange}
+            placeholder="Hospitals you're affiliated with"
+            className={`input input-bordered bg-white w-full ${errors.hospitalAffiliations ? 'input-error border-red-300' : 'border-gray-200'}`}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">Consultation Fee</span>
+            </label>
+            <input
+              type="text"
+              name="consultationFee"
+              value={formData.consultationFee}
+              onChange={handleChange}
+              placeholder="Your standard fee (in ₹)"
+              className={`input input-bordered bg-white w-full ${errors.consultationFee ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+          </div>
+          
+          <div className="form-control w-full">
+            <label className="label">
+              <span className="label-text text-gray-700 font-medium">Available Hours</span>
+            </label>
+            <input
+              type="text"
+              name="availableHours"
+              value={formData.availableHours}
+              onChange={handleChange}
+              placeholder="e.g., Mon-Fri 9AM-5PM"
+              className={`input input-bordered bg-white w-full ${errors.availableHours ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+          </div>
+        </div>
+      </>
+    );
+  };
+  
+  // Step 4: Account Setup - The section that needs updating
+  const renderAccountStep = () => {
+    return (
+      <>
+        <h3 className="text-lg font-semibold mb-4">Account Setup</h3>
+        
+        <div className="form-control w-full">
+          <label className="label">
+            <span className="label-text text-gray-700 font-medium">Password*</span>
+          </label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Create a secure password"
+              className={`input input-bordered bg-white w-full pr-10 ${errors.password ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            <button
+              type="button"
+              onClick={togglePassword}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              {showPassword ? (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              )}
+            </button>
+          </div>
+          {errors.password && (
+            <label className="label">
+              <span className="label-text-alt text-red-500">{errors.password}</span>
+            </label>
+          )}
+          <p className="text-xs mt-1 text-gray-500">
+            Password must be at least 8 characters long and include uppercase, lowercase, 
+            number, and special character (!@#$%^&*).
+          </p>
+        </div>
+        
+        <div className="form-control w-full mt-2">
+          <label className="label">
+            <span className="label-text text-gray-700 font-medium">Confirm Password*</span>
+          </label>
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm your password"
+              className={`input input-bordered bg-white w-full pr-10 ${errors.confirmPassword ? 'input-error border-red-300' : 'border-gray-200'}`}
+            />
+            <button
+              type="button"
+              onClick={toggleConfirmPassword}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              {showConfirmPassword ? (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-gray-500">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573-3.007 9.963-7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              )}
+            </button>
+          </div>
+          {errors.confirmPassword && (
+            <label className="label">
+              <span className="label-text-alt text-red-500">{errors.confirmPassword}</span>
+            </label>
+          )}
+        </div>
+        
+        <div className="form-control mt-4">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              name="acceptTerms"
+              checked={formData.acceptTerms}
+              onChange={handleChange}
+              className="checkbox checkbox-primary"
+            />
+            <span className="label-text">
+              I agree to the{' '}
+              <Link href="/terms" className="text-blue-600 hover:underline">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="text-blue-600 hover:underline">
+                Privacy Policy
               </Link>
-            </p>
+            </span>
+          </label>
+          {errors.acceptTerms && (
+            <label className="label">
+              <span className="label-text-alt text-red-500">{errors.acceptTerms}</span>
+            </label>
+          )}
+        </div>
+
+        <div className="bg-blue-50 p-4 rounded-lg mt-6 border border-blue-100">
+          <h4 className="text-sm font-semibold text-blue-800 mb-2">What happens next?</h4>
+          <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
+            <li>Your application will be reviewed by our admin team</li>
+            <li>You'll receive an email once your account is approved</li>
+            <li>The verification process may take 1-2 business days</li>
+          </ul>
+        </div>
+      </>
+    );
+  };
+  
+  // Render the current step content based on state
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return renderPersonalInfoStep();
+      case 2:
+        return renderAddressStep();
+      case 3:
+        return renderProfessionalInfoStep();
+      case 4:
+        return renderAccountStep();
+      default:
+        return null;
+    }
+  };
+  
+  return (
+    <div className="bg-gray-50 min-h-screen py-8">
+      <div className="container mx-auto px-4">
+        <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-2xl font-bold text-center mb-6">Create Your Doctor Account</h2>
+          
+          {renderProgressBar()}
+          
+          <form onSubmit={handleSubmit}>
+            {renderStepContent()}
+            {renderStepButtons()}
+          </form>
+          
+          <div className="text-center mt-6">
+            Already have an account?{" "}
+            <Link href="/login" className="text-blue-600 hover:underline">
+              Log In
+            </Link>
           </div>
         </div>
       </div>
+      
+      <Toaster position="top-center" reverseOrder={false} />
+      
+      <style jsx global>{`
+        .step-item {
+          flex: 1;
+          text-align: center;
+          position: relative;
+        }
+        
+        .step-counter {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto;
+          background-color: #e5e7eb;
+          color: #6b7280;
+          font-weight: bold;
+          font-size: 14px;
+        }
+        
+        .step-counter.current {
+          background-color: #3b82f6;
+          color: white;
+        }
+        
+        .step-counter.completed {
+          background-color: #10b981;
+          color: white;
+        }
+        
+        .step-item.active .step-name {
+          color: #3b82f6;
+          font-weight: 500;
+        }
+      `}</style>
     </div>
   );
-}
+};
+
+export default DoctorSignupForm;
