@@ -37,20 +37,28 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
 ));
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
-const SelectItem = React.forwardRef(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Item
-    ref={ref}
-    className={`relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className}`}
-    {...props}
-  >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-      <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
-      </SelectPrimitive.ItemIndicator>
-    </span>
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-  </SelectPrimitive.Item>
-));
+const SelectItem = React.forwardRef(({ className, children, value: providedValue, ...props }, ref) => {
+  // Generate a default value if none is provided or if it's empty
+  const value = providedValue === undefined || providedValue === "" 
+    ? `item-${Math.random().toString(36).substr(2, 9)}` // Generate a unique default value
+    : providedValue;
+  
+  return (
+    <SelectPrimitive.Item
+      ref={ref}
+      value={value}
+      className={`relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className}`}
+      {...props}
+    >
+      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        <SelectPrimitive.ItemIndicator>
+          <Check className="h-4 w-4" />
+        </SelectPrimitive.ItemIndicator>
+      </span>
+      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    </SelectPrimitive.Item>
+  );
+});
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
 export { Select, SelectValue, SelectTrigger, SelectContent, SelectItem };
