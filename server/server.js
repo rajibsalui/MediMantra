@@ -11,18 +11,18 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 
 // Import configurations
-import { corsOptions, rateLimitOptions } from './config/server.config.js';
-import connectDb from './src/db/dbconnection.js';
+import { corsOptions, rateLimitOptions } from './src/config/server.config.js';
+import connectDb from './src/config/db.config.js';
 
 // Import routes
-// import authRoutes from './routes/auth.routes.js';
+ import authRoutes from './routes/auth.routes.js';
 // import messageRoutes from './routes/message.routes.js';
 // import userRoutes from './routes/user.routes.js';
 // import chatRoutes from './routes/chat.routes.js';
 
 // Import middleware
-// import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
-// import { requestLogger } from './middleware/logging.middleware.js';
+ import { errorHandler, notFoundHandler } from './src/middleware/error.middleware.js';
+ import { requestLogger } from './src/middleware/logging.middleware.js';
 
 // Load environment variables
 dotenv.config();
@@ -64,7 +64,8 @@ app.use(requestLogger);
 
 // API routes
 const apiRouter = express.Router();
- apiRouter.use('/auth', authrouter);
+
+//apiRouter.use('/auth', authRoutes);
 
 // apiRouter.use('/messages', messageRoutes);
 // apiRouter.use('/users', userRoutes);
