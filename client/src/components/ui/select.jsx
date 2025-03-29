@@ -37,16 +37,28 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
 ));
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
+<<<<<<< HEAD
 const SelectItem = React.forwardRef(({ className, children, value, ...props }, ref) => {
   // Ensure value is never an empty string or undefined
   const safeValue = value === undefined || value === null || value === '' 
     ? `item-${Math.random().toString(36).substr(2, 9)}` // Generate a unique default value
     : value;
+=======
+const SelectItem = React.forwardRef(({ className, children, value: providedValue, ...props }, ref) => {
+  // Generate a default value if none is provided or if it's empty
+  const value = providedValue === undefined || providedValue === "" 
+    ? `item-${Math.random().toString(36).substr(2, 9)}` // Generate a unique default value
+    : providedValue;
+>>>>>>> c5d04fabb37fe3d92c8c5d07510857decdf0d09f
   
   return (
     <SelectPrimitive.Item
       ref={ref}
+<<<<<<< HEAD
       value={safeValue}
+=======
+      value={value}
+>>>>>>> c5d04fabb37fe3d92c8c5d07510857decdf0d09f
       className={`relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className}`}
       {...props}
     >
