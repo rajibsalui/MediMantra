@@ -8,6 +8,7 @@ import connectDB from './config/dbconnect.js';
 // Import routes
 import authRoutes from './routes/auth.route.js';
 import patientRoutes from './routes/patient.route.js';
+import doctorRoutes from './routes/doctor.route.js';
 
 
 // Initialize Express app
@@ -26,6 +27,7 @@ app.get('/', (req, res) => {
 });
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
+app.use('/api/doctors', doctorRoutes);
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

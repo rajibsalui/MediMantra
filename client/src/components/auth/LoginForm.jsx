@@ -11,9 +11,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BackgroundBeams } from "../ui/aceternity/background-beams";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "react-hot-toast";
 
 export default function LoginForm() {
   const router = useRouter();
+  const { login } = useAuth();
   const [isDoctor, setIsDoctor] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +25,7 @@ export default function LoginForm() {
     password: "",
     rememberMe: false,
   });
-  
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -30,28 +33,47 @@ export default function LoginForm() {
       [name]: type === "checkbox" ? checked : value,
     });
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate API call
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // Redirect based on user type
-      if (isDoctor) {
-        router.push("/doctor-dashboard");
-      } else {
-        router.push("/dashboard");
-      }
+      console.log("Form data:", formData.email); // Debugging line
+      // Call the login function matching how it's defined in AuthContext
+      await login(formData);
+
+      toast.success("Login successful!");
+
+      // Redirect based on user type - we'll get this from the returned user object in AuthContext
+      router.push("/");
     } catch (error) {
       console.error("Login failed:", error);
+      toast.error(error.message || "Invalid credentials");
     } finally {
       setIsLoading(false);
     }
   };
-  
+
+  const handleSocialLogin = async (provider) => {
+    // This is a placeholder for future implementation
+    try {
+      setIsLoading(true);
+
+      if (provider === "google") {
+        // Placeholder for actual Google authentication
+        toast.info("Google login will be implemented soon");
+      } else if (provider === "facebook") {
+        // Placeholder for actual Facebook authentication
+        toast.info("Facebook login will be implemented soon");
+      }
+    } catch (error) {
+      toast.error(error.message || `${provider} login failed`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden">
       <BackgroundBeams className="z-0" />
@@ -61,7 +83,7 @@ export default function LoginForm() {
           <div className="mb-6 text-center">
             <Link href="/" className="inline-block mb-6">
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                MediBot
+                MediMantra
               </span>
             </Link>
             <h2 className="text-3xl font-bold text-slate-800 dark:text-white">
@@ -71,10 +93,11 @@ export default function LoginForm() {
               Please sign in to your account
             </p>
           </div>
-          
+
           {/* User type toggle */}
           <div className="flex p-1 mb-8 bg-slate-100 dark:bg-slate-800 rounded-xl">
             <button
+              type="button"
               className={cn(
                 "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
                 !isDoctor
@@ -86,6 +109,7 @@ export default function LoginForm() {
               Patient
             </button>
             <button
+              type="button"
               className={cn(
                 "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
                 isDoctor
@@ -97,7 +121,7 @@ export default function LoginForm() {
               Doctor
             </button>
           </div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -118,7 +142,7 @@ export default function LoginForm() {
                   className="h-11"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
@@ -153,7 +177,7 @@ export default function LoginForm() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -172,7 +196,7 @@ export default function LoginForm() {
                   </Label>
                 </div>
               </div>
-              
+
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -183,7 +207,7 @@ export default function LoginForm() {
                 ) : null}
                 {isLoading ? "Signing in..." : "Sign in"}
               </Button>
-              
+
               <div className="mt-6 text-center">
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   Don't have an account?{" "}
@@ -197,7 +221,7 @@ export default function LoginForm() {
               </div>
             </form>
           </motion.div>
-          
+
           {/* OAuth buttons */}
           <div className="mt-6">
             <div className="relative">
@@ -210,9 +234,14 @@ export default function LoginForm() {
                 </span>
               </div>
             </div>
-            
+
             <div className="mt-6 grid grid-cols-2 gap-4">
-              <Button variant="outline" className="h-11">
+              <Button
+                variant="outline"
+                className="h-11"
+                disabled={isLoading}
+                onClick={() => handleSocialLogin("google")}
+              >
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -233,7 +262,12 @@ export default function LoginForm() {
                 </svg>
                 Google
               </Button>
-              <Button variant="outline" className="h-11">
+              <Button
+                variant="outline"
+                className="h-11"
+                disabled={isLoading}
+                onClick={() => handleSocialLogin("facebook")}
+              >
                 <svg className="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
                 </svg>

@@ -1,68 +1,75 @@
 import jwt from 'jsonwebtoken';
-import Patient from '../models/patient.model.js';
+import User from '../models/user.model.js';
 
 export const authMiddleware = async (req, res, next) => {
   try {
-    // Get token from cookie or authorization header
     let token;
-    
-    if (req.cookies && req.cookies.accessToken) {
-      token = req.cookies.accessToken;
-    } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+
+    // Check for token in Authorization header
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      // Extract token from "Bearer <token>"
       token = req.headers.authorization.split(' ')[1];
-    }
-    
-    // Check if token exists
+    } 
+    // If no token is found
     if (!token) {
       return res.status(401).json({
         success: false,
         message: 'Not authorized, no token provided'
       });
     }
-    
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Find user by id from decoded token
-    const currentUser = await Patient.findById(decoded.id).select('-password');
-    
-    if (!currentUser) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-    
-    // Check if user is active
-    if (!currentUser.isActive) {
+
+    try {
+      // Verify the token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Add user data to request object
+      req.user = await User.findById(decoded.id).select('-password');
+      
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+      
+      next();
+    } catch (error) {
       return res.status(401).json({
         success: false,
-        message: 'User account is deactivated'
+        message: 'Not authorized, token invalid'
       });
     }
-    
-    // Add user to request object
-    req.user = currentUser;
-    next();
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false, 
-        message: 'Invalid token'
-      });
-    }
-    
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Token expired'
-      });
-    }
-    
+    console.error('Auth middleware error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
+      message: 'Server error in authentication'
     });
   }
 };
+
+// Middleware for checking specific roles
+export const checkRole = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+    
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. Role ${req.user.role} not authorized to access this resource`
+      });
+    }
+    
+    next();
+  };
+};
+
+export default { authMiddleware, checkRole };

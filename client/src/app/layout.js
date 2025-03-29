@@ -4,6 +4,10 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/toast-provider";
 import Footer from "@/components/layout/Footer";
 import Header from "@/components/layout/Header";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { DoctorProvider } from "@/contexts/DoctorContext";
+import { PatientProvider } from "@/contexts/PatientContext";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,8 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Mediमंत्र - Your Medical Assistant",
-  description: "AI-powered medical assistant for healthcare professionals",
+  title: "MediMantra - Modern Healthcare Platform",
+  description: "A comprehensive healthcare management system",
 };
 
 export default function RootLayout({ children }) {
@@ -29,13 +33,18 @@ export default function RootLayout({ children }) {
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <ToastProvider />
-          <div className="flex min-h-screen w-full flex-col bg-background text-foreground antialiased transition-colors duration-200">
-            <Header />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <AuthProvider>
+            <DoctorProvider>
+              <PatientProvider>
+                <div className="flex min-h-screen w-full flex-col bg-background text-foreground antialiased transition-colors duration-200">
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+                <Toaster position="top-right" />
+              </PatientProvider>
+            </DoctorProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
