@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import fs from 'fs';
-import OpenAI from "openai";
+import { OpenAI as OpenAIApi } from "openai";
 
 // Get the directory of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -42,7 +42,7 @@ if (!apiKey) {
 
 // Initialize OpenAI client with appropriate error handling
 const client = apiKey 
-  ? new OpenAI({ apiKey }) 
+  ? new OpenAIApi({ apiKey }) 
   : null;
 
 // Health assistant prompt
