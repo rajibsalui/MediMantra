@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
 import { toast, Toaster } from 'react-hot-toast';
+import { useAuth } from "@/contexts/AuthContext"; // Added AuthContext import
 
 const UserSignupForm = () => {
   const router = useRouter();
+  const { register } = useAuth(); // Get register function from AuthContext
   
   // Form state with all requested fields
   const [formData, setFormData] = useState({
@@ -263,18 +264,18 @@ const UserSignupForm = () => {
           phone: formData.emergencyContactPhone,
           relationship: formData.emergencyContactRelation
         },
-        role: formData.role,
+        role: "patient",
       };
       
-      // Replace with your API endpoint
-      const response = await axios.post('/api/auth/signup', payload);
+      // Call the register function from AuthContext
+      await register(payload);
       
       toast.success('Account created! Welcome to MediMantra.');
       
-      // Redirect to login page or dashboard using Next.js router
-      router.push('/login');
+      // Redirect to login page or verification page
+      router.push('/verify-email');
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to create account. Please try again.';
+      const errorMessage = error.message || 'Failed to create account. Please try again.';
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);

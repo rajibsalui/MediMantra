@@ -1,112 +1,106 @@
+import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import User from '../models/user.model.js';
 import Patient from '../models/patient.model.js';
-import { sendEmail } from '../utils/email.js';
+import Doctor from '../models/doctor.model.js';
 
-// Generate JWT tokens
-const generateTokens = (id) => {
-  const accessToken = jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '1d'
-  });
-  
-  const refreshToken = jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, {
+// Helper function to generate JWT token
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '30d'
   });
+};
+
+/**
+ * @desc    Register a new user
+ * @route   POST /api/auth/register
+ * @access  Public
+ */
+export const register = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   
-  return { accessToken, refreshToken };
-};
-
-// Set cookie options
-const cookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
-  maxAge: 24 * 60 * 60 * 1000 // 1 day
-};
-
-// Register new patient
-export const registerUser = async (req, res) => {
   try {
-    const { 
-      firstName, 
-      lastName, 
-      email, 
-      phone, 
-      password, 
-      dateOfBirth, 
-      gender 
-    } = req.body;
-    
-    // Check if patient exists
-    const patientExists = await Patient.findOne({ email });
-    
-    if (patientExists) {
+    const { firstName, lastName, email, password, phone, role, dateOfBirth, gender } = req.body;
+
+    // Check if user already exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
       return res.status(400).json({
         success: false,
-        message: 'Patient with this email already exists'
+        message: 'User with this email already exists'
       });
     }
-    
-    // Create new patient
-    const patient = await Patient.create({
+
+    // Create new user
+    const user = new User({
       firstName,
       lastName,
       email,
-      phone,
       password,
+      phone,
+      role: role || 'user',
       dateOfBirth,
       gender
     });
-    
-    // Generate verification token
-    // const verificationToken = patient.generateEmailVerificationToken();
-    // await patient.save();
-    
-    // Send verification email
-    // const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
-    
-    // await sendEmail({
-    //   email: patient.email,
-    //   subject: 'Email Verification - MediMantra',
-    //   message: `Please verify your email by clicking the link: ${verificationUrl}`
-    // });
-    
-    // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(patient._id);
-    
-    // Save refresh token to database
-    patient.refreshToken = refreshToken;
-    await patient.save();
-    
-    // Send response with cookie
-    res.cookie('accessToken', accessToken, cookieOptions);
+
+    await user.save({ session });
+
+    // If role is patient, create patient profile
+    if (role === 'patient' || !role) {
+      const patient = new Patient({
+        user: user._id
+      });
+      await patient.save({ session });
+      
+      // Update user role to patient
+      user.role = 'patient';
+      await user.save({ session });
+    }
+
+    await session.commitTransaction();
+
+    // Generate token
+    const token = generateToken(user._id);
+
     res.status(201).json({
       success: true,
-      message: 'Patient registered successfully. Please verify your email.',
-      patient: {
-        _id: patient._id,
-        firstName: patient.firstName,
-        lastName: patient.lastName,
-        email: patient.email,
-        phone: patient.phone,
-        isEmailVerified: patient.isEmailVerified
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        profileImage: user.profileImage,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender
       }
     });
   } catch (error) {
+    await session.abortTransaction();
+    console.error('Registration error:', error);
     res.status(500).json({
       success: false,
-      message: 'Registration failed',
+      message: 'Server error during registration',
       error: error.message
     });
+  } finally {
+    session.endSession();
   }
 };
 
-// Login patient
-export const loginUser = async (req, res) => {
+/**
+ * @desc    Login user
+ * @route   POST /api/auth/login
+ * @access  Public
+ */
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     // Validate email and password
     if (!email || !password) {
       return res.status(400).json({
@@ -114,568 +108,503 @@ export const loginUser = async (req, res) => {
         message: 'Please provide email and password'
       });
     }
-    
-    // Find patient
-    const patient = await Patient.findOne({ email }).select('+password');
-    
-    if (!patient) {
+
+    // Check for user
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
     }
-    
+
     // Check if password matches
-    const isMatch = await patient.comparePassword(password);
-    
+    const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
     }
-    
-    // Check if patient is active
-    if (!patient.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Your account has been deactivated. Please contact support.'
-      });
-    }
-    
+
     // Update last login
-    patient.lastLogin = Date.now();
-    await patient.save();
-    
-    // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(patient._id);
-    
-    // Save refresh token to database
-    patient.refreshToken = refreshToken;
-    await patient.save();
-    
-    // Send response with cookie
-    res.cookie('accessToken', accessToken, cookieOptions);
+    user.lastLogin = Date.now();
+    await user.save();
+
+    // Generate token
+    const token = generateToken(user._id);
+
     res.status(200).json({
       success: true,
-      message: 'Login successful',
-      patient: {
-        _id: patient._id,
-        firstName: patient.firstName,
-        lastName: patient.lastName,
-        email: patient.email,
-        phone: patient.phone,
-        isEmailVerified: patient.isEmailVerified
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        profileImage: user.profileImage,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender
       }
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
-      message: 'Login failed',
+      message: 'Server error during login',
       error: error.message
     });
   }
 };
 
-// Logout patient
-export const logoutUser = async (req, res) => {
+/**
+ * @desc    Get current user
+ * @route   GET /api/auth/me
+ * @access  Private
+ */
+export const getCurrentUser = async (req, res) => {
   try {
-    // Get patient from middleware
-    const patient = req.user;
+    const user = await User.findById(req.user.id);
     
-    // Remove refresh token from database
-    patient.refreshToken = undefined;
-    await patient.save();
-    
-    // Clear cookie
-    res.clearCookie('accessToken');
-    
-    res.status(200).json({
-      success: true,
-      message: 'Logout successful'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Logout failed',
-      error: error.message
-    });
-  }
-};
-
-// Refresh access token
-export const refreshAccessToken = async (req, res) => {
-  try {
-    const { refreshToken } = req.body;
-    
-    if (!refreshToken) {
-      return res.status(400).json({
-        success: false,
-        message: 'Refresh token is required'
-      });
-    }
-    
-    // Verify refresh token
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    
-    // Find patient
-    const patient = await Patient.findById(decoded.id);
-    
-    if (!patient || patient.refreshToken !== refreshToken) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid refresh token'
-      });
-    }
-    
-    // Generate new access token
-    const accessToken = jwt.sign({ id: patient._id }, process.env.JWT_SECRET, {
-      expiresIn: '1d'
-    });
-    
-    // Send response with cookie
-    res.cookie('accessToken', accessToken, cookieOptions);
-    res.status(200).json({
-      success: true,
-      message: 'Token refreshed successfully',
-      accessToken
-    });
-  } catch (error) {
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid or expired refresh token'
-      });
-    }
-    
-    res.status(500).json({
-      success: false,
-      message: 'Token refresh failed',
-      error: error.message
-    });
-  }
-};
-
-// Verify email
-export const verifyEmail = async (req, res) => {
-  try {
-    const { token } = req.body;
-    
-    if (!token) {
-      return res.status(400).json({
-        success: false,
-        message: 'Verification token is required'
-      });
-    }
-    
-    // Hash the token
-    const emailVerificationToken = crypto
-      .createHash('sha256')
-      .update(token)
-      .digest('hex');
-    
-    // Find patient with this token and token not expired
-    const patient = await Patient.findOne({
-      emailVerificationToken,
-      emailVerificationExpires: { $gt: Date.now() }
-    });
-    
-    if (!patient) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired verification token'
-      });
-    }
-    
-    // Verify email
-    patient.isEmailVerified = true;
-    patient.emailVerificationToken = undefined;
-    patient.emailVerificationExpires = undefined;
-    await patient.save();
-    
-    res.status(200).json({
-      success: true,
-      message: 'Email verified successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Email verification failed',
-      error: error.message
-    });
-  }
-};
-
-// Resend verification email
-export const resendVerificationEmail = async (req, res) => {
-  try {
-    const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
-      });
-    }
-    
-    // Find patient
-    const patient = await Patient.findOne({ email });
-    
-    if (!patient) {
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Patient not found'
+        message: 'User not found'
       });
     }
-    
-    if (patient.isEmailVerified) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is already verified'
-      });
+
+    // Check if user has a patient or doctor profile
+    let profile = null;
+    if (user.role === 'patient') {
+      profile = await Patient.findOne({ user: user._id });
+    } else if (user.role === 'doctor') {
+      profile = await Doctor.findOne({ user: user._id });
     }
-    
-    // Generate verification token
-    const verificationToken = patient.generateEmailVerificationToken();
-    await patient.save();
-    
-    // Send verification email
-    const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
-    
-    await sendEmail({
-      email: patient.email,
-      subject: 'Email Verification - MediMantra',
-      message: `Please verify your email by clicking the link: ${verificationUrl}`
-    });
-    
+
     res.status(200).json({
       success: true,
-      message: 'Verification email sent successfully'
+      data: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        profileImage: user.profileImage,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender,
+        profileCompleted: profile ? profile.profileCompleted : false
+      }
     });
   } catch (error) {
+    console.error('Get current user error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to send verification email',
+      message: 'Server error',
       error: error.message
     });
   }
 };
 
-// Verify phone
-export const verifyPhone = async (req, res) => {
-  try {
-    const { phone, otp } = req.body;
-    
-    if (!phone || !otp) {
-      return res.status(400).json({
-        success: false,
-        message: 'Phone number and OTP are required'
-      });
-    }
-    
-    // Find patient
-    const patient = await Patient.findOne({ phone });
-    
-    if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: 'Patient not found'
-      });
-    }
-    
-    // Verify OTP (you would add actual SMS OTP verification here)
-    if (patient.phoneVerificationToken !== otp || 
-        patient.phoneVerificationExpires < Date.now()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired OTP'
-      });
-    }
-    
-    // Verify phone
-    patient.isPhoneVerified = true;
-    patient.phoneVerificationToken = undefined;
-    patient.phoneVerificationExpires = undefined;
-    await patient.save();
-    
-    res.status(200).json({
-      success: true,
-      message: 'Phone verified successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Phone verification failed',
-      error: error.message
-    });
-  }
-};
-
-// Forgot password
+/**
+ * @desc    Request password reset
+ * @route   POST /api/auth/forgot-password
+ * @access  Public
+ */
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
-      });
-    }
-    
-    // Find patient
-    const patient = await Patient.findOne({ email });
-    
-    if (!patient) {
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Patient not found'
+        message: 'No user with that email'
       });
     }
-    
+
     // Generate reset token
-    const resetToken = patient.generatePasswordResetToken();
-    await patient.save();
-    
-    // Send reset email
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-    
-    await sendEmail({
-      email: patient.email,
-      subject: 'Password Reset - MediMantra',
-      message: `You requested a password reset. Please use the following link to reset your password: ${resetUrl}\nIf you didn't request this, please ignore this email.`
-    });
+    const resetToken = user.getResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    // TODO: Send email with reset token
+    // For now, just return the token (in production, you would email this)
     
     res.status(200).json({
       success: true,
-      message: 'Password reset email sent successfully'
+      message: 'Password reset email sent',
+      data: {
+        resetToken
+      }
     });
   } catch (error) {
+    console.error('Forgot password error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to send password reset email',
+      message: 'Server error',
       error: error.message
     });
   }
 };
 
-// Reset password
+/**
+ * @desc    Reset password
+ * @route   PUT /api/auth/reset-password/:resetToken
+ * @access  Public
+ */
 export const resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
-    
-    if (!token || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Token and new password are required'
-      });
-    }
-    
-    // Hash the token
+    // Get hashed token
     const resetPasswordToken = crypto
       .createHash('sha256')
-      .update(token)
+      .update(req.params.resetToken)
       .digest('hex');
-    
-    // Find patient with this token and token not expired
-    const patient = await Patient.findOne({
+
+    // Find user by reset token and check if expired
+    const user = await User.findOne({
       resetPasswordToken,
-      resetPasswordExpires: { $gt: Date.now() }
+      resetPasswordExpire: { $gt: Date.now() }
     });
-    
-    if (!patient) {
+
+    if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired reset token'
+        message: 'Invalid or expired token'
       });
     }
-    
+
     // Set new password
-    patient.password = password;
-    patient.resetPasswordToken = undefined;
-    patient.resetPasswordExpires = undefined;
-    await patient.save();
-    
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    // Generate new token
+    const token = generateToken(user._id);
+
     res.status(200).json({
       success: true,
-      message: 'Password reset successfully'
+      message: 'Password reset successful',
+      token
     });
   } catch (error) {
+    console.error('Reset password error:', error);
     res.status(500).json({
       success: false,
-      message: 'Password reset failed',
+      message: 'Server error',
       error: error.message
     });
   }
 };
 
-// Change password
+/**
+ * @desc    Update user profile
+ * @route   PUT /api/auth/profile
+ * @access  Private
+ */
+export const updateProfile = async (req, res) => {
+  try {
+    const { firstName, lastName, phone, dateOfBirth, gender } = req.body;
+
+    // Find user
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update fields if provided
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (phone) user.phone = phone;
+    if (dateOfBirth) user.dateOfBirth = dateOfBirth;
+    if (gender) user.gender = gender;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        profileImage: user.profileImage,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender
+      }
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Change password
+ * @route   PUT /api/auth/change-password
+ * @access  Private
+ */
 export const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({
+
+    // Find user with password
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        message: 'Current password and new password are required'
+        message: 'User not found'
       });
     }
-    
-    // Get patient from middleware with password
-    const patient = await Patient.findById(req.user._id).select('+password');
-    
-    // Check if current password is correct
-    const isMatch = await patient.comparePassword(currentPassword);
-    
+
+    // Check if current password matches
+    const isMatch = await user.matchPassword(currentPassword);
     if (!isMatch) {
       return res.status(401).json({
         success: false,
         message: 'Current password is incorrect'
       });
     }
-    
+
     // Set new password
-    patient.password = newPassword;
-    await patient.save();
-    
+    user.password = newPassword;
+    await user.save();
+
     res.status(200).json({
       success: true,
       message: 'Password changed successfully'
     });
   } catch (error) {
+    console.error('Change password error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to change password',
+      message: 'Server error',
       error: error.message
     });
   }
 };
 
-// Get current user
-export const getCurrentUser = async (req, res) => {
+/**
+ * @desc    Logout user (invalidate tokens)
+ * @route   POST /api/auth/logout
+ * @access  Private
+ */
+export const logout = async (req, res) => {
   try {
-    // Get patient from middleware
-    const patient = req.user;
-    
+    // In a more complete implementation, you would:
+    // 1. Add the token to a blacklist or invalidate in your DB
+    // 2. Clear any HTTP-only cookies if you're using them
+
+    // For now, just return success - client will clear local storage
     res.status(200).json({
       success: true,
-      patient
+      message: 'Logged out successfully'
     });
   } catch (error) {
+    console.error('Logout error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get current user',
+      message: 'Server error',
       error: error.message
     });
   }
 };
 
-// Google OAuth
-export const googleAuth = async (req, res) => {
+/**
+ * @desc    Refresh access token
+ * @route   POST /api/auth/refresh-token
+ * @access  Public (with refresh token)
+ */
+export const refreshAccessToken = async (req, res) => {
   try {
-    const { token } = req.body;
-    
-    // Verify Google token and get user info
-    // This would typically use the Google API client library
-    // For now, we'll just simulate it
-    
-    const { email, firstName, lastName, profilePicture } = req.body; // In a real implementation, these would come from Google
-    
-    // Check if patient exists
-    let patient = await Patient.findOne({ email });
-    
-    if (!patient) {
-      // Create new patient
-      patient = await Patient.create({
-        firstName,
-        lastName,
-        email,
-        isEmailVerified: true, // Email is verified by Google
-        profilePicture
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token is required'
       });
     }
+
+    // Verify refresh token (you would need to implement verification logic)
+    // This is a simplified example
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
     
-    // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(patient._id);
-    
-    // Save refresh token to database
-    patient.refreshToken = refreshToken;
-    await patient.save();
-    
-    // Send response with cookie
-    res.cookie('accessToken', accessToken, cookieOptions);
+    // Generate new access token
+    const accessToken = generateToken(decoded.id);
+
     res.status(200).json({
       success: true,
-      message: 'Google authentication successful',
-      patient: {
-        _id: patient._id,
-        firstName: patient.firstName,
-        lastName: patient.lastName,
-        email: patient.email,
-        isEmailVerified: patient.isEmailVerified,
-        profilePicture: patient.profilePicture
+      accessToken
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Invalid or expired refresh token'
+    });
+  }
+};
+
+/**
+ * @desc    Verify user email
+ * @route   POST /api/auth/verify-email
+ * @access  Public
+ */
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Hash token
+    const emailVerificationToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    // Find user with the email verification token
+    const user = await User.findOne({
+      emailVerificationToken,
+      emailVerificationExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+    // Set email as verified
+    user.isEmailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpire = undefined;
+    
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully'
+    });
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Resend verification email
+ * @route   POST /api/auth/resend-verification-email
+ * @access  Public
+ */
+export const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User with this email does not exist'
+      });
+    }
+
+    // Check if email is already verified
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Generate new verification token
+    const verificationToken = user.getEmailVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    // TODO: Send email with verification token
+    // For now, just return the token (in production, you would email this)
+
+    res.status(200).json({
+      success: true,
+      message: 'Verification email sent',
+      data: {
+        verificationToken
       }
     });
   } catch (error) {
+    console.error('Resend verification error:', error);
     res.status(500).json({
       success: false,
-      message: 'Google authentication failed',
+      message: 'Server error',
       error: error.message
     });
   }
 };
 
-// Facebook OAuth
-export const facebookAuth = async (req, res) => {
+/**
+ * @desc    Verify phone number
+ * @route   POST /api/auth/verify-phone
+ * @access  Public
+ */
+export const verifyPhone = async (req, res) => {
   try {
-    const { token } = req.body;
-    
-    // Verify Facebook token and get user info
-    // This would typically use the Facebook SDK
-    // For now, we'll just simulate it
-    
-    const { email, firstName, lastName, profilePicture } = req.body; // In a real implementation, these would come from Facebook
-    
-    // Check if patient exists
-    let patient = await Patient.findOne({ email });
-    
-    if (!patient) {
-      // Create new patient
-      patient = await Patient.create({
-        firstName,
-        lastName,
-        email,
-        isEmailVerified: true, // Email is verified by Facebook
-        profilePicture
+    const { phone, otp } = req.body;
+
+    // In a real implementation, you would:
+    // 1. Validate the OTP against what was sent
+    // 2. Check if it's expired
+    // 3. Mark the phone as verified
+
+    // Find user with phone
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User with this phone number not found'
       });
     }
-    
-    // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(patient._id);
-    
-    // Save refresh token to database
-    patient.refreshToken = refreshToken;
-    await patient.save();
-    
-    // Send response with cookie
-    res.cookie('accessToken', accessToken, cookieOptions);
+
+    // This is a simplified example - you would need to implement actual OTP verification
+    // For demo purposes, let's assume OTP "123456" is valid
+    if (otp !== "123456") {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP'
+      });
+    }
+
+    // Mark phone as verified
+    user.isPhoneVerified = true;
+    await user.save();
+
     res.status(200).json({
       success: true,
-      message: 'Facebook authentication successful',
-      patient: {
-        _id: patient._id,
-        firstName: patient.firstName,
-        lastName: patient.lastName,
-        email: patient.email,
-        isEmailVerified: patient.isEmailVerified,
-        profilePicture: patient.profilePicture
-      }
+      message: 'Phone verified successfully'
     });
   } catch (error) {
+    console.error('Phone verification error:', error);
     res.status(500).json({
       success: false,
-      message: 'Facebook authentication failed',
+      message: 'Server error',
       error: error.message
     });
   }
 };
+
