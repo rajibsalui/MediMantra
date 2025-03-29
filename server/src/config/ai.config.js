@@ -1,29 +1,52 @@
 import dotenv from "dotenv";
-dotenv.config();
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+import fs from 'fs';
 import OpenAI from "openai";
-const client = new OpenAI(
-    { apiKey: "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" },
-);
 
-// const completion = await client.chat.completions.create({
-//     model: "gpt-4o",
-//     messages: [
-//         {
-//             role: "user",
-//             content: "Write a one-sentence bedtime story about a unicorn.",
-//         },
-//     ],
-// });
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// console.log(completion.choices[0].message.content);
+// Try to load .env file from various possible locations
+const envPaths = [
+  resolve(__dirname, '../../../.env'),  // server root
+  resolve(__dirname, '../../../../.env'), // project root
+  resolve(__dirname, '../.env'),  // src folder
+  resolve(__dirname, '../../.env')  // server/src folder
+];
 
-// const userMessage = req.body.message;
-const userMessage="I am having a seious headache since 2 days.what should I do??";
-        // if (!userMessage) {
-        //     return res.status(400).json({ error: "Message is required." });
-        // }
+let envLoaded = false;
+for (const path of envPaths) {
+  if (fs.existsSync(path)) {
+    console.log(`Loading .env from ${path}`);
+    dotenv.config({ path });
+    envLoaded = true;
+    break;
+  }
+}
 
-        const prompt = `You are a highly knowledgeable and empathetic AI health assistant. Your role is to provide users with reliable, evidence-based information about medical conditions, symptoms, treatments, medications, nutrition, mental health, fitness, and general well-being.
+if (!envLoaded) {
+  console.warn("No .env file found in expected locations. Make sure to provide API keys directly.");
+}
+
+// Check if API key exists in environment variables
+const apiKey = process.env.OPENAI_API_KEY;
+
+if (!apiKey) {
+  console.error("OpenAI API key is missing! Check your .env file or set it directly in the code.");
+  console.error("Create a .env file in the project root with: OPENAI_API_KEY=your_key_here");
+  // Depending on your preference, you might want to throw an error or continue with a dummy key
+  // throw new Error("Missing OpenAI API key");
+}
+
+// Initialize OpenAI client with appropriate error handling
+const client = apiKey 
+  ? new OpenAI({ apiKey }) 
+  : null;
+
+// Health assistant prompt
+const healthAssistantPrompt = `You are a highly knowledgeable and empathetic AI health assistant. Your role is to provide users with reliable, evidence-based information about medical conditions, symptoms, treatments, medications, nutrition, mental health, fitness, and general well-being.
 
 Guidelines:
 1. Provide only scientifically backed medical insights from reputable sources.
@@ -32,25 +55,22 @@ Guidelines:
 4. Avoid giving emergency medical advice. Always direct users to seek professional help for urgent issues.
 5. Use an empathetic and professional tone, ensuring clarity and reassurance.
 6. Offer actionable next steps or general guidance based on user queries.
-7. Encourage preventive care, healthy lifestyle choices, and mental well-being practices.
+7. Encourage preventive care, healthy lifestyle choices, and mental well-being practices.`;
 
-### Example Responses:
-User: "I have a persistent cough. What should I do?"
-AI: "A persistent cough can have multiple causes, including allergies, infections, or underlying conditions like asthma. If your cough lasts more than three weeks, is accompanied by fever, chest pain, or shortness of breath, consult a doctor. Staying hydrated and using a humidifier may help ease irritation."
+// Default configuration
+const aiConfig = {
+  client,
+  models: {
+    default: "gpt-4o",
+    fallback: "gpt-3.5-turbo"
+  },
+  prompts: {
+    healthAssistant: healthAssistantPrompt
+  },
+  defaultParams: {
+    temperature: 0.7,
+    max_tokens: 500
+  }
+};
 
-User: "Can you recommend a diet for managing high blood pressure?"
-AI: "A DASH (Dietary Approaches to Stop Hypertension) diet is often recommended for managing high blood pressure. It emphasizes fruits, vegetables, whole grains, lean proteins, and low-fat dairy while reducing salt, saturated fats, and added sugars. Would you like some meal plan examples?"
-
-User: "${userMessage}"
-AI:`;
-
-        const response = await client.chat.completions.create({
-            model: "gpt-4o",
-            messages: [{ role: "system", content: prompt }],
-            temperature: 0.7,
-            max_tokens: 500,
-        });
-
-        // res.json({ response: response.choices[0].message.content });
-
-        console.log(response.choices[0].message.content);
+export default aiConfig;
