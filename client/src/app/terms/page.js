@@ -25,7 +25,7 @@ export default function TermsPage() {
               Terms of Service
             </h1>
             <p className="mt-4 max-w-3xl mx-auto text-xl">
-              Please read these terms carefully before using MediBot
+              Please read these terms carefully before using Mediमंत्र
             </p>
             <p className="mt-4 text-sm">
               Last Updated: May 15, 2023
@@ -83,10 +83,10 @@ export default function TermsPage() {
                 <section id="acceptance" className="mb-10">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Acceptance of Terms</h2>
                   <p className="text-gray-600 mb-3">
-                    By accessing or using MediBot services, website, mobile applications, or any other services provided by MediBot Health, Inc. (collectively, the "Services"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use our Services.
+                    By accessing or using Mediमंत्र services, website, mobile applications, or any other services provided by Mediमंत्र Health, Inc. (collectively, the "Services"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use our Services.
                   </p>
                   <p className="text-gray-600 mb-3">
-                    These Terms constitute a legal agreement between you and MediBot Health, Inc., a Delaware corporation with its principal place of business in San Francisco, California ("MediBot," "we," "us," or "our").
+                    These Terms constitute a legal agreement between you and Mediमंत्र Health, Inc., a Delaware corporation with its principal place of business in San Francisco, California ("Mediमंत्र," "we," "us," or "our").
                   </p>
                 </section>
                 
@@ -103,7 +103,7 @@ export default function TermsPage() {
                 <section id="access" className="mb-10">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">3. Access and Use</h2>
                   <p className="text-gray-600 mb-3">
-                    MediBot grants you a limited, non-exclusive, non-transferable, non-sublicensable, revocable license to access and use the Services for your personal, non-commercial use, subject to these Terms.
+                    Mediमंत्र grants you a limited, non-exclusive, non-transferable, non-sublicensable, revocable license to access and use the Services for your personal, non-commercial use, subject to these Terms.
                   </p>
                   <p className="text-gray-600 mb-3">
                     You agree not to:
@@ -140,7 +140,7 @@ export default function TermsPage() {
                 <section id="content" className="mb-10">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">5. User Content</h2>
                   <p className="text-gray-600 mb-3">
-                    You retain ownership of any content you submit, post, or display on or through the Services ("User Content"). By providing User Content, you grant MediBot a worldwide, non-exclusive, royalty-free license to use, reproduce, modify, adapt, publish, translate, distribute, and display such User Content for the purpose of providing and improving our Services.
+                    You retain ownership of any content you submit, post, or display on or through the Services ("User Content"). By providing User Content, you grant Mediमंत्र a worldwide, non-exclusive, royalty-free license to use, reproduce, modify, adapt, publish, translate, distribute, and display such User Content for the purpose of providing and improving our Services.
                   </p>
                   <p className="text-gray-600 mb-3">
                     You are solely responsible for your User Content. You represent and warrant that:
@@ -155,7 +155,7 @@ export default function TermsPage() {
                 <section id="ip" className="mb-10">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">6. Intellectual Property</h2>
                   <p className="text-gray-600 mb-3">
-                    The Services and all content and materials included on the Services, including without limitation the MediBot logo, design, text, graphics, and other files, are the property of MediBot or our licensors. These are protected by copyright, trademark, and other intellectual property laws.
+                    The Services and all content and materials included on the Services, including without limitation the Mediमंत्र logo, design, text, graphics, and other files, are the property of Mediमंत्र or our licensors. These are protected by copyright, trademark, and other intellectual property laws.
                   </p>
                   <p className="text-gray-600 mb-3">
                     Nothing in these Terms grants you any right to use any trademark, design, or logo without our express written permission.
@@ -165,10 +165,10 @@ export default function TermsPage() {
                 <section id="health" className="mb-10">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Health Information</h2>
                   <p className="text-gray-600 mb-3">
-                    MediBot is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
+                    Mediमंत्र is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
                   </p>
                   <p className="text-gray-600 mb-3">
-                    The use of any information provided through the Services is solely at your own risk. MediBot strives to provide accurate and up-to-date health information, but we make no guarantees regarding the accuracy, completeness, or reliability of any health information provided.
+                    The use of any information provided through the Services is solely at your own risk. Mediमंत्र strives to provide accurate and up-to-date health information, but we make no guarantees regarding the accuracy, completeness, or reliability of any health information provided.
                   </p>
                 </section>
                 
@@ -179,7 +179,7 @@ export default function TermsPage() {
                       THE SERVICES ARE PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. YOUR USE OF THE SERVICES IS AT YOUR SOLE RISK.
                     </p>
                     <p className="text-gray-700 mt-2">
-                      MEDIBOT DOES NOT WARRANT THAT (A) THE SERVICES WILL MEET YOUR REQUIREMENTS, (B) THE SERVICES WILL BE UNINTERRUPTED, TIMELY, SECURE, OR ERROR-FREE, (C) THE RESULTS THAT MAY BE OBTAINED FROM THE USE OF THE SERVICES WILL BE ACCURATE OR RELIABLE, OR (D) ANY ERRORS IN THE SERVICES WILL BE CORRECTED.
+                      Mediमंत्र DOES NOT WARRANT THAT (A) THE SERVICES WILL MEET YOUR REQUIREMENTS, (B) THE SERVICES WILL BE UNINTERRUPTED, TIMELY, SECURE, OR ERROR-FREE, (C) THE RESULTS THAT MAY BE OBTAINED FROM THE USE OF THE SERVICES WILL BE ACCURATE OR RELIABLE, OR (D) ANY ERRORS IN THE SERVICES WILL BE CORRECTED.
                     </p>
                   </div>
                 </section>
@@ -188,10 +188,10 @@ export default function TermsPage() {
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Limitation of Liability</h2>
                   <div className="bg-gray-50 border-l-4 border-yellow-400 p-4 mb-3">
                     <p className="text-gray-700">
-                      IN NO EVENT SHALL MEDIBOT, ITS AFFILIATES, OR THEIR RESPECTIVE OFFICERS, DIRECTORS, EMPLOYEES, OR AGENTS, BE LIABLE TO YOU FOR ANY INDIRECT, INCIDENTAL, SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES WHATSOEVER RESULTING FROM ANY (A) USE OR INABILITY TO USE THE SERVICES, (B) ERRORS, MISTAKES, OR INACCURACIES OF CONTENT, (C) PERSONAL INJURY OR PROPERTY DAMAGE RELATED TO YOUR USE OF THE SERVICES, (D) UNAUTHORIZED ACCESS TO OR USE OF OUR SECURE SERVERS AND/OR ANY PERSONAL INFORMATION STORED THEREIN, OR (E) ANY OTHER MATTER RELATING TO THE SERVICES.
+                      IN NO EVENT SHALL Mediमंत्र, ITS AFFILIATES, OR THEIR RESPECTIVE OFFICERS, DIRECTORS, EMPLOYEES, OR AGENTS, BE LIABLE TO YOU FOR ANY INDIRECT, INCIDENTAL, SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES WHATSOEVER RESULTING FROM ANY (A) USE OR INABILITY TO USE THE SERVICES, (B) ERRORS, MISTAKES, OR INACCURACIES OF CONTENT, (C) PERSONAL INJURY OR PROPERTY DAMAGE RELATED TO YOUR USE OF THE SERVICES, (D) UNAUTHORIZED ACCESS TO OR USE OF OUR SECURE SERVERS AND/OR ANY PERSONAL INFORMATION STORED THEREIN, OR (E) ANY OTHER MATTER RELATING TO THE SERVICES.
                     </p>
                     <p className="text-gray-700 mt-2">
-                      IN NO EVENT SHALL MEDIBOT'S TOTAL LIABILITY TO YOU FOR ALL DAMAGES, LOSSES, OR CAUSES OF ACTION EXCEED THE AMOUNT YOU HAVE PAID TO MEDIBOT IN THE LAST SIX (6) MONTHS, OR, IF YOU HAVE NOT PAID MEDIBOT FOR THE USE OF ANY SERVICES, ONE HUNDRED DOLLARS ($100).
+                      IN NO EVENT SHALL Mediमंत्र'S TOTAL LIABILITY TO YOU FOR ALL DAMAGES, LOSSES, OR CAUSES OF ACTION EXCEED THE AMOUNT YOU HAVE PAID TO Mediमंत्र IN THE LAST SIX (6) MONTHS, OR, IF YOU HAVE NOT PAID Mediमंत्र FOR THE USE OF ANY SERVICES, ONE HUNDRED DOLLARS ($100).
                     </p>
                   </div>
                 </section>
@@ -199,7 +199,7 @@ export default function TermsPage() {
                 <section id="indemnification" className="mb-10">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">10. Indemnification</h2>
                   <p className="text-gray-600 mb-3">
-                    You agree to defend, indemnify, and hold harmless MediBot, its affiliates, and their respective officers, directors, employees, and agents, from and against any and all claims, damages, obligations, losses, liabilities, costs or debt, and expenses (including but not limited to attorney's fees) arising from: (a) your use of and access to the Services; (b) your violation of any term of these Terms; (c) your violation of any third-party right, including without limitation any copyright, property, or privacy right; or (d) any claim that your User Content caused damage to a third party.
+                    You agree to defend, indemnify, and hold harmless Mediमंत्र, its affiliates, and their respective officers, directors, employees, and agents, from and against any and all claims, damages, obligations, losses, liabilities, costs or debt, and expenses (including but not limited to attorney's fees) arising from: (a) your use of and access to the Services; (b) your violation of any term of these Terms; (c) your violation of any third-party right, including without limitation any copyright, property, or privacy right; or (d) any claim that your User Content caused damage to a third party.
                   </p>
                 </section>
                 
@@ -226,11 +226,11 @@ export default function TermsPage() {
                     If you have any questions about these Terms, please contact us at:
                   </p>
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-gray-800">MediBot Health, Inc.</p>
+                    <p className="text-gray-800">Mediमंत्र Health, Inc.</p>
                     <p className="text-gray-800">123 MediTech Boulevard</p>
                     <p className="text-gray-800">Suite 456</p>
                     <p className="text-gray-800">San Francisco, CA 94107</p>
-                    <p className="text-gray-800 mt-2">Email: legal@medibot.com</p>
+                    <p className="text-gray-800 mt-2">Email: legal@Mediमंत्र.com</p>
                     <p className="text-gray-800">Phone: +1 (800) 123-4567</p>
                   </div>
                 </section>

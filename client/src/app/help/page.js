@@ -28,8 +28,8 @@ export default function HelpPage() {
   const patientHelpArticles = [
     {
       id: 'p1',
-      title: 'Getting Started with MediBot',
-      content: 'Learn how to set up your account, personalize your health profile, and navigate the MediBot dashboard.',
+      title: 'Getting Started with Mediमंत्र',
+      content: 'Learn how to set up your account, personalize your health profile, and navigate the Mediमंत्र dashboard.',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -79,7 +79,7 @@ export default function HelpPage() {
     {
       id: 'p6',
       title: 'Managing Health Records',
-      content: 'How to view, download, and share your medical records securely through the MediBot platform.',
+      content: 'How to view, download, and share your medical records securely through the Mediमंत्र platform.',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -161,18 +161,18 @@ export default function HelpPage() {
     },
     {
       id: 'faq2',
-      question: 'Is my health data secure with MediBot?',
-      answer: 'Yes, security is our top priority. MediBot uses end-to-end encryption to protect all your health data. We are fully HIPAA compliant and follow industry best practices for data security and privacy. Your information is never shared without your explicit consent.'
+      question: 'Is my health data secure with Mediमंत्र?',
+      answer: 'Yes, security is our top priority. Mediमंत्र uses end-to-end encryption to protect all your health data. We are fully HIPAA compliant and follow industry best practices for data security and privacy. Your information is never shared without your explicit consent.'
     },
     {
       id: 'faq3',
-      question: 'How can I sync my wearable devices with MediBot?',
-      answer: 'Go to Settings > Connected Devices in your MediBot account. Select your device brand and follow the on-screen instructions to connect. We support most major health wearables including Apple Health, Fitbit, Garmin, and Google Fit.'
+      question: 'How can I sync my wearable devices with Mediमंत्र?',
+      answer: 'Go to Settings > Connected Devices in your Mediमंत्र account. Select your device brand and follow the on-screen instructions to connect. We support most major health wearables including Apple Health, Fitbit, Garmin, and Google Fit.'
     },
     {
       id: 'faq4',
-      question: 'Can I use MediBot without internet connection?',
-      answer: 'MediBot offers limited offline functionality. You can view previously loaded data and scheduled reminders, but real-time features like chat, appointment booking, and data synchronization require an internet connection.'
+      question: 'Can I use Mediमंत्र without internet connection?',
+      answer: 'Mediमंत्र offers limited offline functionality. You can view previously loaded data and scheduled reminders, but real-time features like chat, appointment booking, and data synchronization require an internet connection.'
     },
     {
       id: 'faq5',
@@ -196,7 +196,7 @@ export default function HelpPage() {
               Help Center
             </h1>
             <p className="mt-4 max-w-3xl mx-auto text-xl">
-              Find answers, guides, and resources to help you make the most of MediBot
+              Find answers, guides, and resources to help you make the most of Mediमंत्र
             </p>
           </div>
         </div>
@@ -320,7 +320,7 @@ export default function HelpPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16" id="video-tutorials">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900">Video Tutorials</h2>
-          <p className="mt-4 text-xl text-gray-600">Learn how to use MediBot with our step-by-step video guides</p>
+          <p className="mt-4 text-xl text-gray-600">Learn how to use Mediमंत्र with our step-by-step video guides</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -334,8 +334,8 @@ export default function HelpPage() {
               </div>
             </div>
             <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Getting Started with MediBot</h3>
-              <p className="text-gray-600">A complete overview of MediBot's features and how to set up your account.</p>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Getting Started with Mediमंत्र</h3>
+              <p className="text-gray-600">A complete overview of Mediमंत्र's features and how to set up your account.</p>
               <div className="mt-4 flex items-center text-sm text-gray-500">
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -439,7 +439,7 @@ export default function HelpPage() {
               </svg>
             </div>
             <h3 className="text-lg font-bold text-gray-800 mb-2">User Manual</h3>
-            <p className="text-gray-600 mb-4">Complete guide to all MediBot features and functionality</p>
+            <p className="text-gray-600 mb-4">Complete guide to all Mediमंत्र features and functionality</p>
             <a href="#" className="text-blue-600 hover:text-blue-800 font-medium flex items-center">
               Download PDF
               <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -471,7 +471,7 @@ export default function HelpPage() {
               </svg>
             </div>
             <h3 className="text-lg font-bold text-gray-800 mb-2">Quick Start Guide</h3>
-            <p className="text-gray-600 mb-4">Get started with MediBot in 10 minutes or less</p>
+            <p className="text-gray-600 mb-4">Get started with Mediमंत्र in 10 minutes or less</p>
             <a href="#" className="text-blue-600 hover:text-blue-800 font-medium flex items-center">
               Download PDF
               <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -516,7 +516,7 @@ export default function HelpPage() {
                   <svg className="h-6 w-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                   </svg>
-                  <span>support@medibot.com</span>
+                  <span>support@Mediमंत्र.com</span>
                 </div>
               </div>
             </div>

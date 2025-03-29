@@ -105,7 +105,7 @@ export default function PrivacyPage() {
               <section id="introduction" className="mb-12">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Introduction</h2>
                 <p className="text-gray-600 mb-4">
-                  MediBot Health, Inc. ("MediBot," "we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website, mobile application, and other services (collectively, the "Services").
+                  Mediमंत्र Health, Inc. ("Mediमंत्र," "we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website, mobile application, and other services (collectively, the "Services").
                 </p>
                 <p className="text-gray-600 mb-4">
                   Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do not access or use our Services. By accessing or using our Services, you acknowledge that you have read, understood, and agree to be bound by this Privacy Policy.
@@ -113,7 +113,7 @@ export default function PrivacyPage() {
                 <div className="bg-blue-50 rounded-lg p-4">
                   <h3 className="font-semibold text-blue-800 mb-1">HIPAA Compliance</h3>
                   <p className="text-gray-700">
-                    MediBot is fully compliant with the Health Insurance Portability and Accountability Act of 1996 (HIPAA). For information about how we handle your protected health information (PHI), please refer to our separate HIPAA Notice of Privacy Practices.
+                    Mediमंत्र is fully compliant with the Health Insurance Portability and Accountability Act of 1996 (HIPAA). For information about how we handle your protected health information (PHI), please refer to our separate HIPAA Notice of Privacy Practices.
                   </p>
                 </div>
               </section>
@@ -235,7 +235,7 @@ export default function PrivacyPage() {
                     <li><strong>Service Providers:</strong> With third-party service providers who perform services on our behalf, such as hosting, data analysis, payment processing, and customer service.</li>
                     <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, reorganization, sale of assets, or bankruptcy, in which case personal information would be among the assets transferred.</li>
                     <li><strong>Legal Requirements:</strong> To comply with applicable laws, regulations, legal processes, or enforceable governmental requests.</li>
-                    <li><strong>Protection of Rights:</strong> To protect the rights, property, or safety of MediBot, our users, or the public.</li>
+                    <li><strong>Protection of Rights:</strong> To protect the rights, property, or safety of Mediमंत्र, our users, or the public.</li>
                   </ul>
                   
                   <h3 className="text-lg font-medium text-gray-900 mb-2">De-identified Information</h3>
@@ -443,12 +443,12 @@ export default function PrivacyPage() {
                 </p>
                 
                 <div className="bg-blue-50 p-4 rounded-lg">
-                  <p className="text-gray-800">MediBot Health, Inc.</p>
+                  <p className="text-gray-800">Mediमंत्र Health, Inc.</p>
                   <p className="text-gray-800">Attn: Privacy Officer</p>
                   <p className="text-gray-800">123 MediTech Boulevard</p>
                   <p className="text-gray-800">Suite 456</p>
                   <p className="text-gray-800">San Francisco, CA 94107</p>
-                  <p className="text-gray-800 mt-2">Email: privacy@medibot.com</p>
+                  <p className="text-gray-800 mt-2">Email: privacy@Mediमंत्र.com</p>
                   <p className="text-gray-800">Phone: +1 (800) 123-4567</p>
                 </div>
                 
@@ -463,7 +463,7 @@ export default function PrivacyPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Link href="/terms" className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                     <h4 className="font-medium text-gray-900 mb-1">Terms of Service</h4>
-                    <p className="text-gray-600 text-sm">Review our Terms of Service that govern your use of MediBot.</p>
+                    <p className="text-gray-600 text-sm">Review our Terms of Service that govern your use of Mediमंत्र.</p>
                   </Link>
                   
                   <Link href="#" className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">

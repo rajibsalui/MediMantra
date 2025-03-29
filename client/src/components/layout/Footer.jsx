@@ -54,7 +54,7 @@ export default function Footer() {
             >
               <Link href="/" className="flex items-center">
                 <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                  MediBot
+                  Mediमंत्र
                 </span>
               </Link>
               <p className="mt-4 text-sm text-muted-foreground">
@@ -138,11 +138,11 @@ export default function Footer() {
               <div className="mt-6 space-y-2">
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Mail size={14} className="mr-2" />
-                  <span>contact@medibot.com</span>
+                  <span>contact@Mediमंत्र.com</span>
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Phone size={14} className="mr-2" />
-                  <span>+1 (800) MEDIBOT</span>
+                  <span>+1 (800) Mediमंत्र</span>
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
                   <MapPin size={14} className="mr-2" />
@@ -162,7 +162,7 @@ export default function Footer() {
           transition={{ duration: 0.5, delay: 0.6 }}
         >
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} MediBot. All rights reserved.
+            © {new Date().getFullYear()} Mediमंत्र. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground mt-2 sm:mt-0 flex items-center">
             Made with <Heart size={12} className="mx-1 text-red-500" /> for better healthcare

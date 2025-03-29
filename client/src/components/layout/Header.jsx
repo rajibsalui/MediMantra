@@ -90,12 +90,12 @@ export default function Header() {
             className="flex items-center space-x-2"
           >
             <motion.span 
-              className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent"
+              className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent"
               initial={{ scale: 1 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              MediBot
+              Mediमंत्र
             </motion.span>
           </Link>
         </div>
