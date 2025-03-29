@@ -352,19 +352,19 @@ const labOrderSchema = new mongoose.Schema({
 
 // Indexes
 labTestSchema.index({ name: 1 });
-labTestSchema.index({ testCode: 1 });
+// labTestSchema.index({ testCode: 1 });
 labTestSchema.index({ category: 1 });
 labTestSchema.index({ standardPrice: 1 });
 labTestSchema.index({ name: 'text', 'description.detailed': 'text', indicationsFor: 'text' });
 
 labPackageSchema.index({ name: 1 });
-labPackageSchema.index({ code: 1 });
+// labPackageSchema.index({ code: 1 });
 labPackageSchema.index({ price: 1 });
 labPackageSchema.index({ forConditions: 1 });
 labPackageSchema.index({ name: 'text', description: 'text', forConditions: 'text' });
 
 labOrderSchema.index({ patient: 1, orderDate: -1 });
-labOrderSchema.index({ orderNumber: 1 });
+// labOrderSchema.index({ orderNumber: 1 });
 labOrderSchema.index({ status: 1 });
 labOrderSchema.index({ 'paymentDetails.transactionId': 1 });
 

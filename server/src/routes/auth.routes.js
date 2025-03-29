@@ -1,23 +1,46 @@
 import express from 'express';
-import { register, login, logout, updateProfile, checkAuth, firebaseAuth } from '../controllers/auth.controller.js';
-import { protect } from '../middleware/auth.middleware.js';
-import {
-  sendVerificationCodes,
-  verifyCode,
-  sendPhoneVerificationCode
-} from '../controllers/verification.controller.js';
+import { 
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+  verifyEmail,
+  resendVerificationEmail,
+  verifyPhone,
+  registerDoctor,
+  googleAuth,
+  facebookAuth,
+  getCurrentUser
+} from '../controllers/auth.controller.js';
+import { authMiddleware } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/login', login);
-router.post('/firebase', firebaseAuth);
-router.post('/logout', protect, logout);
-router.put('/update-profile', protect, updateProfile);
-router.get('/check', protect, checkAuth);
-router.post('/send-verification', protect, sendVerificationCodes);
-router.post('/verify-code', protect, verifyCode);
-router.put('/profile', protect, updateProfile);
-router.post('/verify-phone/send', protect, sendPhoneVerificationCode);
+// Authentication routes
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.post('/logout', authMiddleware, logoutUser);
+router.post('/refresh-token', refreshAccessToken);
+router.post('/change-password', authMiddleware, changePassword);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password/:token', resetPassword);
+
+// Email and phone verification
+router.post('/verify-email/:token', verifyEmail);
+router.post('/resend-verification-email', resendVerificationEmail);
+router.post('/verify-phone', verifyPhone);
+
+// Doctor registration (requires additional info and verification)
+router.post('/register-doctor', registerDoctor);
+
+// Social authentication
+router.post('/google', googleAuth);
+router.post('/facebook', facebookAuth);
+
+// Current user
+router.get('/me', authMiddleware, getCurrentUser);
 
 export default router;

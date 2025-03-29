@@ -1,516 +1,354 @@
-import User from "../models/user.model.js";
-import { generateToken } from "../utils/jwt.utils.js";
-import { uploadImage } from "../utils/uploadImage.js";
-import bcrypt from "bcryptjs";
+import { User } from '../models/user.model.js';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email.utils.js';
+import Doctor from '../models/doctor.model.js';
+import Patient from '../models/patient.model.js';
 
-// Register user
-// export const register = async (req, res) => {
-//   try {
-//     const { firstName, lastName, email, password } = req.body;
-//     // Validate input
-//     if (!firstName || !lastName || !email || !password) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Please provide all required fields",
-//       });
-//     }
-
-//     // Check if user already exists
-//     const userExists = await User.findOne({
-//       $or: [
-//         { email: email.toLowerCase() },
-//         { username: username.toLowerCase() },
-//       ],
-//     });
-
-//     if (userExists) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "User already exists",
-//       });
-//     }
-
-//     // Create user with hashed password
-//     const user = await User.create({
-//       firstName,
-//       lastName,
-//       username: username.toLowerCase(),
-//       email: email.toLowerCase(),
-//       password,
-//     });
-
-//     // Generate token
-//     const token = generateToken(user._id);
-
-//     // Set cookie
-//     res.cookie("token", token, {
-//       httpOnly: true,
-//       secure: process.env.NODE_ENV === "production",
-//       sameSite: "strict",
-//       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-//     });
-
-//     // Remove password from response
-//     const userResponse = user.toObject();
-//     delete userResponse.password;
-
-//     res.status(201).json({
-//       success: true,
-//       token,
-//       user: userResponse,
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: "Error creating user",
-//     });
-//   }
-// };
-
-export const register = async (req, res) => {
-  try {
-    const { firstName, lastName, email, password, username, phone } = req.body;
-
-    // Validate input
-    if (!firstName || !lastName || !email || !password || !username) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide all required fields",
-      });
-    }
-
-    // Check if user already exists
-    const userExists = await User.findOne({
-      $or: [
-        { email: email.toLowerCase() },
-        { username: username.toLowerCase() },
-      ],
-    });
-    
-    if (userExists) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-      });
-    }
-
-
-    // Create user with hashed password
-    const user = await User.create({
-      firstName,
-      lastName,
-      username: username.toLowerCase(),
-      email: email.toLowerCase(),
-      password,
-      phoneNumber: phone,
-    });
-
-    // Generate token
-    const token = generateToken(user._id);
-
-    // Set cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    });
-
-    // Remove password from response
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
-    res.status(201).json({
-      success: true,
-      token,
-      user: userResponse,
-    });
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({
-      success: false,
-      message: "Error creating user",
-      error: error.message, // Include error message for debugging
-    });
-  }
-};
-
-// Firebase authentication
-export const firebaseAuth = async (req, res) => {
-  try {
-    const { user: firebaseUser } = req.body;
-
-    if (!firebaseUser?.uid) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid Firebase user data",
-      });
-    }
-
-    // Find or create user
-    let user = await User.findOne({
-      $or: [{ firebaseUid: firebaseUser.uid }, { email: firebaseUser.email }],
-    });
-
-    if (!user) {
-      // Create new user
-      const names = firebaseUser.displayName?.split(" ") || [];
-      user = await User.create({
-        firstName: names[0] || "",
-        lastName: names.slice(1).join(" ") || "",
-        email: firebaseUser.email,
-        username: firebaseUser.email.split("@")[0],
-        firebaseUid: firebaseUser.uid,
-        phoneNumber: firebaseUser.phoneNumber || "",
-        authProvider: "google",
-        avatar: firebaseUser.photoURL || "",
-        isVerified: firebaseUser.emailVerified,
-        isOnline: true,
-        lastSeen: new Date(),
-      });
-    } else {
-      // Update existing user
-      user.isOnline = true;
-      user.lastSeen = new Date();
-      user.firebaseUid = firebaseUser.uid;
-      if (!user.avatar && firebaseUser.photoURL) {
-        user.avatar = firebaseUser.photoURL;
-      }
-      await user.save();
-    }
-
-    // Generate JWT token
-    const token = generateToken(user._id);
-
-    res.status(200).json({
-      success: true,
-      token,
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        username: user.username,
-        avatar: user.avatar,
-        isOnline: user.isOnline,
-        authProvider: user.authProvider,
-      },
-    });
-  } catch (error) {
-    console.error("Firebase auth error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Authentication failed",
-    });
-  }
-};
-
-// Login user
-export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide email and password",
-      });
-    }
-
-    // Find user and check if it's an email/password user
-    const user = await User.findOne({
-      email: email.toLowerCase(),
-      authProvider: "email",
-    }).select("+password");
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials or wrong authentication method",
-      });
-    }
-
-    // Verify password
-    const isPasswordValid = await user.matchPassword(password);
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid credentials",
-      });
-    }
-
-    // Update online status
-    user.isOnline = true;
-    user.lastSeen = Date.now();
-    await user.save();
-
-    // Generate token
-    const token = generateToken(user._id);
-
-    // Set cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    // Remove password from response
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
-    res.status(200).json({
-      success: true,
-      token,
-      user: userResponse,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error logging in",
-    });
-  }
-};
-
-// Logout user
-export const logout = async (req, res) => {
-  try {
-    // Update user status
-    await User.findByIdAndUpdate(req.user.id, {
-      isOnline: false,
-      lastSeen: Date.now(),
-    });
-
-    // Clear cookie
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "Logged out successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error logging out",
-    });
-  }
-};
-
-// Update profile
-export const updateProfile = async (req, res) => {
+// Register a new user
+export const registerUser = async (req, res) => {
   try {
     const {
       firstName,
       lastName,
-      username,
       email,
-      phoneNumber,
-      currentPassword,
-      newPassword,
+      password,
+      phone,
+      dateOfBirth,
+      gender
     } = req.body;
-    const avatar = req.body.avatar;
 
-    const user = await User.findById(req.user.id).select("+password");
-    if (!user) {
-      return res.status(404).json({
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({
         success: false,
-        message: "User not found",
+        message: 'User with this email already exists'
       });
     }
 
-    // Handle phone number update with verification check
-    if (phoneNumber && phoneNumber !== user.phoneNumber) {
-      const isVerified = await Verification.findOne({
-        userId: user._id,
-        phone: phoneNumber,
-        phoneVerified: true,
-        expiresAt: { $gt: new Date() }
-      });
+    // Create new user
+    const user = await User.create({
+      firstName,
+      lastName,
+      email: email.toLowerCase(),
+      password,
+      phone,
+      username: email.split('@')[0],
+      role: 'patient',
+      isEmailVerified: true // Simplified: Auto verify email
+    });
 
-      if (!isVerified) {
-        return res.status(400).json({
-          success: false,
-          message: "Phone number must be verified before updating",
-          requiresVerification: true
-        });
-      }
-      user.phoneNumber = phoneNumber;
-    }
+    // Create simplified patient profile
+    await Patient.create({
+      user: user._id,
+      dateOfBirth,
+      gender,
+      address: {},  // Empty object instead of empty strings
+      emergencyContact: {}  // Empty object instead of empty strings
+    });
 
-    // Check file size if avatar is being updated
-    if (avatar && avatar !== user.avatar) {
-      const sizeInMB =
-        Buffer.from(avatar.split(",")[1], "base64").length / (1024 * 1024);
-      if (sizeInMB > 5) {
-        return res.status(400).json({
-          success: false,
-          message: "Image size should not exceed 5MB",
-        });
-      }
-    }
+    // Generate JWT tokens
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
 
-    // Handle password update
-    if (newPassword) {
-      if (!currentPassword) {
-        return res.status(400).json({
-          success: false,
-          message: "Current password is required",
-        });
-      }
+    // Set refresh token in HTTP-only cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
 
-      const isPasswordValid = await user.matchPassword(currentPassword);
-      if (!isPasswordValid) {
-        return res.status(401).json({
-          success: false,
-          message: "Current password is incorrect",
-        });
-      }
+    // Return user details and access token
+    const userResponse = {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role
+    };
 
-      user.password = newPassword;
-    }
-
-    // Handle username update
-    if (username && username !== user.username) {
-      const usernameExists = await User.findOne({
-        username: username.toLowerCase(),
-        _id: { $ne: user._id },
-      });
-      if (usernameExists) {
-        return res.status(400).json({
-          success: false,
-          message: "Username already taken",
-        });
-      }
-      user.username = username.toLowerCase();
-    }
-
-    // Handle email update
-    if (email && email !== user.email) {
-      const emailExists = await User.findOne({
-        email: email.toLowerCase(),
-        _id: { $ne: user._id },
-      });
-      if (emailExists) {
-        return res.status(400).json({
-          success: false,
-          message: "Email already taken",
-        });
-      }
-      user.email = email.toLowerCase();
-    }
-
-    // Update other fields
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
-
-    // Handle avatar update
-    if (avatar && avatar !== user.avatar) {
-      try {
-        user.avatar = await uploadImage(avatar);
-      } catch (error) {
-        return res.status(400).json({
-          success: false,
-          message: "Error uploading avatar",
-        });
-      }
-    }
-
-    await user.save();
-
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
-    res.status(200).json({
+    res.status(201).json({
       success: true,
-      user: userResponse,
+      message: 'Registration successful',
+      accessToken,
+      user: userResponse
     });
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || "Error updating profile",
+      message: 'Error creating user',
+      error: error.message
     });
   }
 };
 
-// Check auth status
-export const checkAuth = async (req, res) => {
+// Register a new doctor
+export const registerDoctor = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      phone,
+      specialties,
+      experience,
+      registrationNumber
+    } = req.body;
 
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email already exists'
+      });
+    }
+
+    // Create new user
+    const user = await User.create({
+      firstName,
+      lastName,
+      email: email.toLowerCase(),
+      password,
+      phone,
+      username: email.split('@')[0],
+      role: 'doctor',
+      isEmailVerified: true // Simplified: Auto verify email
+    });
+
+    // Create simplified doctor profile
+    await Doctor.create({
+      user: user._id,
+      registrationNumber,
+      qualifications: [{ degree: 'MD', institution: '', year: null }],
+      specializations: specialties ? specialties.split(',').map(s => s.trim()) : [],
+      experience: parseInt(experience, 10) || 0,
+      consultationFee: 500,
+      profileImage: '',
+      practiceLocations: []
+    });
+
+    // Generate JWT tokens
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    // Set refresh token in HTTP-only cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict', 
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Doctor registration successful',
+      accessToken,
+      user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error('Doctor registration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating doctor account',
+      error: error.message
+    });
+  }
+};
+
+// Login user - simplified
+export const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required'
+      });
+    }
+
+    // Find user by email with password
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    
     if (!user) {
       return res.status(401).json({
         success: false,
-        isLoggedIn: false,
-        message: "Not authenticated",
+        message: 'Invalid email or password'
       });
     }
 
+    // Verify password
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Update last login time
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate tokens
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    // Set refresh token in HTTP-only cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+
+    // Response without password
+    const userResponse = {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar
+    };
+
     res.status(200).json({
       success: true,
-      isLoggedIn: true,
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        username: user.username,
-        email: user.email,
-        avatar: user.avatar,
-        isOnline: user.isOnline,
-        lastSeen: user.lastSeen,
-        contacts: user.contacts,
-        createdAt: user.createdAt,
-        emailVerified: user.emailVerified,
-        phoneVerified: user.phoneVerified,
-        authProvider: user.authProvider,
-        phoneNumber: user.phoneNumber,
-      },
+      message: 'Login successful',
+      accessToken,
+      user: userResponse
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
-      isLoggedIn: false,
-      message: "Error checking authentication status",
+      message: 'Error during login',
+      error: error.message
     });
   }
 };
 
-
-
-export const verifyPhoneNumber = async (req, res) => {
+// Logout user - simplified
+export const logoutUser = async (req, res) => {
   try {
-    const { phone, code } = req.body;
-    const userId = req.user.id;
-
-    const verification = await Verification.findOne({
-      userId,
-      phone,
-      phoneCode: code,
-      expiresAt: { $gt: new Date() }
-    });
-
-    if (!verification) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or expired verification code"
-      });
-    }
-
-    verification.phoneVerified = true;
-    await verification.save();
+    // Clear refresh token cookie
+    res.clearCookie('refreshToken');
 
     res.status(200).json({
       success: true,
-      message: "Phone number verified successfully"
+      message: 'Logout successful'
     });
-
   } catch (error) {
+    console.error('Logout error:', error);
     res.status(500).json({
       success: false,
-      message: "Error verifying phone number"
+      message: 'Error during logout'
+    });
+  }
+};
+
+// Forgot password - send reset link (simplified)
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Find user
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: 'If your email is registered, you will receive a password reset link'
+      });
+    }
+
+    // Generate simple reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPassword = {
+      token: crypto.createHash('sha256').update(resetToken).digest('hex'),
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+    };
+    await user.save();
+
+    // Send password reset email
+    await sendPasswordResetEmail(user.email, resetToken, user.firstName);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset instructions sent to your email'
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error processing forgot password request'
+    });
+  }
+};
+
+// Get current user - simplified
+export const getCurrentUser = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Get fresh user data
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Get role-specific data
+    let roleData = null;
+    
+    if (user.role === 'doctor') {
+      roleData = await Doctor.findOne({ user: userId });
+    } else if (user.role === 'patient') {
+      roleData = await Patient.findOne({ user: userId });
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        avatar: user.avatar,
+        role: user.role,
+        roleData
+      }
+    });
+  } catch (error) {
+    console.error('Get current user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching user profile'
     });
   }
 };
