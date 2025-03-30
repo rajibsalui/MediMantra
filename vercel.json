@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "client/package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "server/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "server/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "client/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "MONGODB_URI": "your-mongodb-uri",
+    "JWT_SECRET": "your-jwt-secret",
+    "OPENAI_API_KEY": "your-openai-api-key",
+    "NEXT_PUBLIC_API_URL": "/api"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "/api"
+    }
+  }
+}
