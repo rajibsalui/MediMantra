@@ -27,7 +27,7 @@ const DoctorCard = ({ doctor }) => {
 
   return (
     <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.3 }}>
-      <Link href={`/doctors/${doctor.id}`} passHref>
+      <Link href={`/doctors/${doctor._id || doctor.id}`} passHref>
         <Card className="overflow-hidden h-full bg-white border border-gray-200 hover:border-blue-500 hover:shadow-xl transition-all duration-300 rounded-xl">
           <CardContent className="p-0">
             <div className="flex flex-col h-full">
