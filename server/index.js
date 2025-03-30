@@ -4,12 +4,12 @@ import express from 'express';
 import cors from 'cors';
 import connectDB from './config/dbconnect.js';
 
-
 // Import routes
 import authRoutes from './routes/auth.route.js';
 import patientRoutes from './routes/patient.route.js';
 import doctorRoutes from './routes/doctor.route.js';
-
+import chatbotRoutes from './routes/chatbot.route.js';
+import symptomRoutes from './routes/symptom.route.js';
 
 // Initialize Express app
 const app = express();
@@ -28,6 +28,9 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
+app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/symptom-checker', symptomRoutes);
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

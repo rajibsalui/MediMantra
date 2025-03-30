@@ -15,26 +15,43 @@ export const usePatient = () => useContext(PatientContext);
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export const PatientProvider = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, token } = useAuth();
   const [patient, setPatient] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
   const [patientError, setPatientError] = useState(null);
 
+  // Configure axios with auth token
+  const getAuthHeaders = () => {
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    };
+  };
+
   // Fetch patient profile when authenticated
   useEffect(() => {
-    if (isAuthenticated && user?.role === "patient") {
+    if (isAuthenticated && user?.role === "patient" && token) {
       getPatientProfile();
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, token]);
 
   // Get patient profile
   const getPatientProfile = async () => {
+    if (!token) {
+      console.warn("No authentication token available");
+      return null;
+    }
+
     try {
       setLoading(true);
       setPatientError(null);
-      const { data } = await axios.get(`${API_URL}/patients/profile`);
+      const { data } = await axios.get(
+        `${API_URL}/patients/profile`, 
+        getAuthHeaders()
+      );
       setPatient(data.data);
       return data.data;
     } catch (error) {
@@ -49,9 +66,18 @@ export const PatientProvider = ({ children }) => {
 
   // Update patient profile
   const updatePatientProfile = async (profileData) => {
+    if (!token) {
+      toast.error("Authentication required");
+      throw new Error("No authentication token available");
+    }
+
     try {
       setLoading(true);
-      const { data } = await axios.put(`${API_URL}/patients/profile`, profileData);
+      const { data } = await axios.put(
+        `${API_URL}/patients/profile`, 
+        profileData, 
+        getAuthHeaders()
+      );
       setPatient(data.data);
       toast.success("Profile updated successfully");
       return data.data;
@@ -66,6 +92,11 @@ export const PatientProvider = ({ children }) => {
 
   // Get patient appointments
   const getPatientAppointments = async (filters = {}) => {
+    if (!token) {
+      toast.error("Authentication required");
+      throw new Error("No authentication token available");
+    }
+
     try {
       setAppointmentsLoading(true);
       // Construct query params from filters
@@ -74,7 +105,10 @@ export const PatientProvider = ({ children }) => {
         if (value) params.append(key, value);
       });
 
-      const { data } = await axios.get(`${API_URL}/patients/appointments?${params.toString()}`);
+      const { data } = await axios.get(
+        `${API_URL}/patients/appointments?${params.toString()}`, 
+        getAuthHeaders()
+      );
       setAppointments(data.data);
       return data;
     } catch (error) {
@@ -88,9 +122,18 @@ export const PatientProvider = ({ children }) => {
 
   // Book appointment
   const bookAppointment = async (appointmentData) => {
+    if (!token) {
+      toast.error("Authentication required");
+      throw new Error("No authentication token available");
+    }
+
     try {
       setLoading(true);
-      const { data } = await axios.post(`${API_URL}/patients/appointments`, appointmentData);
+      const { data } = await axios.post(
+        `${API_URL}/patients/appointments`, 
+        appointmentData, 
+        getAuthHeaders()
+      );
       // Refresh appointments list
       getPatientAppointments();
       toast.success("Appointment booked successfully");
@@ -106,9 +149,18 @@ export const PatientProvider = ({ children }) => {
 
   // Cancel appointment
   const cancelAppointment = async (appointmentId, reason) => {
+    if (!token) {
+      toast.error("Authentication required");
+      throw new Error("No authentication token available");
+    }
+
     try {
       setLoading(true);
-      const { data } = await axios.put(`${API_URL}/patients/appointments/${appointmentId}/cancel`, { reason });
+      const { data } = await axios.put(
+        `${API_URL}/patients/appointments/${appointmentId}/cancel`, 
+        { reason }, 
+        getAuthHeaders()
+      );
       // Refresh appointments list
       getPatientAppointments();
       toast.success("Appointment cancelled successfully");
@@ -124,13 +176,26 @@ export const PatientProvider = ({ children }) => {
 
   // Update profile image
   const updateProfileImage = async (formData) => {
+    if (!token) {
+      toast.error("Authentication required");
+      throw new Error("No authentication token available");
+    }
+
     try {
       setLoading(true);
-      const { data } = await axios.put(`${API_URL}/patients/profile-image`, formData, {
+      const config = {
+        ...getAuthHeaders(),
         headers: {
+          ...getAuthHeaders().headers,
           'Content-Type': 'multipart/form-data'
         }
-      });
+      };
+      
+      const { data } = await axios.put(
+        `${API_URL}/patients/profile-image`, 
+        formData, 
+        config
+      );
       // Update patient state with new image
       await getPatientProfile();
       toast.success("Profile image updated successfully");
@@ -144,11 +209,56 @@ export const PatientProvider = ({ children }) => {
     }
   };
 
+  // Add these methods to match what your dashboard might need
+  const fetchPatientProfile = async (userId) => {
+    return await getPatientProfile();
+  };
+
+  const fetchUpcomingAppointments = async (userId) => {
+    return await getPatientAppointments({ status: 'upcoming' });
+  };
+
+  const fetchMedicalRecords = async (userId) => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(
+        `${API_URL}/patients/medical-records`,
+        getAuthHeaders()
+      );
+      return data.data;
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to fetch medical records";
+      console.error("Error fetching medical records:", error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchVitalStats = async (userId) => {
+    try { 
+      setLoading(true);
+      const { data } = await axios.get(
+        `${API_URL}/patients/vital-stats`,
+        getAuthHeaders()
+      );
+      return data.data || [];
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to fetch vital statistics";
+      console.error("Error fetching vital stats:", error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <PatientContext.Provider
       value={{
         patient,
+        patientProfile: patient, // Alias for dashboard compatibility
         appointments,
+        upcomingAppointments: appointments?.filter(apt => apt.status === 'upcoming') || [], // For dashboard
         loading,
         appointmentsLoading,
         error: patientError,
@@ -158,6 +268,13 @@ export const PatientProvider = ({ children }) => {
         bookAppointment,
         cancelAppointment,
         updateProfileImage,
+        // Added for dashboard compatibility
+        fetchPatientProfile,
+        fetchUpcomingAppointments,
+        fetchMedicalRecords,
+        fetchVitalStats,
+        medicalRecords: null, // Will be populated by fetchMedicalRecords
+        vitalStats: [], // Will be populated by fetchVitalStats,
       }}
     >
       {children}

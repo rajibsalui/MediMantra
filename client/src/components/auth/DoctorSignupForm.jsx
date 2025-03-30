@@ -5,12 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDoctor } from "@/contexts/DoctorContext";
 
 const DoctorSignupForm = () => {
   const router = useRouter();
-  const { register } = useAuth();
-  const { uploadVerificationDocuments } = useDoctor();
+  const { registerDoctor, completeDoctorProfile, uploadVerificationDocs } = useAuth();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -29,7 +27,7 @@ const DoctorSignupForm = () => {
     specialties: "",
     experience: "",
     hospitalAffiliations: "",
-    languages: "",
+    languages: "", 
     consultationFee: "",
     about: "",
     profileImage: null,
@@ -178,8 +176,8 @@ const DoctorSignupForm = () => {
     setIsLoading(true);
     
     try {
-      // Step 1: Prepare user registration data (auth related)
-      const registrationData = {
+      // Step 1: Prepare doctor registration data
+      const doctorData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -187,56 +185,41 @@ const DoctorSignupForm = () => {
         dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
         password: formData.password,
-        role: "doctor"
-      };
-      
-      // Register the basic user account with doctor role
-      const registerResponse = await register(registrationData, "doctor");
-      
-      // Step 2: Prepare doctor profile data
-      const doctorProfileData = {
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        zipCode: formData.zipCode,
-        registrationNumber: formData.registrationNumber,
-        qualifications: formData.qualifications.split(",").map(item => item.trim()).filter(Boolean),
         specialties: formData.specialties.split(",").map(item => item.trim()).filter(Boolean),
-        experience: parseFloat(formData.experience),
-        hospitalAffiliations: formData.hospitalAffiliations.split(",").map(item => item.trim()).filter(Boolean),
-        languages: formData.languages.split(",").map(item => item.trim()).filter(Boolean),
-        consultationFee: parseFloat(formData.consultationFee),
-        bio: formData.about,
+        qualifications: formData.qualifications.split(",").map(item => item.trim()).filter(Boolean),
+        registrationNumber: formData.registrationNumber,
+        registrationCouncil: "Medical Council of India", // Could add this to form if needed
+        experience: parseInt(formData.experience)
       };
       
-      // After successful registration, update doctor profile
-      const doctorFormData = new FormData();
+      // Register doctor
+      const registerResponse = await registerDoctor(doctorData);
+      console.log("Doctor registration response:", registerResponse);
+      toast.success("Doctor account created successfully!");
       
-      // Add doctor profile fields
-      Object.entries(doctorProfileData).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          // Handle arrays like qualifications, specialties, etc.
-          value.forEach((item) => {
-            doctorFormData.append(`${key}[]`, item);
-          });
-        } else {
-          doctorFormData.append(key, value);
-        }
-      });
+      // Step 2: Complete doctor profile with additional details
+      // const profileData = {
+      //   address: {
+      //     street: formData.address,
+      //     city: formData.city,
+      //     state: formData.state,
+      //     zipCode: formData.zipCode
+      //   },
+      //   hospitalAffiliations: formData.hospitalAffiliations.split(",").map(item => item.trim()).filter(Boolean),
+      //   languages: formData.languages.split(",").map(item => item.trim()).filter(Boolean),
+      //   consultationFee: parseFloat(formData.consultationFee),
+      //   bio: formData.about
+      // };
       
-      // Step 3: Handle profile image separately if provided
-      if (formData.profileImage) {
-        // We'll use the updateProfileImage function from DoctorContext
-        const imageFormData = new FormData();
-        imageFormData.append('profileImage', formData.profileImage);
-        
-        // This will be called after registration in doctor dashboard
-      }
+      // await completeDoctorProfile(profileData);
+      // toast.success("Doctor profile completed successfully!");
       
-      // Step 4: Handle verification documents
-      // Note: You might want to provide a separate page for this after registration
+      // Step 3: Upload verification documents if available
+      // if (formData.profileImage) {
+      //   await uploadVerificationDocs(formData.profileImage);
+      //   toast.success("Profile picture uploaded successfully!");
+      // }
       
-      toast.success("Sign up successful! Please complete your profile in your dashboard.");
       router.push("/doctor/dashboard");
     } catch (error) {
       toast.error(error.message || "Registration failed. Please try again.");
@@ -245,7 +228,7 @@ const DoctorSignupForm = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Render progress bar
   const renderProgressBar = () => {
     // Progress bar code remains unchanged

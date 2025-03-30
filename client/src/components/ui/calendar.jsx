@@ -8,10 +8,33 @@ export function Calendar({
   className,
   classNames,
   showOutsideDays = true,
+  selected,
+  onSelect,
+  mode = "single", // Add a mode prop to support single, multiple, range
   ...props
 }) {
+  // If onSelect is not provided, create a controlled component internally
+  const [selectedDate, setSelectedDate] = React.useState(selected || undefined);
+  
+  // Handle selection changes
+  const handleSelect = React.useCallback((date) => {
+    if (onSelect) {
+      // If onSelect is provided, use it (uncontrolled component)
+      onSelect(date);
+    } else {
+      // Otherwise, handle selection internally (controlled component)
+      setSelectedDate(date);
+    }
+  }, [onSelect]);
+  
+  // Use either the externally controlled selected value or the internal state
+  const value = selected !== undefined ? selected : selectedDate;
+  
   return (
     <DayPicker
+      mode={mode}
+      selected={value}
+      onSelect={handleSelect}
       showOutsideDays={showOutsideDays}
       className={className}
       classNames={{

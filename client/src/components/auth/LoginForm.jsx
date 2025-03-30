@@ -16,7 +16,7 @@ import { toast } from "react-hot-toast";
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { user, login, loginDoctor } = useAuth();
   const [isDoctor, setIsDoctor] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,14 +39,16 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      console.log("Form data:", formData.email); // Debugging line
-      // Call the login function matching how it's defined in AuthContext
-      await login(formData);
-
-      toast.success("Login successful!");
-
-      // Redirect based on user type - we'll get this from the returned user object in AuthContext
-      router.push("/");
+      // Use different login function based on user type
+      if (isDoctor) {
+        await loginDoctor(formData);
+        toast.success("Doctor login successful!");
+        router.push("/doctor/dashboard");
+      } else {
+        await login(formData);
+        toast.success("Login successful!");
+        router.push(`/${user.role}/dashboard`);
+      }
     } catch (error) {
       console.error("Login failed:", error);
       toast.error(error.message || "Invalid credentials");

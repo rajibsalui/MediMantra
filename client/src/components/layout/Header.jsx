@@ -20,7 +20,9 @@ import {
   LogIn,
   UserPlus,
   Stethoscope,
-  Heart
+  Heart,
+  Bot,
+  MessageSquare
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -31,12 +33,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { motion } from "framer-motion"
+import ChatbotDialog from "@/components/chatbot/ChatbotDialog"
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false) // Replace with actual auth state
   const [scrolled, setScrolled] = useState(false)
+  const [chatbotOpen, setChatbotOpen] = useState(false)
   
   useEffect(() => {
     const handleScroll = () => {
@@ -57,11 +61,6 @@ export default function Header() {
       name: "Symptom Checker",
       href: "/symptom-checker",
       icon: <FileText className="h-4 w-4 mr-2" />,
-    },
-    {
-      name: "Lab Tests",
-      href: "/lab-tests",
-      icon: <Activity className="h-4 w-4 mr-2" />,
     },
   ]
 
@@ -131,7 +130,7 @@ export default function Header() {
             </motion.div>
           ))}
 
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
               <motion.span 
                 className="flex items-center"
@@ -154,22 +153,26 @@ export default function Header() {
                 <Link href="/help">Help & Support</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
         </nav>
 
         {/* Right side actions */}
         <div className="flex items-center space-x-2">
-          {/* Search */}
+          {/* AI Chatbot Button */}
           <motion.div 
-            className="hidden md:flex relative mr-2"
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.1 }} 
+            whileTap={{ scale: 0.95 }}
+            className="hidden md:block"
           >
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="w-[200px] rounded-full bg-background/50 border-muted pl-8 focus:border-primary transition-all"
-            />
+            <Button 
+              onClick={() => setChatbotOpen(true)}
+              variant="ghost" 
+              size="icon" 
+              className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full"
+              aria-label="Open AI Medical Assistant"
+            >
+              <Bot className="h-5 w-5" />
+            </Button>
           </motion.div>
 
           {/* Emergency */}
@@ -364,6 +367,25 @@ export default function Header() {
               </Link>
             </motion.div>
 
+            {/* Mobile AI Chatbot button */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-4"
+            >
+              <Button 
+                onClick={() => {
+                  setChatbotOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100"
+              >
+                <Bot className="mr-2 h-5 w-5" />
+                Chat with Medical AI
+              </Button>
+            </motion.div>
+
             {/* Emergency button - mobile */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -429,6 +451,9 @@ export default function Header() {
           </div>
         </motion.div>
       )}
+
+      {/* AI Chatbot Dialog */}
+      <ChatbotDialog open={chatbotOpen} onOpenChange={setChatbotOpen} />
     </motion.header>
   )
 }

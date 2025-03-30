@@ -11,6 +11,11 @@ const DoctorCard = ({ doctor }) => {
   const fullStars = Math.floor(doctor.ratings);
   const hasHalfStar = doctor.ratings % 1 >= 0.5;
 
+  // Get the review count safely
+  const reviewCount = Array.isArray(doctor.reviews) 
+    ? doctor.reviews.length 
+    : (typeof doctor.reviews === 'number' ? doctor.reviews : 0);
+
   // Determine availability badge color
   const getAvailabilityColor = (availability) => {
     if (availability === "Today")
@@ -91,7 +96,7 @@ const DoctorCard = ({ doctor }) => {
                         ))}
                       </div>
                       <span className="text-gray-600 text-sm font-medium">
-                        {doctor.ratings} ({doctor.reviews})
+                        {doctor.ratings} ({reviewCount})
                       </span>
                     </div>
                   </div>

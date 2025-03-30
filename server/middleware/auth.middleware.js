@@ -51,6 +51,8 @@ export const authMiddleware = async (req, res, next) => {
   }
 };
 
+// Add this to your existing middleware
+
 // Middleware for checking specific roles
 export const checkRole = (...roles) => {
   return (req, res, next) => {

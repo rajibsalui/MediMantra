@@ -1,101 +1,146 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock, 
+  ArrowRight, 
+  RotateCcw,
+  User,
+  HelpCircle,
+  ShieldAlert
+} from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 export default function ResultsDisplay({ results, onReset }) {
-  const getRiskColor = (risk) => {
-    switch (risk.toLowerCase()) {
-      case 'low': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'high': return 'bg-red-100 text-red-800';
-      default: return 'bg-blue-100 text-blue-800';
+  // Define urgency level colors and icons
+  const urgencyConfig = {
+    Low: {
+      color: "bg-green-100 text-green-800 border-green-200",
+      icon: <CheckCircle className="h-5 w-5 text-green-600" />
+    },
+    Medium: {
+      color: "bg-amber-100 text-amber-800 border-amber-200",
+      icon: <Clock className="h-5 w-5 text-amber-600" />
+    },
+    High: {
+      color: "bg-red-100 text-red-800 border-red-200",
+      icon: <AlertTriangle className="h-5 w-5 text-red-600" />
     }
   };
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
-
+  const urgencyStyle = urgencyConfig[results.urgencyLevel] || urgencyConfig.Medium;
+  
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden"
-    >
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
-        <h2 className="text-2xl font-bold">Analysis Results</h2>
-        <p className="opacity-80">Based on the information you provided</p>
-      </div>
-      
-      <div className="p-6">
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="space-y-6"
-        >
-          <motion.div variants={item} className="border-b pb-4">
-            <h3 className="font-semibold text-lg text-gray-900 mb-2">Potential Diagnosis</h3>
-            <p className="text-gray-700">{results.diagnosis}</p>
-          </motion.div>
+    <div className="space-y-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="shadow-md border-t-4 border-t-blue-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-2xl">Analysis Results</CardTitle>
+            <CardDescription>
+              Based on the information you provided
+            </CardDescription>
+          </CardHeader>
           
-          <motion.div variants={item}>
-            <h3 className="font-semibold text-lg text-gray-900 mb-2">Risk Level</h3>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRiskColor(results.riskLevel)}`}>
-              {results.riskLevel}
-            </span>
-          </motion.div>
-          
-          <motion.div variants={item}>
-            <h3 className="font-semibold text-lg text-gray-900 mb-2">Recommendations</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              {results.recommendations.map((rec, index) => (
-                <li key={index} className="text-gray-700">{rec}</li>
-              ))}
-            </ul>
-          </motion.div>
-          
-          {results.additionalTests && results.additionalTests.length > 0 && (
-            <motion.div variants={item}>
-              <h3 className="font-semibold text-lg text-gray-900 mb-2">Suggested Tests</h3>
-              <ul className="list-disc pl-5 space-y-1">
-                {results.additionalTests.map((test, index) => (
-                  <li key={index} className="text-gray-700">{test}</li>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Urgency Level</h3>
+                <div className="mt-1 flex items-center gap-2">
+                  {urgencyStyle.icon}
+                  <span className="font-medium">{results.urgencyLevel}</span>
+                </div>
+              </div>
+              
+              <Badge className={`px-3 py-1 text-sm ${urgencyStyle.color}`}>
+                {results.urgencyLevel === "High" 
+                  ? "Seek medical attention soon" 
+                  : results.urgencyLevel === "Medium" 
+                    ? "Follow up with a doctor" 
+                    : "Monitor your condition"}
+              </Badge>
+            </div>
+            
+            <Separator />
+            
+            {/* Possible conditions */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Possible Considerations</h3>
+              <ul className="space-y-2">
+                {results.possibleConditions.map((condition, index) => (
+                  <li key={index} className="bg-gray-50 rounded-md p-3 text-sm">
+                    {condition}
+                  </li>
                 ))}
               </ul>
-            </motion.div>
-          )}
-          
-          <motion.div variants={item} className="pt-4 border-t">
-            <p className="text-gray-500 text-sm mb-4">
-              <strong>Disclaimer:</strong> This is an AI-generated analysis and should not replace professional medical advice.
-              Please consult with a healthcare professional for proper diagnosis and treatment.
-            </p>
-            
-            <div className="flex justify-center mt-6">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={onReset}
-                className="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all"
-              >
-                Check Another Symptom
-              </motion.button>
+              <p className="text-xs text-gray-500 mt-2">
+                These are not diagnoses, but potential considerations to discuss with your doctor.
+              </p>
             </div>
-          </motion.div>
-        </motion.div>
-      </div>
-    </motion.div>
+            
+            <Separator />
+            
+            {/* Specialist recommendation */}
+            <div className="flex items-start gap-3">
+              <User className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium">Suggested Specialist</h3>
+                <p className="text-sm">{results.suggestedSpecialist}</p>
+              </div>
+            </div>
+            
+            {/* Recommendations */}
+            <div className="bg-blue-50 border border-blue-100 rounded-md p-4">
+              <h3 className="text-sm font-medium text-blue-900 mb-2">Recommendations</h3>
+              <ul className="space-y-2">
+                {results.recommendations.map((rec, index) => (
+                  <li key={index} className="flex gap-2 text-sm text-blue-800">
+                    <ArrowRight className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    <span>{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* Relevant questions */}
+            {results.relevantQuestions && results.relevantQuestions.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <HelpCircle className="h-4 w-4 text-gray-500" />
+                  <h3 className="text-sm font-medium text-gray-700">Questions Your Doctor May Ask</h3>
+                </div>
+                <ul className="pl-6 space-y-1">
+                  {results.relevantQuestions.map((question, index) => (
+                    <li key={index} className="text-sm text-gray-600 list-disc">
+                      {question}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+          
+          <CardFooter className="flex flex-col items-start pt-2">
+            <div className="flex items-start gap-2 mb-4 text-xs text-gray-500 bg-gray-50 p-3 rounded-md w-full">
+              <ShieldAlert className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+              <p>{results.disclaimer}</p>
+            </div>
+            <Button onClick={onReset} variant="outline" className="gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Start New Analysis
+            </Button>
+          </CardFooter>
+        </Card>
+      </motion.div>
+    </div>
   );
 }

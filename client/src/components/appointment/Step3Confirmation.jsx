@@ -112,7 +112,7 @@ export default function Step3Confirmation({
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Location</span>
-                <span className="font-medium">{selectedDoctor.location}</span>
+                <span className="font-medium">{selectedDoctor.firstName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Duration</span>

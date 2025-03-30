@@ -27,13 +27,13 @@ export const AuthProvider = ({ children }) => {
       
       if (storedToken) {
         try {
-          // Set default auth header
+          // Set default auth header  
           axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
           
           // Fetch current user
           const { data } = await axios.get(`${API_URL}/auth/current-user`);
           
-          setUser(data.data);
+          setUser(data.user || data.data);
           setToken(storedToken);
         } catch (error) {
           console.error("Auth check error:", error);
@@ -61,23 +61,25 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  // Register user
-  const register = async (userData, role = "patient") => {
+  // Register patient
+  const register = async (userData) => {
     try {
       setLoading(true);
-      const endpoint = "/auth/register";
-      const { data } = await axios.post(`${API_URL}${endpoint}`, userData);
+      const { data } = await axios.post(`${API_URL}/auth/register`, userData);
       
-      // Store tokens if returned immediately
-      if (data.token) {
-        localStorage.setItem("accessToken", data.token);
-        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+      // Store tokens
+      if (data.accessToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+        if (data.refreshToken) {
+          localStorage.setItem("refreshToken", data.refreshToken);
+        }
+        axios.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
       }
       
       // Set user if available
-      if (data.user) {
-        setUser(data.user);
-        setToken(data.token);
+      if (data.patient || data.user) {
+        setUser(data.patient || data.user);
+        setToken(data.accessToken);
       }
       
       return data;
@@ -89,26 +91,99 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login user
+  // Register doctor - specific function for doctor registration
+  const registerDoctor = async (doctorData) => {
+    try {
+      setLoading(true);
+      const { data } = await axios.post(`${API_URL}/auth/doctor/register`, doctorData);
+      
+      // Store tokens
+      if (data.accessToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+        if (data.refreshToken) {
+          localStorage.setItem("refreshToken", data.refreshToken);
+        }
+        axios.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
+      }
+      
+      // Set user if available
+      if (data.user) {
+        setUser({
+          ...data.user,
+          doctorProfile: data.doctorProfile
+        });
+        setToken(data.accessToken);
+      }
+      
+      return data;
+    } catch (error) {
+      const message = error.response?.data?.message || "Doctor registration failed";
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login user (patient)
   const login = async (credentials) => {
     try {
       setLoading(true);
       
       const { data } = await axios.post(`${API_URL}/auth/login`, credentials);
       
-      // Store token
-      if (data.token) {
-        localStorage.setItem("accessToken", data.token);
-        localStorage.setItem("userId", data.user.id);
-        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
-      }
+     
       
-      setUser(data.user);
+      setUser(data.patient || data.user);
       setToken(data.token);
+      localStorage.setItem("accessToken", data.token);
+      
+      localStorage.setItem("UserId", data.userId);
+       // Store tokens
+       if (data.accessToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("UserId", data.user._id);
+        if (data.refreshToken) {
+          localStorage.setItem("refreshToken", data.refreshToken);
+        }
+        axios.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
+      }
       
       return data;
     } catch (error) {
       const message = error.response?.data?.message || "Login failed";
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login doctor - specific function for doctor login
+  const loginDoctor = async (credentials) => {
+    try {
+      setLoading(true);
+      
+      const { data } = await axios.post(`${API_URL}/auth/doctor/login`, credentials);
+      
+      // Store tokens
+      if (data.token) {
+        localStorage.setItem("accessToken", data.token);
+        localStorage.setItem("doctorId", data.user._id);
+        if (data.refreshToken) {  
+          localStorage.setItem("refreshToken", data.refreshToken);
+        }
+        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+      }
+      
+      // Set user with doctor profile data
+      setUser({
+        ...data.user,
+        doctorProfile: data.doctorProfile
+      });
+      setToken(data.token);
+      
+      return data;
+    } catch (error) {
+      const message = error.response?.data?.message || "Doctor login failed";
       throw new Error(message);
     } finally {
       setLoading(false);
@@ -140,6 +215,71 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Complete doctor profile - for doctors after registration
+  const completeDoctorProfile = async (profileData) => {
+    try {
+      setLoading(true);
+      const { data } = await axios.put(`${API_URL}/auth/doctor/complete-profile`, profileData);
+      
+      // Update user state with doctor profile
+      setUser(prevUser => ({
+        ...prevUser,
+        doctorProfile: data.data
+      }));
+      
+      return data;
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to complete doctor profile";
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Upload verification documents - for doctors
+  const uploadVerificationDocs = async (documents) => {
+    try {
+      setLoading(true);
+      
+      const formData = new FormData();
+      
+      // Append each file to form data
+      if (Array.isArray(documents)) {
+        documents.forEach((file, index) => {
+          formData.append(`documents[${index}]`, file);
+        });
+      } else {
+        // Single file upload
+        formData.append('document', documents);
+      }
+      
+      const { data } = await axios.post(`${API_URL}/auth/doctor/verification-documents`, 
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+      
+      // Update user state with verification documents
+      setUser(prevUser => ({
+        ...prevUser,
+        doctorProfile: {
+          ...prevUser.doctorProfile,
+          verificationDocuments: data.data
+        }
+      }));
+      
+      return data;
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to upload verification documents";
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Refresh access token
   const refreshAccessToken = async (refreshToken) => {
     try {
@@ -161,6 +301,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // All other auth functions remain the same...
   // Password reset request
   const forgotPassword = async (email) => {
     try {
@@ -253,82 +394,11 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await axios.get(`${API_URL}/auth/current-user`);
-      setUser(data.data);
+      setUser(data.user || data.data);
+      localStorage.setItem("UserId", data.user._id);
       return data;
     } catch (error) {
       const message = error.response?.data?.message || "Failed to get user profile";
-      throw new Error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Social login (Google)
-  const googleLogin = async (idToken) => {
-    try {
-      setLoading(true);
-      const { data } = await axios.post(`${API_URL}/auth/google`, { idToken });
-      
-      // Store token
-      if (data.token) {
-        localStorage.setItem("accessToken", data.token);
-        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
-      }
-      
-      setUser(data.user);
-      setToken(data.token);
-      
-      return data;
-    } catch (error) {
-      const message = error.response?.data?.message || "Google login failed";
-      throw new Error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Social login (Facebook)
-  const facebookLogin = async (accessToken, userId) => {
-    try {
-      setLoading(true);
-      const { data } = await axios.post(`${API_URL}/auth/facebook`, { 
-        accessToken, 
-        userId 
-      });
-      
-      // Store token
-      if (data.token) {
-        localStorage.setItem("accessToken", data.token);
-        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
-      }
-      
-      setUser(data.user);
-      setToken(data.token);
-      
-      return data;
-    } catch (error) {
-      const message = error.response?.data?.message || "Facebook login failed";
-      throw new Error(message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update user profile
-  const updateProfile = async (profileData) => {
-    try {
-      setLoading(true);
-      const { data } = await axios.put(`${API_URL}/auth/profile`, profileData);
-      
-      // Update user state with new profile data
-      setUser(prevUser => ({
-        ...prevUser,
-        ...data.data
-      }));
-      
-      return data;
-    } catch (error) {
-      const message = error.response?.data?.message || "Profile update failed";
       throw new Error(message);
     } finally {
       setLoading(false);
@@ -342,8 +412,11 @@ export const AuthProvider = ({ children }) => {
         token,
         loading,
         isAuthenticated: !!user,
+        isDoctor: user?.role === 'doctor',
         register,
+        registerDoctor,
         login,
+        loginDoctor,
         logout,
         refreshAccessToken,
         forgotPassword,
@@ -353,9 +426,8 @@ export const AuthProvider = ({ children }) => {
         resendVerificationEmail,
         verifyPhone,
         getCurrentUser,
-        googleLogin,
-        facebookLogin,
-        updateProfile
+        completeDoctorProfile,
+        uploadVerificationDocs
       }}
     >
       {children}
