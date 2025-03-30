@@ -159,6 +159,9 @@ export default function AppointmentContent() {
           
           {currentStep === 3 && (
             <Step3Confirmation
+            // selectedDoctor={appointmentDetails.doctor}
+            //     selectedDate={appointmentDetails.date}
+                // selectedTimeSlot={appointmentDetails.timeSlot}
               appointmentDetails={appointmentDetails}
               onBack={goToPrevStep}
               onConfirm={confirmAppointment}

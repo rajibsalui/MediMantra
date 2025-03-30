@@ -28,7 +28,7 @@ export default function Step2PatientInfo({
   // GSAP animations
   useEffect(() => {
     gsap.from(formRef.current, {
-      opacity: 0,
+      // opacity: 0,
       y: 20,
       duration: 0.6,
       ease: "power2.out"

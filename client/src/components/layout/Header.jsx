@@ -38,7 +38,7 @@ import ChatbotDialog from "@/components/chatbot/ChatbotDialog"
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
-  const [isLoggedIn, setIsLoggedIn] = useState(false) // Replace with actual auth state
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [chatbotOpen, setChatbotOpen] = useState(false)
   
@@ -50,6 +50,22 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Check for authentication token in localStorage
+  useEffect(() => {
+    // Make sure we're running on the client side
+    if (typeof window !== 'undefined') {
+      try {
+        const token = localStorage.getItem('accessToken');
+        // Update login state based on token presence
+        setIsLoggedIn(!!token);
+      } catch (error) {
+        // Handle potential localStorage errors
+        console.error('Error accessing localStorage:', error);
+        setIsLoggedIn(false);
+      }
+    }
+  }, []);
 
   const navItems = [
     {
@@ -65,6 +81,15 @@ export default function Header() {
   ]
 
   const router = useRouter()
+
+  // Handle logout function
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('accessToken');
+      setIsLoggedIn(false);
+      router.push('/');
+    }
+  }
 
   return (
     <motion.header 
@@ -129,31 +154,6 @@ export default function Header() {
               )}
             </motion.div>
           ))}
-
-          {/* <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-              <motion.span 
-                className="flex items-center"
-                whileHover={{ scale: 1.05 }}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                More
-                <ChevronDown className="h-4 w-4 ml-1" />
-              </motion.span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="backdrop-blur-lg bg-background/90">
-              <DropdownMenuItem asChild>
-                <Link href="/health-records">Health Records</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/doctors">Find Doctors</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/help">Help & Support</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu> */}
         </nav>
 
         {/* Right side actions */}
@@ -223,7 +223,7 @@ export default function Header() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  onClick={() => setIsLoggedIn(false)} 
+                  onClick={handleLogout}
                   className="cursor-pointer"
                 >
                   Sign out
