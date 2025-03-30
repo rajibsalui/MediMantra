@@ -67,6 +67,10 @@ const doctorSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'Other', '']
+  },
   qualifications: [{
     degree: {
       type: String,
@@ -75,7 +79,7 @@ const doctorSchema = new mongoose.Schema({
     },
     institution: {
       type: String,
-      required: true,
+      required: true,   
       trim: true
     },
     year: {
@@ -207,6 +211,15 @@ const doctorSchema = new mongoose.Schema({
   customFields: {
     type: Map,
     of: String
+  },
+  registrationStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  rejectionReason: {
+    type: String,
+    trim: true
   }
 }, { 
   timestamps: true,
@@ -214,6 +227,10 @@ const doctorSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
+// Add this method to your User schema
+doctorSchema.methods.matchPassword = async function(enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 // Virtual for full name
 doctorSchema.virtual('fullName').get(function() {
   return `Dr. ${this.user.firstName} ${this.user.lastName}`;

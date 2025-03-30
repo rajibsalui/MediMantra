@@ -2,6 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, useAnimation, useInView } from 'framer-motion';
+import axios from 'axios';
+import Link from "next/link";
+// import {useNavigate} from "react-router-dom";
 import { 
   BackgroundBeams, 
   MovingBorder, 
@@ -26,14 +29,19 @@ import {
 import SymptomForm from '@/components/SymptomForm';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import ResultsDisplay from '@/components/ResultsDisplay';
+import { useRouter } from 'next/navigation';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function SymptomChecker() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
+  const [error, setError] = useState(null);
   const [showBeams, setShowBeams] = useState(true);
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: true });
   const mainControls = useAnimation();
+  const navigate = useRouter();
 
   useEffect(() => {
     if (isInView) {
@@ -52,17 +60,17 @@ export default function SymptomChecker() {
   
   const handleSubmit = async (formData) => {
     setLoading(true);
+    setError(null);
     
-    // Simulate API call (will be replaced with actual AI processing later)
-    setTimeout(() => {
+    try {
+      const response = await axios.post(`${API_URL}/symptom-checker/analyze`, formData);
+      setResults(response.data.data);
+    } catch (err) {
+      console.error('Error analyzing symptoms:', err);
+      setError(err.response?.data?.message || 'An error occurred while analyzing your symptoms');
+    } finally {
       setLoading(false);
-      setResults({
-        diagnosis: "Sample diagnosis",
-        recommendations: ["Sample recommendation 1", "Sample recommendation 2"],
-        riskLevel: "Medium",
-        additionalTests: ["Test 1", "Test 2"]
-      });
-    }, 3000);
+    }
   };
 
   // Sample medical experts data for the trust indicators
@@ -154,11 +162,11 @@ export default function SymptomChecker() {
         )}
         
         {/* Main content - Form or Results */}
-        <div className="max-w-4xl mx-auto" ref={containerRef}>
+        <div className="max-w-4xl mx-auto" ref={containerRef}> 
           {!loading && !results && (
             <motion.div
               variants={{
-                hidden: { opacity: 0, y: 50 },
+                hidden: { opacity: 1, y: 50 },
                 visible: { opacity: 1, y: 0 },
               }}
               initial="hidden"
@@ -197,9 +205,28 @@ export default function SymptomChecker() {
               transition={{ duration: 0.5 }}
             >
               <ResultsDisplay results={results} onReset={() => {
-                setResults(null);
-                setShowBeams(true);
+                navigate.push('/symptom-checker');
+                 setResults(false);
+                // setShowBeams(true);
               }} />
+            </motion.div>
+          )}
+          
+          {error && !loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-6"
+            >
+              <h3 className="font-medium">Error</h3>
+              <p>{error}</p>
+              <Button 
+                variant="outline" 
+                className="mt-3"
+                onClick={() => setError(null)}
+              >
+                Try Again
+              </Button>
             </motion.div>
           )}
         </div>

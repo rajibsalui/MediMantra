@@ -17,7 +17,7 @@ export const getDoctors = async (req, res) => {
     const skip = (page - 1) * limit;
     
     // Filter options
-    const filter = { isVerified: true };
+    const filter = { isVerified: false };
     
     // Add specialty filter if provided
     if (req.query.specialty) {
@@ -660,10 +660,18 @@ export const addDoctorReview = async (req, res) => {
  */
 export const getDoctorAvailability = async (req, res) => {
   try {
-    const doctorId = req.params.id;
+    const { id } = req.params;
     const { date } = req.query;
     
-    const doctor = await Doctor.findById(doctorId);
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: 'Date is required'
+      });
+    }
+    
+    // Get doctor
+    const doctor = await Doctor.findById(id);
     if (!doctor) {
       return res.status(404).json({
         success: false,
@@ -671,60 +679,54 @@ export const getDoctorAvailability = async (req, res) => {
       });
     }
     
-    // If specific date is provided, check booked slots
-    let bookedSlots = [];
-    if (date) {
-      const queryDate = new Date(date);
-      const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][queryDate.getDay()];
-      
-      // Get booked appointments for that day
-      const appointments = await Appointment.find({
-        doctor: doctorId,
-        appointmentDate: {
-          $gte: new Date(queryDate.setHours(0, 0, 0)),
-          $lt: new Date(queryDate.setHours(23, 59, 59))
-        },
-        status: { $nin: ['cancelled', 'no-show'] }
-      }).select('appointmentTime');
-      
-      bookedSlots = appointments.map(app => app.appointmentTime);
-      
-      // Get available slots for that day
-      const dayAvailability = doctor.availability.find(a => a.day === dayOfWeek);
-      
-      if (!dayAvailability || !dayAvailability.isAvailable) {
-        return res.status(200).json({
-          success: true,
-          data: {
-            dayOfWeek,
-            isAvailable: false,
-            availableSlots: []
-          }
-        });
-      }
-      
-      // Mark booked slots
-      const availableSlots = dayAvailability.slots.map(slot => ({
-        ...slot.toObject(),
-        isBooked: bookedSlots.includes(slot.startTime)
-      }));
-      
+    // Get day of week from date
+    const dateObj = new Date(date);
+    const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dateObj.getDay()];
+    
+    // Find availability for that day
+    const daySchedule = doctor.availability.find(a => a.day === dayOfWeek);
+    
+    if (!daySchedule || !daySchedule.isAvailable) {
       return res.status(200).json({
         success: true,
-        data: {
-          dayOfWeek,
-          isAvailable: true,
-          availableSlots
-        }
+        message: `Doctor is not available on ${dayOfWeek}`,
+        data: []
       });
     }
     
-    // Return full availability schedule
-    res.status(200).json({
-      success: true,
-      data: doctor.availability
+    // Find already booked appointments for that day
+    const startOfDay = new Date(dateObj);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(dateObj);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    const bookedAppointments = await Appointment.find({
+      doctor: id,
+      appointmentDate: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      },
+      status: { $nin: ['cancelled', 'no-show'] }
     });
     
+    // Mark booked slots
+    const availableSlots = daySchedule.slots.map(slot => {
+      const isBooked = bookedAppointments.some(
+        app => app.appointmentTime === slot.startTime
+      );
+      
+      return {
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        isAvailable: !isBooked && !slot.isBooked
+      };
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: availableSlots
+    });
   } catch (error) {
     console.error('Error getting doctor availability:', error);
     res.status(500).json({

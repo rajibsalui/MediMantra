@@ -6,7 +6,10 @@ import {
   getPatientAppointments,
   bookAppointment,
   cancelAppointment,
-  updateProfileImage
+  updateProfileImage,
+  getPatientMedicalRecords,
+  getPatientVitalStats,
+  rateDoctorAfterAppointment
 } from '../controllers/patient.controller.js';
 
 const router = express.Router();
@@ -52,5 +55,26 @@ router.put('/appointments/:id/cancel', authMiddleware, cancelAppointment);
  * @access  Private (Patient only)
  */
 router.put('/profile-image', authMiddleware, updateProfileImage);
+
+/**
+ * @route   GET /api/patients/medical-records
+ * @desc    Get patient medical records
+ * @access  Private (Patient only)
+ */
+router.get('/medical-records', authMiddleware, getPatientMedicalRecords);
+
+/**
+ * @route   GET /api/patients/vital-stats
+ * @desc    Get patient vital statistics
+ * @access  Private (Patient only)
+ */
+router.get('/vital-stats', authMiddleware, getPatientVitalStats);
+
+/**
+ * @route   POST /api/patients/doctors/:doctorId/rate
+ * @desc    Rate a doctor after appointment
+ * @access  Private (Patient only)
+ */
+router.post('/doctors/:doctorId/rate', authMiddleware, rateDoctorAfterAppointment);
 
 export default router;

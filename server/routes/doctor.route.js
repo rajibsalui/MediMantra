@@ -19,7 +19,8 @@ import {
   searchDoctors,
   filterDoctorsBySpecialty,
   toggleDoctorAvailability,
-  deleteDoctor
+  deleteDoctor,
+  getDoctorAvailability
 } from '../controllers/doctor.controller.js';
 
 const router = express.Router();
@@ -58,6 +59,13 @@ router.get('/profile', authMiddleware, getDoctorProfile);
  * @access  Public
  */
 router.get('/:id', getDoctorById);
+
+/**
+ * @route   GET /api/doctors/:id/availability
+ * @desc    Get doctor availability for a specific date
+ * @access  Public
+ */
+router.get('/:id/availability', getDoctorAvailability);
 
 /**
  * @route   PUT /api/doctors/profile

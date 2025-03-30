@@ -3,22 +3,29 @@
 import { useState, useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { Loader2 } from "lucide-react";
-import { doctors, specialties, timeSlots, insuranceProviders } from "./data";
 import StepProgress from "./StepProgress";
 import Step1DoctorSelection from "./Step1DoctorSelection";
 import Step2PatientInfo from "./Step2PatientInfo";
 import Step3Confirmation from "./Step3Confirmation";
+import { DoctorListProvider } from "@/contexts/DoctorListContext";
+import { useAppointment } from "@/contexts/AppointmentContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function AppointmentContent() {
-  // State
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSpecialty, setSelectedSpecialty] = useState("");
+  const { user, isAuthenticated } = useAuth();
+  const { 
+    appointmentDetails, 
+    updateAppointmentDetails, 
+    bookAppointment, 
+    loading,
+    getAvailableTimeSlots
+  } = useAppointment();
+  
   const [currentStep, setCurrentStep] = useState(1);
-  const [prescriptionFiles, setPrescriptionFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // Add state for search term
+  const router = useRouter();
   
   // Refs for animations
   const headerRef = useRef(null);
@@ -27,69 +34,68 @@ export default function AppointmentContent() {
   useEffect(() => {
     gsap.from(headerRef.current, {
       y: -50,
-      // opacity: 0,
       duration: 1,
       ease: "power3.out"
     });
   }, []);
 
+  // Check authentication
+  useEffect(() => {
+    if (!isAuthenticated && currentStep > 1) {
+      router.push("/auth/login?redirect=/appointments");
+    }
+  }, [isAuthenticated, currentStep, router]);
+
   // Handle file upload for prescriptions
   const handleFileChange = (e) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      setPrescriptionFiles([...prescriptionFiles, ...newFiles]);
+      updateAppointmentDetails("prescriptionFiles", [
+        ...appointmentDetails.prescriptionFiles,
+        ...newFiles
+      ]);
     }
   };
-
-  // Remove uploaded file
+  
+  // Remove file from prescriptions
   const removeFile = (index) => {
-    setPrescriptionFiles(prescriptionFiles.filter((_, i) => i !== index));
+    const updatedFiles = [...appointmentDetails.prescriptionFiles];
+    updatedFiles.splice(index, 1);
+    updateAppointmentDetails("prescriptionFiles", updatedFiles);
   };
   
-  // Go to next step
+  // Navigation functions
   const goToNextStep = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      window.scrollTo(0, 0);
-      setCurrentStep(current => Math.min(current + 1, 3));
-      setIsLoading(false);
-    }, 800); 
-  };
-
-  // Go to previous step
-  const goToPrevStep = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      window.scrollTo(0, 0);
-      setCurrentStep(current => Math.max(current - 1, 1));
-      setIsLoading(false);
-    }, 600);
-  };
-
-  // Confirm appointment
-  const confirmAppointment = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      alert("Appointment booked successfully!");
-    }, 1500);
-  };
-
-  // Get available time slots for selected date
-  const getAvailableTimeSlots = () => {
-    const dayOfWeek = selectedDate.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return timeSlots.filter((_, index) => index % 3 === 0);
-    }
-    return timeSlots;
+    setCurrentStep((prev) => prev + 1);
   };
   
+  const goToPrevStep = () => {
+    setCurrentStep((prev) => prev - 1);
+  };
+  
+  // Confirm appointment booking
+  const confirmAppointment = async () => {
+    try {
+      setIsLoading(true);
+      await bookAppointment();
+      // Redirect to appointments list after successful booking
+      router.push("/dashboard/appointments");
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+      setIsLoading(false);
+    }
+  };
+
+  // Add a handler for search changes
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 dark:from-slate-950 dark:to-slate-900">
-      {/* Loader Overlay */}
+    <div className="min-h-screen bg-gray-50">
       {isLoading && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-xl flex flex-col items-center max-w-xs w-full">
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
             <Loader2 className="h-10 w-10 text-blue-600 animate-spin mb-4" />
             <p className="text-lg font-medium">
               {currentStep === 3 ? "Booking your appointment..." : "Loading..."}
@@ -123,27 +129,27 @@ export default function AppointmentContent() {
         {/* Main content based on step */}
         <div className="max-w-6xl mx-auto">
           {currentStep === 1 && (
-            <Step1DoctorSelection 
-              doctors={doctors}
-              specialties={specialties}
-              selectedDoctor={selectedDoctor}
-              selectedDate={selectedDate}
-              selectedTimeSlot={selectedTimeSlot}
-              searchTerm={searchTerm}
-              selectedSpecialty={selectedSpecialty}
-              onDoctorSelect={setSelectedDoctor}
-              onDateSelect={setSelectedDate}
-              onTimeSlotSelect={setSelectedTimeSlot}
-              onSearchChange={setSearchTerm}
-              onSpecialtyChange={setSelectedSpecialty}
-              getAvailableTimeSlots={getAvailableTimeSlots}
-              onNext={goToNextStep}
-            />
+            <DoctorListProvider>
+              <Step1DoctorSelection 
+                selectedDoctor={appointmentDetails.doctor}
+                selectedDate={appointmentDetails.date}
+                selectedTimeSlot={appointmentDetails.timeSlot}
+                onDoctorSelect={(doctor) => updateAppointmentDetails("doctor", doctor)}
+                onDateSelect={(date) => updateAppointmentDetails("date", date)}
+                onTimeSlotSelect={(timeSlot) => updateAppointmentDetails("timeSlot", timeSlot)}
+                getAvailableTimeSlots={getAvailableTimeSlots}
+                onNext={goToNextStep}
+                searchTerm={searchTerm}
+                onSearchChange={handleSearchChange}
+              />
+            </DoctorListProvider>
           )}
           
           {currentStep === 2 && (
             <Step2PatientInfo
-              prescriptionFiles={prescriptionFiles}
+              appointmentDetails={appointmentDetails}
+              updateAppointmentDetails={updateAppointmentDetails}
+              prescriptionFiles={appointmentDetails.prescriptionFiles}
               onFileUpload={handleFileChange}
               onFileRemove={removeFile}
               onNext={goToNextStep}
@@ -153,14 +159,10 @@ export default function AppointmentContent() {
           
           {currentStep === 3 && (
             <Step3Confirmation
-              selectedDoctor={selectedDoctor}
-              selectedDate={selectedDate}
-              selectedTimeSlot={selectedTimeSlot}
-              prescriptionFiles={prescriptionFiles}
-              insuranceProviders={insuranceProviders}
+              appointmentDetails={appointmentDetails}
               onBack={goToPrevStep}
               onConfirm={confirmAppointment}
-              isLoading={isLoading}
+              isLoading={loading}
             />
           )}
         </div>

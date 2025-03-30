@@ -67,6 +67,7 @@ export const register = async (req, res) => {
     res.status(201).json({
       success: true,
       token,
+      userId:user._id,
       user: {
         id: user._id,
         firstName: user.firstName,

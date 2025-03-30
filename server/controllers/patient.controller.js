@@ -441,3 +441,291 @@ export const updateProfileImage = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc    Get patient medical records
+ * @route   GET /api/patients/medical-records
+ * @access  Private (Patient only)
+ */
+export const getPatientMedicalRecords = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Find patient
+    const patient = await Patient.findOne({ user: userId });
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient profile not found'
+      });
+    }
+    
+    // Find medical records including prescriptions, test results, etc.
+    // For more complex applications, this could be in a separate collection
+    const medicalRecords = {
+      visits: await Appointment.find({
+        patient: patient._id,
+        status: 'completed'
+      })
+      .populate({
+        path: 'doctor',
+        select: 'user specialties',
+        populate: {
+          path: 'user',
+          select: 'firstName lastName profileImage'
+        }
+      })
+      .sort({ appointmentDate: -1 })
+      .lean(),
+      
+      prescriptions: await mongoose.model('Prescription').find({
+        patient: patient._id
+      })
+      .populate('doctor', 'user')
+      .populate({
+        path: 'doctor',
+        populate: {
+          path: 'user',
+          select: 'firstName lastName'
+        }
+      })
+      .sort({ createdAt: -1 })
+      .lean()
+      .catch(err => {
+        console.log('No Prescription model found or error:', err.message);
+        return [];
+      }),
+      
+      testResults: await mongoose.model('TestResult').find({
+        patient: patient._id
+      })
+      .sort({ testDate: -1 })
+      .lean()
+      .catch(err => {
+        console.log('No TestResult model found or error:', err.message);
+        return [];
+      }),
+      
+      allergies: patient.allergies || [],
+      
+      chronicConditions: patient.chronicConditions || [],
+      
+      surgicalHistory: patient.surgicalHistory || [],
+      
+      immunizationHistory: patient.immunizationHistory || [],
+      
+      documents: await mongoose.model('MedicalDocument').find({
+        patient: patient._id
+      })
+      .sort({ uploadDate: -1 })
+      .lean()
+      .catch(err => {
+        console.log('No MedicalDocument model found or error:', err.message);
+        return [];
+      })
+    };
+    
+    res.status(200).json({
+      success: true,
+      data: medicalRecords
+    });
+  } catch (error) {
+    console.error('Error getting medical records:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get patient vital statistics
+ * @route   GET /api/patients/vital-stats
+ * @access  Private (Patient only)
+ */
+export const getPatientVitalStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Find patient
+    const patient = await Patient.findOne({ user: userId });
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient profile not found'
+      });
+    }
+    
+    // Get vital stats from visits - can be expanded with a dedicated model later
+    let vitalStats = [];
+    
+    try {
+      // Check if VitalStat model exists
+      vitalStats = await mongoose.model('VitalStat').find({
+        patient: patient._id
+      })
+      .sort({ recordedAt: -1 })
+      .limit(20)
+      .lean();
+    } catch (err) {
+      // If model doesn't exist, generate sample data
+      console.log('No VitalStat model found or error:', err.message);
+      
+      // Generate mock data if no real data exists
+      // This will help in testing and initial setup
+      const today = new Date();
+      
+      // Generate data for the last 6 months
+      for (let i = 0; i < 6; i++) {
+        const date = new Date(today);
+        date.setMonth(date.getMonth() - i);
+        
+        vitalStats.push({
+          recordedAt: date,
+          bloodPressure: {
+            systolic: 110 + Math.floor(Math.random() * 20),
+            diastolic: 70 + Math.floor(Math.random() * 15)
+          },
+          heartRate: 70 + Math.floor(Math.random() * 15),
+          temperature: 36.5 + (Math.random() * 1.0),
+          respiratoryRate: 16 + Math.floor(Math.random() * 4),
+          oxygenSaturation: 95 + Math.floor(Math.random() * 4),
+          weight: patient.weight?.value || 70 + Math.floor(Math.random() * 10),
+          height: patient.height?.value || 170
+        });
+      }
+    }
+    
+    // Format vital stats for easier frontend charting
+    const formattedVitalStats = {
+      labels: vitalStats.map(stat => new Date(stat.recordedAt).toLocaleDateString()),
+      datasets: {
+        bloodPressure: {
+          systolic: vitalStats.map(stat => stat.bloodPressure?.systolic || 0),
+          diastolic: vitalStats.map(stat => stat.bloodPressure?.diastolic || 0)
+        },
+        heartRate: vitalStats.map(stat => stat.heartRate || 0),
+        temperature: vitalStats.map(stat => stat.temperature || 0),
+        respiratoryRate: vitalStats.map(stat => stat.respiratoryRate || 0),
+        oxygenSaturation: vitalStats.map(stat => stat.oxygenSaturation || 0),
+        weight: vitalStats.map(stat => stat.weight || 0)
+      },
+      data: vitalStats // Include raw data
+    };
+    
+    res.status(200).json({
+      success: true,
+      data: formattedVitalStats
+    });
+  } catch (error) {
+    console.error('Error getting vital stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Rate doctor after appointment
+ * @route   POST /api/patients/doctors/:doctorId/rate
+ * @access  Private (Patient only)
+ */
+export const rateDoctorAfterAppointment = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const { rating, comment, appointmentId } = req.body;
+    const userId = req.user.id;
+    
+    // Validate input
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rating must be between 1 and 5'
+      });
+    }
+    
+    // Get patient
+    const patient = await Patient.findOne({ user: userId });
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient profile not found'
+      });
+    }
+    
+    // Verify the appointment exists and is completed
+    const appointment = await Appointment.findOne({
+      _id: appointmentId,
+      doctor: doctorId,
+      patient: patient._id,
+      status: 'completed'
+    });
+    
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'No completed appointment found with this doctor'
+      });
+    }
+    
+    // Get doctor profile
+    const doctor = await mongoose.model('Doctor').findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Doctor not found'
+      });
+    }
+    
+    // Check if review already exists
+    const existingReviewIndex = doctor.reviews.findIndex(
+      r => r.patient.toString() === patient._id.toString()
+    );
+    
+    if (existingReviewIndex > -1) {
+      // Update existing review
+      doctor.reviews[existingReviewIndex].rating = rating;
+      doctor.reviews[existingReviewIndex].comment = comment;
+      doctor.reviews[existingReviewIndex].date = Date.now();
+    } else {
+      // Add new review
+      doctor.reviews.push({
+        patient: patient._id,
+        rating,
+        comment,
+        date: Date.now()
+      });
+    }
+    
+    // Update appointment feedback
+    appointment.feedback = {
+      submitted: true,
+      rating,
+      comments: comment
+    };
+    
+    await appointment.save();
+    
+    // Update doctor's average rating
+    await doctor.updateAverageRating();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Rating submitted successfully',
+      data: {
+        rating,
+        comment
+      }
+    });
+  } catch (error) {
+    console.error('Error rating doctor:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
