@@ -38,10 +38,10 @@ export default function DoctorDetail({ params }) {
   useEffect(() => {
     // Unwrap params using React.use()
     const unwrappedParams = typeof params === 'object' && params instanceof Promise ? use(params) : params;
-    const id = unwrappedParams?.id;
+    const doctorId = unwrappedParams?.doctorId; // Change from id to doctorId
     
-    if (id) {
-      const foundDoctor = doctorsData.find(doc => doc.id === id);
+    if (doctorId) {
+      const foundDoctor = doctorsData.find(doc => doc.id === doctorId);
       setDoctor(foundDoctor);
     }
     setLoading(false);
