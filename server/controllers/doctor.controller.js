@@ -16,7 +16,7 @@ export const getDoctors = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     
-    // Filter options
+    // Filter options - FIX: Changed isVerified to true to show only verified doctors
     const filter = { isVerified: false };
     
     // Add specialty filter if provided
@@ -38,6 +38,16 @@ export const getDoctors = async (req, res) => {
       filter.user = { $in: users.map(user => user._id) };
     }
     
+    // Filter by acceptingNewPatients if specified
+    if (req.query.acceptingNewPatients !== undefined) {
+      filter.acceptingNewPatients = req.query.acceptingNewPatients === 'true';
+    }
+    
+    // Filter by languages if provided
+    if (req.query.language) {
+      filter.languages = { $regex: req.query.language, $options: 'i' };
+    }
+    
     // Get verified doctors with pagination
     const doctors = await Doctor.find(filter)
       .populate('user', 'firstName lastName email phone profileImage')
@@ -48,9 +58,58 @@ export const getDoctors = async (req, res) => {
     // Count total documents for pagination info
     const total = await Doctor.countDocuments(filter);
     
+    // Get availability for each doctor
+    const doctorsWithAvailability = await Promise.all(doctors.map(async (doctor) => {
+      // Convert Mongoose document to plain object for modification
+      const doctorObj = doctor.toObject();
+      
+      // Get next available appointment slot
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Check if doctor has availability data
+      const hasAvailability = doctorObj.availability && doctorObj.availability.length > 0;
+      
+      // Get the nearest available day
+      let nextAvailableDay = null;
+      if (hasAvailability) {
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const todayIndex = today.getDay();
+        
+        // Look for the next available day in the doctor's schedule
+        for (let i = 0; i < 7; i++) {
+          const checkDayIndex = (todayIndex + i) % 7;
+          const checkDay = daysOfWeek[checkDayIndex];
+          
+          const daySchedule = doctorObj.availability.find(a => 
+            a.day === checkDay && a.isAvailable && a.slots && a.slots.length > 0
+          );
+          
+          if (daySchedule) {
+            const availableSlots = daySchedule.slots.filter(slot => !slot.isBooked);
+            if (availableSlots.length > 0) {
+              nextAvailableDay = {
+                day: checkDay,
+                date: new Date(today.getTime() + (i * 24 * 60 * 60 * 1000)),
+                firstAvailableSlot: availableSlots[0].startTime
+              };
+              break;
+            }
+          }
+        }
+      }
+      
+      // Add availability info to doctor object
+      return {
+        ...doctorObj,
+        nextAvailable: nextAvailableDay,
+        availabilityStatus: doctorObj.acceptingNewPatients ? 'accepting' : 'not accepting'
+      };
+    }));
+    
     res.status(200).json({
       success: true,
-      data: doctors,
+      data: doctorsWithAvailability,
       pagination: {
         total,
         page,
@@ -793,12 +852,13 @@ export const updateDoctorAvailability = async (req, res) => {
 
 /**
  * @desc    Get doctor dashboard stats
- * @route   GET /api/doctors/dashboard
+ * @route   GET /api/doctors/dashboard-stats
  * @access  Private (Doctor)
  */
 export const getDoctorDashboardStats = async (req, res) => {
   try {
-    const userId = req.user.id;
+    console.log(req.user._id)
+    const userId = req.user._id; 
     
     // Find doctor profile
     const doctor = await Doctor.findOne({ user: userId });
@@ -895,7 +955,7 @@ const getMonthlyAppointmentStats = async (doctorId) => {
   const appointments = await Appointment.aggregate([
     {
       $match: {
-        doctor: mongoose.Types.ObjectId(doctorId),
+        doctor: new mongoose.Types.ObjectId(doctorId),
         createdAt: { $gte: sixMonthsAgo }
       }
     },
@@ -1516,7 +1576,15 @@ export const getDoctorProfile = async (req, res) => {
     
     // Find doctor with user details
     const doctor = await Doctor.findOne({ user: userId })
-      .populate('user', 'firstName lastName email phone profileImage dateOfBirth gender');
+      .populate('user', 'firstName lastName email phone profileImage dateOfBirth gender')
+      .populate({
+        path: 'reviews.patient',
+        select: 'user',
+        populate: {
+          path: 'user',
+          select: 'firstName lastName profileImage'
+        }
+      });
     
     if (!doctor) {
       return res.status(404).json({
@@ -1524,10 +1592,45 @@ export const getDoctorProfile = async (req, res) => {
         message: 'Doctor profile not found'
       });
     }
+
+    // Get upcoming appointments count
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const upcomingAppointments = await Appointment.countDocuments({
+      doctor: doctor._id,
+      appointmentDate: { $gte: today },
+      status: 'scheduled'
+    });
+
+    // Get today's appointments
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const todayAppointmentsCount = await Appointment.countDocuments({
+      doctor: doctor._id,
+      appointmentDate: {
+        $gte: today,
+        $lt: tomorrow
+      },
+      status: 'scheduled'
+    });
+    
+    // Get total patients count
+    const uniquePatientsCount = await Appointment.distinct('patient', {
+      doctor: doctor._id
+    }).length;
     
     res.status(200).json({
       success: true,
-      data: doctor
+      data: {
+        doctor,
+        stats: {
+          upcomingAppointments,
+          todayAppointments: todayAppointmentsCount,
+          totalPatients: uniquePatientsCount
+        }
+      }
     });
     
   } catch (error) {

@@ -22,6 +22,8 @@ export const AppointmentProvider = ({ children }) => {
     prescriptionFiles: []
   });
 
+  // console.log(token)
+
   // Headers helper function
   const getAuthHeaders = () => ({
     headers: {
@@ -50,7 +52,8 @@ export const AppointmentProvider = ({ children }) => {
   };
 
   // Get all patient appointments
-  const getAppointments = async (status = "") => {
+  const getAppointments = async () => {
+    const token = localStorage.getItem("token");
     if (!token) {
       toast.error("Authentication required");
       return [];
@@ -58,11 +61,11 @@ export const AppointmentProvider = ({ children }) => {
 
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      if (status) params.append("status", status);
+      // const params = new URLSearchParams();
+      // if (status) params.append("status", status);
 
       const { data } = await axios.get(
-        `${API_URL}/patients/appointments?${params.toString()}`, 
+        `${API_URL}/patients/appointments`, 
         getAuthHeaders()
       );
       
@@ -80,34 +83,39 @@ export const AppointmentProvider = ({ children }) => {
   // Book appointment
   const bookAppointment = async () => {
     if (!token) {
+      // console.log("No token found");
       toast.error("Authentication required");
       throw new Error("No authentication token available");
     }
 
     if (!appointmentDetails.doctor || !appointmentDetails.date || !appointmentDetails.timeSlot) {
+      // console.log("Missing appointment details", appointmentDetails);
       toast.error("Please select a doctor, date and time slot");
       throw new Error("Missing required appointment details");
     }
 
     try {
       setLoading(true);
-      
+      // console.log("Booking appointment with details:", appointmentDetails.date);
       const appointmentData = {
-        doctorId: appointmentDetails.doctor._id,
+        doctorId: appointmentDetails.doctor.id,
         appointmentDate: appointmentDetails.date.toISOString(),
         appointmentTime: appointmentDetails.timeSlot,
         appointmentType: appointmentDetails.appointmentType,
         reason: appointmentDetails.reason
       };
+
+      // console.log("Appointment data:", appointmentData);
       
-      const { data } = await axios.post(
+      const data  = await axios.post(
         `${API_URL}/patients/appointments`, 
         appointmentData, 
         getAuthHeaders()
       );
-      
+      // console.log( "data", data.data)
       // Refresh appointments list
-      await getAppointments();
+       await getAppointments();
+      // console.log(apt)
       
       // Clear the appointment details
       clearAppointmentDetails();

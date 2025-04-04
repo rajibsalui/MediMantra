@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 
 // Create context
@@ -12,47 +12,102 @@ export const useDoctorList = () => useContext(DoctorListContext);
 // API URL
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
+// Create a simple cache outside component to persist between renders
+const cache = {
+  allDoctors: {
+    data: null,
+    timestamp: null,
+    expiryTime: 5 * 60 * 1000, // 5 minutes
+  },
+  doctorsBySpecialty: {},
+  searchResults: {}
+};
+
 export const DoctorListProvider = ({ children }) => {
   const [doctors, setDoctors] = useState([]);
   const [specialties, setSpecialties] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with loading false to prevent immediate loading
   const [error, setError] = useState(null);
   
-  // Fetch all doctors
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // Use useRef instead of state for activeRequest to avoid re-renders
+  const activeRequestRef = useRef(null);
+  
+  // Extract unique specialties from doctors list
+  const extractSpecialties = useCallback((doctorsList) => {
+    if (!doctorsList || !Array.isArray(doctorsList)) return [];
+    
+    const allSpecialties = doctorsList.reduce((acc, doctor) => {
+      if (doctor.specialties && Array.isArray(doctor.specialties)) {
+        doctor.specialties.forEach(specialty => {
+          if (!acc.includes(specialty)) {
+            acc.push(specialty);
+          }
+        });
+      }
+      return acc;
+    }, []);
+    
+    return allSpecialties.sort();
+  }, []);
+  
+  // Check if cache is valid
+  const isCacheValid = useCallback((cacheEntry) => {
+    return (
+      cacheEntry?.data && 
+      cacheEntry?.timestamp && 
+      Date.now() - cacheEntry.timestamp < cacheEntry.expiryTime
+    );
+  }, []);
+
+  // Fetch all doctors with caching - main fix for infinite loop
+  const fetchAllDoctors = useCallback(async (forceRefresh = false) => {
+    // Return cached data if valid
+    if (!forceRefresh && isCacheValid(cache.allDoctors)) {
+      setDoctors(cache.allDoctors.data);
+      setSpecialties(extractSpecialties(cache.allDoctors.data));
+      return;
+    }
+    
+    // Cancel any ongoing request to prevent duplicate API calls
+    if (activeRequestRef.current) {
+      activeRequestRef.current.cancel("Operation canceled due to new request");
+    }
+    
+    // Create a new cancellation token
+    const cancelTokenSource = axios.CancelToken.source();
+    activeRequestRef.current = cancelTokenSource;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await axios.get(`${API_URL}/doctors`, {
+        cancelToken: cancelTokenSource.token
+      });
+      
+      if (response.data.success) {
+        // Update cache
+        cache.allDoctors = {
+          data: response.data.data,
+          timestamp: Date.now(),
+          expiryTime: 5 * 60 * 1000
+        };
         
-        const response = await axios.get(`${API_URL}/doctors`);
-           console.log(response.data);
-           
-        if (response.data.success) {
-          setDoctors(response.data.data);
-          
-          // Extract unique specialties from doctors
-          const allSpecialties = response.data.data.reduce((acc, doctor) => {
-            if (doctor.specialties && Array.isArray(doctor.specialties)) {
-              doctor.specialties.forEach(specialty => {
-                if (!acc.includes(specialty)) {
-                  acc.push(specialty);
-                }
-              });
-            }
-            return acc;
-          }, []);
-          
-          setSpecialties(allSpecialties.sort());
-        } else {
-          setError(response.data.message || "Failed to fetch doctors");
-        }
-      } catch (err) {
+        setDoctors(response.data.data);
+        console.log(response.data)
+        // Extract and set specialties
+        const allSpecialties = extractSpecialties(response.data.data);
+        setSpecialties(allSpecialties);
+      } else {
+        setError(response.data.message || "Failed to fetch doctors");
+      }
+    } catch (err) {
+      if (!axios.isCancel(err)) {
         console.error("Error fetching doctors:", err);
         setError("Failed to load doctors. Please try again later.");
         
         // Set fallback data for development
-        setDoctors([
+        const fallbackData = [
           {
             _id: "d1",
             user: {
@@ -72,151 +127,219 @@ export const DoctorListProvider = ({ children }) => {
               inPerson: 150
             }
           },
-          {
-            _id: "d2",
-            user: {
-              firstName: "Emily",
-              lastName: "Johnson",
-              profileImage: "/doctors/doctor-2.jpg"
-            },
-            specialties: ["Dermatology"],
-            averageRating: 4.7,
-            experience: 10,
-            clinicDetails: {
-              address: {
-                city: "Boston"
-              }
-            },
-            consultationFee: {
-              inPerson: 120
-            }
-          },
-          {
-            _id: "d3",
-            user: {
-              firstName: "Michael",
-              lastName: "Chen",
-              profileImage: "/doctors/doctor-3.jpg"
-            },
-            specialties: ["Neurology"],
-            averageRating: 4.9,
-            experience: 12,
-            clinicDetails: {
-              address: {
-                city: "Chicago"
-              }
-            },
-            consultationFee: {
-              inPerson: 170
-            }
-          },
-          {
-            _id: "d4",
-            user: {
-              firstName: "Sarah",
-              lastName: "Garcia",
-              profileImage: "/doctors/doctor-4.jpg"
-            },
-            specialties: ["Pediatrics"],
-            averageRating: 4.6,
-            experience: 8,
-            clinicDetails: {
-              address: {
-                city: "Los Angeles"
-              }
-            },
-            consultationFee: {
-              inPerson: 130
-            }
-          }
-        ]);
+          // Other fallback doctors...
+        ];
         
+        setDoctors(fallbackData);
         setSpecialties(["Cardiology", "Dermatology", "Neurology", "Pediatrics", "Orthopedics"]);
-      } finally {
-        setLoading(false);
+      }
+    } finally {
+      setLoading(false);
+      // Don't reset activeRequestRef here - only null it when component unmounts or when request completes normally
+    }
+  }, [extractSpecialties, isCacheValid]); // Remove activeRequest dependency
+
+  // Initial fetch of doctors
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadInitialData = async () => {
+      // Don't show loading indicator for initial data if cache is available
+      if (isCacheValid(cache.allDoctors)) {
+        if (isMounted) {
+          setDoctors(cache.allDoctors.data);
+          setSpecialties(extractSpecialties(cache.allDoctors.data));
+        }
+      } else {
+        try {
+          if (isMounted) setLoading(true);
+          
+          const cancelTokenSource = axios.CancelToken.source();
+          activeRequestRef.current = cancelTokenSource;
+          
+          const response = await axios.get(`${API_URL}/doctors`, {
+            cancelToken: cancelTokenSource.token
+          });
+          
+          if (response.data.success && isMounted) {
+            // Update cache
+            cache.allDoctors = {
+              data: response.data.data,
+              timestamp: Date.now(),
+              expiryTime: 5 * 60 * 1000
+            };
+            
+            setDoctors(response.data.data);
+            setSpecialties(extractSpecialties(response.data.data));
+          }
+        } catch (err) {
+          if (!axios.isCancel(err) && isMounted) {
+            console.error("Error in initial data fetch:", err);
+            // Use fallback data similar to fetchAllDoctors
+          }
+        } finally {
+          if (isMounted) setLoading(false);
+        }
       }
     };
+    
+    loadInitialData();
+    
+    // Cleanup function to cancel any ongoing requests when component unmounts
+    return () => {
+      isMounted = false;
+      if (activeRequestRef.current) {
+        activeRequestRef.current.cancel("Component unmounted");
+        activeRequestRef.current = null;
+      }
+    };
+  }, [extractSpecialties, isCacheValid]); // Run this effect only once
 
-    fetchDoctors();
+  // Create a stable debounce function that doesn't change on re-renders
+  const debounce = useCallback((fn, delay) => {
+    let timeoutId;
+    return (...args) => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn(...args), delay);
+    };
   }, []);
 
-  // Search doctors by name or specialty
-  const searchDoctors = async (query) => {
-    if (!query) return;
+  // Search doctors by name or specialty with debounce
+  const searchDoctorsImpl = useCallback(async (query) => {
+    if (!query) {
+      if (isCacheValid(cache.allDoctors)) {
+        setDoctors(cache.allDoctors.data);
+        return;
+      }
+      fetchAllDoctors();
+      return;
+    }
+    
+    // Check cache for this search query
+    const cacheKey = query.toLowerCase().trim();
+    if (isCacheValid(cache.searchResults[cacheKey])) {
+      setDoctors(cache.searchResults[cacheKey].data);
+      return;
+    }
+    
+    // Cancel any ongoing request
+    if (activeRequestRef.current) {
+      activeRequestRef.current.cancel("Operation canceled due to new request");
+    }
+    
+    const cancelTokenSource = axios.CancelToken.source();
+    activeRequestRef.current = cancelTokenSource;
     
     try {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get(`${API_URL}/doctors/search?query=${query}`);
+      const response = await axios.get(`${API_URL}/doctors/search?query=${query}`, {
+        cancelToken: cancelTokenSource.token
+      });
       
       if (response.data.success) {
+        // Update cache
+        cache.searchResults[cacheKey] = {
+          data: response.data.data,
+          timestamp: Date.now(),
+          expiryTime: 2 * 60 * 1000 // 2 minutes for search results
+        };
+        
         setDoctors(response.data.data);
       } else {
         setError(response.data.message || "Failed to search doctors");
       }
     } catch (err) {
-      console.error("Error searching doctors:", err);
-      setError("Failed to search doctors. Please try again later.");
+      if (!axios.isCancel(err)) {
+        console.error("Error searching doctors:", err);
+        setError("Failed to search doctors. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchAllDoctors, isCacheValid]);
+  
+  // Create a stable search function with debounce
+  const searchDoctors = useMemo(() => 
+    debounce(searchDoctorsImpl, 300), 
+    [searchDoctorsImpl, debounce]
+  );
 
-  // Filter doctors by specialty
-  const filterBySpecialty = async (specialty) => {
+  // Filter doctors by specialty with caching
+  const filterBySpecialty = useCallback(async (specialty) => {
     if (!specialty) {
-      // If no specialty selected, fetch all doctors
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await axios.get(`${API_URL}/doctors`);
-        
-        if (response.data.success) {
-          setDoctors(response.data.data);
-        } else {
-          setError(response.data.message || "Failed to fetch doctors");
-        }
-      } catch (err) {
-        console.error("Error fetching doctors:", err);
-        setError("Failed to load doctors. Please try again later.");
-      } finally {
-        setLoading(false);
+      // If no specialty selected, use cached data if available
+      if (isCacheValid(cache.allDoctors)) {
+        setDoctors(cache.allDoctors.data);
+        return;
       }
+      fetchAllDoctors();
       return;
     }
+    
+    // Check cache for this specialty
+    if (isCacheValid(cache.doctorsBySpecialty[specialty])) {
+      setDoctors(cache.doctorsBySpecialty[specialty].data);
+      return;
+    }
+    
+    // Cancel any ongoing request
+    if (activeRequestRef.current) {
+      activeRequestRef.current.cancel("Operation canceled due to new request");
+    }
+    
+    const cancelTokenSource = axios.CancelToken.source();
+    activeRequestRef.current = cancelTokenSource;
     
     try {
       setLoading(true);
       setError(null);
       
-      const response = await axios.get(`${API_URL}/doctors/specialty/${specialty}`);
+      const response = await axios.get(`${API_URL}/doctors/specialty/${specialty}`, {
+        cancelToken: cancelTokenSource.token
+      });
       
       if (response.data.success) {
+        // Update cache
+        cache.doctorsBySpecialty[specialty] = {
+          data: response.data.data,
+          timestamp: Date.now(),
+          expiryTime: 5 * 60 * 1000 // 5 minutes for specialty filters
+        };
+        
         setDoctors(response.data.data);
       } else {
         setError(response.data.message || "Failed to filter doctors");
       }
     } catch (err) {
-      console.error("Error filtering doctors:", err);
-      setError("Failed to filter doctors. Please try again later.");
+      if (!axios.isCancel(err)) {
+        console.error("Error filtering doctors:", err);
+        setError("Failed to filter doctors. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchAllDoctors, isCacheValid]);
+
+  // Manual refresh function
+  const refreshDoctors = useCallback(() => {
+    fetchAllDoctors(true);
+  }, [fetchAllDoctors]);
+
+  // Memoized context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({
+    doctors,
+    specialties,
+    loading,
+    error,
+    searchDoctors,
+    filterBySpecialty,
+    refreshDoctors
+  }), [doctors, specialties, loading, error, searchDoctors, filterBySpecialty, refreshDoctors]);
 
   return (
-    <DoctorListContext.Provider
-      value={{
-        doctors,
-        specialties,
-        loading,
-        error,
-        searchDoctors,
-        filterBySpecialty
-      }}
-    >
+    <DoctorListContext.Provider value={value}>
       {children}
     </DoctorListContext.Provider>
   );

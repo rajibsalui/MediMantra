@@ -17,13 +17,13 @@ export default function MedicalDisclaimer({ children }) {
       <AlertDialogTrigger asChild>
         {children}
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent className="bg-white dark:bg-slate-900 border dark:border-slate-800">
         <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
+          <AlertDialogTitle className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
             Medical Disclaimer
           </AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription className="text-slate-700 dark:text-slate-300">
             <p className="mb-4">
               The information provided by Mediमंत्र AI is for general informational and educational 
               purposes only and is not a substitute for professional medical advice, diagnosis, or treatment.
@@ -40,7 +40,9 @@ export default function MedicalDisclaimer({ children }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction>I understand</AlertDialogAction>
+          <AlertDialogAction className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800">
+            I understand
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

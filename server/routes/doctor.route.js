@@ -53,12 +53,7 @@ router.get('/specialty/:specialty', filterDoctorsBySpecialty);
  */
 router.get('/profile', authMiddleware, getDoctorProfile);
 
-/**
- * @route   GET /api/doctors/:id
- * @desc    Get doctor by ID
- * @access  Public
- */
-router.get('/:id', getDoctorById);
+
 
 /**
  * @route   GET /api/doctors/:id/availability
@@ -165,4 +160,10 @@ router.put('/toggle-availability', authMiddleware, toggleDoctorAvailability);
  */
 router.delete('/', authMiddleware, deleteDoctor);
 
+/**
+ * @route   GET /api/doctors/:id
+ * @desc    Get doctor by ID
+ * @access  Public
+ */
+router.get('/:id', getDoctorById);
 export default router;

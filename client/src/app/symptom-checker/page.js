@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, useAnimation, useInView } from 'framer-motion';
 import axios from 'axios';
 import Link from "next/link";
-// import {useNavigate} from "react-router-dom";
 import { 
   BackgroundBeams, 
   MovingBorder, 
@@ -23,13 +22,15 @@ import {
   UploadCloud, 
   AlarmClock, 
   Shuffle, 
-  ListChecks
+  ListChecks,
+  ShieldCheck
 } from 'lucide-react';
 
 import SymptomForm from '@/components/SymptomForm';
 import LoadingAnimation from '@/components/LoadingAnimation';
 import ResultsDisplay from '@/components/ResultsDisplay';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -93,16 +94,19 @@ export default function SymptomChecker() {
   ];
   
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gray-50 antialiased">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 antialiased">
       {/* Animated background effect */}
       {showBeams && (
-        <BackgroundBeams className="opacity-20" />
+        <BackgroundBeams className="opacity-20 dark:opacity-30" />
       )}
+      
+      {/* Dark mode gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-blue-500/5 dark:from-blue-800/10 dark:via-indigo-900/5 dark:to-transparent pointer-events-none"></div>
       
       <div className="container relative z-10 mx-auto py-16 px-4">
         <Spotlight
           className="-top-40 left-0 md:left-60 md:-top-20"
-          fill="lightblue"
+          fill="hsl(var(--primary)/0.15)"
         />
       
         {/* Header section with animated gradient text */}
@@ -120,7 +124,7 @@ export default function SymptomChecker() {
           <div className="max-w-3xl mx-auto mt-6">
             <TextGenerateEffect
               words="Upload your medical reports or describe your symptoms for an AI-powered health analysis backed by clinical research and medical expertise."
-              className="text-base md:text-lg text-gray-600"
+              className="text-base md:text-lg text-gray-600 dark:text-gray-300"
             />
           </div>
           
@@ -132,16 +136,28 @@ export default function SymptomChecker() {
             transition={{ delay: 0.5, duration: 0.7 }}
           >
             <div className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-blue-600" />
-              <span className="text-gray-700"><span className="font-bold text-blue-600">98%</span> Analysis Accuracy</span>
+              <div className="p-2 rounded-full bg-blue-100/80 dark:bg-blue-900/30">
+                <Activity className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <span className="text-gray-700 dark:text-gray-300">
+                <span className="font-bold text-blue-600 dark:text-blue-400">98%</span> Analysis Accuracy
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-blue-600" />
-              <span className="text-gray-700"><span className="font-bold text-blue-600">10M+</span> Medical Records Analyzed</span>
+              <div className="p-2 rounded-full bg-blue-100/80 dark:bg-blue-900/30">
+                <Brain className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <span className="text-gray-700 dark:text-gray-300">
+                <span className="font-bold text-blue-600 dark:text-blue-400">10M+</span> Medical Records Analyzed
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <AlarmClock className="h-5 w-5 text-blue-600" />
-              <span className="text-gray-700"><span className="font-bold text-blue-600">30s</span> Average Analysis Time</span>
+              <div className="p-2 rounded-full bg-blue-100/80 dark:bg-blue-900/30">
+                <AlarmClock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <span className="text-gray-700 dark:text-gray-300">
+                <span className="font-bold text-blue-600 dark:text-blue-400">30s</span> Average Analysis Time
+              </span>
             </div>
           </motion.div>
         </div>
@@ -154,7 +170,7 @@ export default function SymptomChecker() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.7 }}
           >
-            <h2 className="text-xl text-gray-700 mb-4">Trusted by medical professionals</h2>
+            <h2 className="text-xl text-gray-700 dark:text-gray-300 mb-4 font-medium">Trusted by medical professionals</h2>
             <div className="flex flex-wrap justify-center gap-2">
               <AnimatedTooltip items={medicalExperts} />
             </div>
@@ -173,7 +189,7 @@ export default function SymptomChecker() {
               animate={mainControls}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <div className="relative">
+              <div className="relative backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 p-1 rounded-2xl shadow-xl dark:shadow-gray-900/30 border border-gray-200/50 dark:border-gray-700/50">
                 <SymptomForm onSubmit={handleSubmit} />
                 
                 <SparklesCore
@@ -193,6 +209,7 @@ export default function SymptomChecker() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              className="backdrop-blur-sm bg-white/50 dark:bg-gray-800/50 p-6 rounded-2xl shadow-xl dark:shadow-gray-900/30 border border-gray-200/50 dark:border-gray-700/50"
             >
               <LoadingAnimation />
             </motion.div>
@@ -205,9 +222,8 @@ export default function SymptomChecker() {
               transition={{ duration: 0.5 }}
             >
               <ResultsDisplay results={results} onReset={() => {
-                navigate.push('/symptom-checker');
-                 setResults(false);
-                // setShowBeams(true);
+                setResults(null);
+                setShowBeams(true);
               }} />
             </motion.div>
           )}
@@ -216,13 +232,13 @@ export default function SymptomChecker() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-6"
+              className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/60 text-red-800 dark:text-red-300 rounded-lg p-6 mb-6 shadow-lg"
             >
-              <h3 className="font-medium">Error</h3>
+              <h3 className="font-medium text-lg mb-2">Error</h3>
               <p>{error}</p>
               <Button 
                 variant="outline" 
-                className="mt-3"
+                className="mt-4 border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
                 onClick={() => setError(null)}
               >
                 Try Again
@@ -262,13 +278,13 @@ export default function SymptomChecker() {
               }
             ].map((feature, index) => (
               <div key={index} className="group relative">
-                <CardHoverEffect className="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm p-6 min-h-[200px]">
+                <CardHoverEffect className="relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/90 shadow-sm dark:shadow-gray-900/30 backdrop-blur-sm p-6 min-h-[200px]">
                   <div className="space-y-4">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
                       {feature.icon}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800">{feature.title}</h3>
-                    <p className="text-sm text-gray-600">{feature.description}</p>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">{feature.title}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
                   </div>
                 </CardHoverEffect>
               </div>
@@ -281,14 +297,19 @@ export default function SymptomChecker() {
           <div className="mt-20 text-center">
             <MovingBorder 
               borderRadius="0.75rem" 
-              className="p-0.5 bg-gray-100"
+              className="p-0.5 bg-gradient-to-r from-blue-100 via-white to-blue-100 dark:from-blue-900/30 dark:via-gray-800/80 dark:to-blue-900/30"
             >
-              <button className="relative w-full rounded-[11px] bg-white px-8 py-4">
-                <div className="text-gray-800 font-medium">
+              <button className="relative w-full rounded-[11px] bg-white dark:bg-gray-800 px-8 py-4 group transition-colors">
+                <div className="flex items-center justify-center gap-2 text-gray-800 dark:text-gray-200 font-medium">
+                  <ShieldCheck className="h-5 w-5 text-blue-600 dark:text-blue-400 opacity-70 group-hover:opacity-100 transition-opacity" />
                   Your data is secure and confidential
                 </div>
               </button>
             </MovingBorder>
+            
+            <div className="mt-10 text-sm text-gray-500 dark:text-gray-400">
+              © {new Date().getFullYear()} MediMantra. All rights reserved.
+            </div>
           </div>
         )}
       </div>

@@ -22,7 +22,9 @@ import {
   Stethoscope,
   Heart,
   Bot,
-  MessageSquare
+  MessageSquare,
+  Settings,
+  HelpCircle
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -34,11 +36,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { motion } from "framer-motion"
 import ChatbotDialog from "@/components/chatbot/ChatbotDialog"
+import ThemeSwitcher from "../ui/ThemeSwitcher"
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userRole, setUserRole] = useState(null) // New state for user role
   const [scrolled, setScrolled] = useState(false)
   const [chatbotOpen, setChatbotOpen] = useState(false)
   
@@ -51,18 +55,26 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Check for authentication token in localStorage
+  // Check for authentication token and user role in localStorage
   useEffect(() => {
     // Make sure we're running on the client side
     if (typeof window !== 'undefined') {
       try {
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('Role'); // Get user role from localStorage
+        
         // Update login state based on token presence
         setIsLoggedIn(!!token);
+        
+        // Set user role if available
+        if (role) {
+          setUserRole(role);
+        }
       } catch (error) {
         // Handle potential localStorage errors
         console.error('Error accessing localStorage:', error);
         setIsLoggedIn(false);
+        setUserRole(null);
       }
     }
   }, []);
@@ -86,7 +98,9 @@ export default function Header() {
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('accessToken');
+      localStorage.removeItem('userRole'); // Also remove the role
       setIsLoggedIn(false);
+      setUserRole(null);
       router.push('/');
     }
   }
@@ -97,24 +111,22 @@ export default function Header() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className={cn(
-        "sticky top-0 z-50 w-full backdrop-blur transition-all duration-300",
+        "sticky top-0 z-50 w-full transition-all duration-300",
         scrolled 
-          ? "bg-background/80 shadow-md" 
-          : "bg-background/60"
+          ? "bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm dark:shadow-gray-800/10" 
+          : "bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm"
       )}
     >
       <div className="container flex h-16 items-center justify-between px-4 sm:px-8">
         {/* Logo */}
         <div className="flex items-center gap-2">
           <Link 
-            onClick={()=>{
-              router.push("/")
-            }}
+            onClick={() => router.push("/")}
             href="/" 
             className="flex items-center space-x-2"
           >
             <motion.span 
-              className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent"
+              className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent"
               initial={{ scale: 1 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -138,8 +150,10 @@ export default function Header() {
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center text-sm font-medium transition-colors hover:text-primary",
-                  pathname === item.href ? "text-primary" : "text-muted-foreground"
+                  "flex items-center text-sm font-medium transition-colors",
+                  pathname === item.href 
+                    ? "text-blue-600 dark:text-blue-400" 
+                    : "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
                 )}
               >
                 {item.icon}
@@ -147,7 +161,7 @@ export default function Header() {
               </Link>
               {pathname === item.href && (
                 <motion.div 
-                  className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-blue-500 to-cyan-400"
+                  className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-blue-500 to-cyan-400 dark:from-blue-400 dark:to-cyan-300"
                   layoutId="navbar-active-indicator"
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
@@ -158,6 +172,7 @@ export default function Header() {
 
         {/* Right side actions */}
         <div className="flex items-center space-x-2">
+          <ThemeSwitcher />
           {/* AI Chatbot Button */}
           <motion.div 
             whileHover={{ scale: 1.1 }} 
@@ -168,7 +183,7 @@ export default function Header() {
               onClick={() => setChatbotOpen(true)}
               variant="ghost" 
               size="icon" 
-              className="bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full"
+              className="bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/50 rounded-full"
               aria-label="Open AI Medical Assistant"
             >
               <Bot className="h-5 w-5" />
@@ -180,7 +195,7 @@ export default function Header() {
             <Button 
               variant="outline" 
               size="sm" 
-              className="hidden md:flex text-red-500 border-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+              className="hidden md:flex text-red-500 dark:text-red-400 border-red-500 dark:border-red-400/70 hover:bg-red-50 dark:hover:bg-red-950/50"
             >
               <Phone className="mr-2 h-4 w-4" />
               Emergency
@@ -189,12 +204,12 @@ export default function Header() {
           
           {/* Notifications */}
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-            <Button variant="ghost" size="icon" className="hidden md:flex relative">
+            <Button variant="ghost" size="icon" className="hidden md:flex relative dark:text-gray-200 dark:hover:bg-gray-800">
               <Bell className="h-5 w-5" />
               <motion.span 
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-red-600"
+                className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-red-600 dark:bg-red-500"
               ></motion.span>
             </Button>
           </motion.div>
@@ -203,29 +218,118 @@ export default function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="ghost" size="icon" className="rounded-full">
+                  <Button variant="ghost" size="icon" className="rounded-full dark:bg-gray-800/50 dark:text-gray-200 dark:hover:bg-gray-800">
                     <UserCircle className="h-6 w-6" />
                   </Button>
                 </motion.div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="backdrop-blur-lg bg-background/90">
-                <DropdownMenuItem className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
+              <DropdownMenuContent align="end" className="backdrop-blur-lg bg-white/90 dark:bg-gray-800/90 border dark:border-gray-700">
+                <div className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+                  My Account {userRole && `(${userRole.charAt(0).toUpperCase() + userRole.slice(1)})`}
+                </div>
+                <DropdownMenuSeparator className="dark:border-gray-700" />
+                
+                {/* Common menu items for both roles */}
+                <DropdownMenuItem 
+                  onClick={() =>{
+                    const userId = localStorage.getItem('userId')
+                    if(!userId) return
+                    if(userRole === 'doctor') {
+                      router.push(`/doctor/dashboard/${userId}`)
+                    }
+                    else{
+                      router.push(`/patient/dashboard/${userId}`)
+                    }
+                    } }
+                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
+                >
+                  <User className="mr-2 h-4 w-4 text-gray-600 dark:text-gray-400" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  <span>My Appointments</span>
+                
+                {/* Doctor-specific menu items */}
+                {userRole === 'doctor' && (
+                  <>
+                    <DropdownMenuItem 
+                      onClick={() => router.push("/doctor/appointments")}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
+                    >
+                      <Calendar className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <span>My Schedule</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => router.push("/doctor/patients")}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
+                    >
+                      <Heart className="mr-2 h-4 w-4 text-red-500 dark:text-red-400" />
+                      <span>My Patients</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => router.push("/doctor/prescriptions")}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
+                    >
+                      <FileText className="mr-2 h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span>Prescriptions</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                
+                {/* Patient-specific menu items */}
+                {userRole === 'patient' && (
+                  <>
+                    <DropdownMenuItem 
+                      onClick={() => router.push("/patient/appointments")}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
+                    >
+                      <Calendar className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <span>My Appointments</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => router.push("/patient/medical-history")}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
+                    >
+                      <FileText className="mr-2 h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span>Medical History</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => router.push("/patient/prescriptions")}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
+                    >
+                      <Activity className="mr-2 h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      <span>Prescriptions</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => router.push("/doctors")}
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
+                    >
+                      <Stethoscope className="mr-2 h-4 w-4 text-blue-500 dark:text-blue-400" />
+                      <span>Find Doctors</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                
+                {/* Common settings and support items */}
+                <DropdownMenuItem 
+                  onClick={() => router.push("/settings")}
+                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
+                >
+                  <Settings className="mr-2 h-4 w-4 text-gray-600 dark:text-gray-400" />
+                  <span>Settings</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <FileText className="mr-2 h-4 w-4" />
-                  <span>Medical History</span>
+                <DropdownMenuItem 
+                  onClick={() => router.push("/support")}
+                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
+                >
+                  <HelpCircle className="mr-2 h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <span>Help & Support</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                
+                <DropdownMenuSeparator className="dark:border-gray-700" />
                 <DropdownMenuItem 
                   onClick={handleLogout}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 dark:focus:bg-red-900/20"
                 >
+                  <LogIn className="mr-2 h-4 w-4 rotate-180" />
                   Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -236,6 +340,7 @@ export default function Header() {
                 <Button 
                   variant="outline" 
                   onClick={() => router.push("/login")}
+                  className="dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
                   <LogIn className="mr-2 h-4 w-4" />
                   Sign In
@@ -245,26 +350,26 @@ export default function Header() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600">
+                    <Button className="bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 hover:from-blue-700 hover:to-cyan-600 dark:hover:from-blue-600 dark:hover:to-cyan-500 text-white">
                       <UserPlus className="mr-2 h-4 w-4" />
                       Sign Up
                       <ChevronDown className="ml-1 h-4 w-4" />
                     </Button>
                   </motion.div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="backdrop-blur-lg bg-background/90">
+                <DropdownMenuContent align="end" className="backdrop-blur-lg bg-white/90 dark:bg-gray-800/90 border dark:border-gray-700">
                   <DropdownMenuItem 
                     onClick={() => router.push("/signup")} 
-                    className="cursor-pointer"
+                    className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                   >
-                    <Heart className="mr-2 h-4 w-4" />
+                    <Heart className="mr-2 h-4 w-4 text-red-500 dark:text-red-400" />
                     <span>As a Patient</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => router.push("/signup/doctor")} 
-                    className="cursor-pointer"
+                    className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                   >
-                    <Stethoscope className="mr-2 h-4 w-4" />
+                    <Stethoscope className="mr-2 h-4 w-4 text-blue-500 dark:text-blue-400" />
                     <span>As a Doctor</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -277,7 +382,7 @@ export default function Header() {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="md:hidden" 
+              className="md:hidden dark:text-gray-200 dark:hover:bg-gray-800" 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? (
@@ -299,14 +404,14 @@ export default function Header() {
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="space-y-1 px-4 py-3 pt-2">
+          <div className="space-y-1 px-4 py-3 pt-2 bg-white dark:bg-gray-900 border-t dark:border-gray-800">
             {/* Mobile search */}
             <div className="relative mb-4">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 type="search"
                 placeholder="Search doctors, symptoms..."
-                className="w-full rounded-md bg-background pl-8"
+                className="w-full rounded-md bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 pl-8"
               />
             </div>
             
@@ -323,8 +428,8 @@ export default function Header() {
                   className={cn(
                     "flex items-center py-2 px-3 text-base font-medium rounded-md",
                     pathname === item.href 
-                      ? "bg-primary/10 text-primary" 
-                      : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" 
+                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   )}
                 >
                   {item.icon}
@@ -334,7 +439,7 @@ export default function Header() {
             ))}
             
             <div className="py-2">
-              <div className="h-px bg-border"></div>
+              <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
             </div>
 
             <motion.div
@@ -345,7 +450,7 @@ export default function Header() {
               <Link
                 href="/health-records" 
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center py-2 px-3 text-base font-medium rounded-md text-foreground hover:bg-accent hover:text-accent-foreground"
+                className="flex items-center py-2 px-3 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <FileText className="h-4 w-4 mr-2" />
                 Health Records
@@ -360,7 +465,7 @@ export default function Header() {
               <Link
                 href="/doctors" 
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center py-2 px-3 text-base font-medium rounded-md text-foreground hover:bg-accent hover:text-accent-foreground"
+                className="flex items-center py-2 px-3 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <UserCircle className="h-4 w-4 mr-2" />
                 Find Doctors
@@ -379,7 +484,7 @@ export default function Header() {
                   setChatbotOpen(true);
                   setMobileMenuOpen(false);
                 }}
-                className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100"
+                className="w-full bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/50"
               >
                 <Bot className="mr-2 h-5 w-5" />
                 Chat with Medical AI
@@ -394,7 +499,7 @@ export default function Header() {
             >
               <Button 
                 variant="outline" 
-                className="w-full mt-2 text-red-500 border-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                className="w-full mt-2 text-red-500 dark:text-red-400 border-red-500 dark:border-red-400/70 hover:bg-red-50 dark:hover:bg-red-950/50"
               >
                 <Phone className="mr-2 h-4 w-4" />
                 Emergency Helpline
@@ -411,7 +516,7 @@ export default function Header() {
               >
                 <Button 
                   variant="outline" 
-                  className="w-full" 
+                  className="w-full border-gray-300 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800" 
                   onClick={() => {
                     router.push("/login");
                     setMobileMenuOpen(false);
@@ -421,11 +526,11 @@ export default function Header() {
                   Sign In
                 </Button>
                 
-                <div className="text-xs font-medium text-center my-2 text-slate-500">Sign up as:</div>
+                <div className="text-xs font-medium text-center my-2 text-gray-500 dark:text-gray-400">Sign up as:</div>
                 
                 <div className="grid grid-cols-2 gap-2">
                   <Button 
-                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600" 
+                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 hover:from-blue-700 hover:to-cyan-600 dark:hover:from-blue-600 dark:hover:to-cyan-500 text-white" 
                     onClick={() => {
                       router.push("/signup");
                       setMobileMenuOpen(false);
@@ -436,7 +541,7 @@ export default function Header() {
                   </Button>
                   
                   <Button 
-                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700" 
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 dark:from-cyan-400 dark:to-blue-500 hover:from-cyan-600 hover:to-blue-700 dark:hover:from-cyan-500 dark:hover:to-blue-600 text-white" 
                     onClick={() => {
                       router.push("/signup/doctor");
                       setMobileMenuOpen(false);

@@ -6,6 +6,7 @@ export const CardSpotlight = ({
   children, 
   className, 
   spotlightSize = 500,
+  borderColor,  // Extract borderColor prop
   ...props 
 }) => {
   const divRef = useRef(null);
@@ -36,9 +37,13 @@ export const CardSpotlight = ({
     <div
       ref={divRef}
       className={cn(
-        "relative overflow-hidden rounded-xl border border-gray-200",
+        "relative overflow-hidden rounded-xl border",
+        !borderColor && "border-gray-200",
         className
       )}
+      style={{
+        ...(borderColor && { borderColor }), // Apply borderColor as inline style if provided
+      }}
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

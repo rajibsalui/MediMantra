@@ -5,7 +5,10 @@ import mongoose from 'mongoose';
 import User from '../models/user.model.js';
 import Doctor from '../models/doctor.model.js';
 import { sendEmail } from '../utils/email.js';
+import { cloudinary } from '../config/cloudinary.config.js';
+import { uploadFile } from '../utils/fileUpload.js';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 // Generate JWT tokens
@@ -38,11 +41,43 @@ const cookieOptions = {
   maxAge: 24 * 60 * 60 * 1000 // 1 day
 };
 
-// Register doctor
+// Helper function to upload base64 image
+const uploadBase64Image = async (base64String, folder = 'medimantra/doctors/profiles') => {
+  try {
+    if (!base64String || !base64String.startsWith('data:image/')) {
+      return null;
+    }
+
+    // Extract base64 data and content type
+    const match = base64String.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+    if (!match || match.length !== 3) {
+      return null;
+    }
+
+    const result = await cloudinary.uploader.upload(base64String, {
+      folder,
+      resource_type: 'image',
+      transformation: [
+        { width: 500, height: 500, crop: 'limit' },
+        { quality: 'auto' }
+      ]
+    });
+
+    return {
+      url: result.secure_url,
+      public_id: result.public_id
+    };
+  } catch (error) {
+    console.error('Base64 image upload failed:', error);
+    return null;
+  }
+};
+
 // Register doctor
 export const registerDoctor = async (req, res) => {
     try {
       const { 
+        // Basic user details
         firstName, 
         lastName, 
         email, 
@@ -54,16 +89,48 @@ export const registerDoctor = async (req, res) => {
         city,
         state,
         zipCode,
+        
+        // Doctor specific details
         registrationNumber,
+        registrationCouncil,
         qualifications,
         specialties,
         experience,
         hospitalAffiliations,
         languages,
         consultationFee,
-        about,
-        profileImage
+        bio,
+        profileImage,
+        
+        // New fields being added
+        clinicDetails,
+        availability,
+        videoConsultation,
+        acceptingNewPatients,
+        customFields
       } = req.body;
+      
+      // Handle profile image upload - different approaches
+      let profileImageData = null;
+      
+      // Case 1: If multer file is available
+      if (req.file) {
+        try {
+          profileImageData = await uploadFile(req.file, 'medimantra/doctors/profiles');
+          console.log('Profile image uploaded via multer:', profileImageData);
+        } catch (uploadError) {
+          console.error('Multer file upload failed:', uploadError);
+        }
+      }
+      // Case 2: If base64 encoded image string is provided
+      else if (profileImage && typeof profileImage === 'string' && profileImage.startsWith('data:image')) {
+        try {
+          profileImageData = await uploadBase64Image(profileImage);
+          console.log('Profile image uploaded via base64:', profileImageData);
+        } catch (uploadError) {
+          console.error('Base64 image upload failed:', uploadError);
+        }
+      }
       
       // Start database transaction
       const session = await mongoose.startSession();
@@ -97,20 +164,19 @@ export const registerDoctor = async (req, res) => {
             country: 'India' // Default country
           },
           role: 'doctor',
-          profilePicture: profileImage
+          profilePicture: profileImageData?.url || null,
+          cloudinaryId: profileImageData?.public_id || null
         }], { session });
         
-        // FIX 1: Process qualifications into proper format
+        // Process qualifications
         let qualificationsArray = [];
         if (typeof qualifications === 'string') {
-          // Simple handling - set institution to a default value
           qualificationsArray = qualifications.split(',').map(qual => ({
             degree: qual.trim(),
             institution: 'To be updated',
             year: new Date().getFullYear()
           }));
         } else if (Array.isArray(qualifications)) {
-          // Handle array of strings
           qualificationsArray = qualifications.map(qual => {
             if (typeof qual === 'string') {
               return {
@@ -119,14 +185,13 @@ export const registerDoctor = async (req, res) => {
                 year: new Date().getFullYear()
               };
             }
-            return qual; // Assume it's already in the correct format
+            return qual;
           });
         } else if (qualifications && typeof qualifications === 'object') {
-          // Handle single qualification object
           qualificationsArray = [qualifications];
         }
         
-        // FIX 2: Process specialties
+        // Process specialties
         let specialtiesArray = [];
         if (typeof specialties === 'string') {
           specialtiesArray = specialties.split(',').map(spec => spec.trim());
@@ -136,7 +201,7 @@ export const registerDoctor = async (req, res) => {
           specialtiesArray = [specialties.toString()];
         }
         
-        // FIX 3: Process languages
+        // Process languages
         let languagesArray = [];
         if (typeof languages === 'string') {
           languagesArray = languages.split(',').map(lang => lang.trim());
@@ -146,7 +211,7 @@ export const registerDoctor = async (req, res) => {
           languagesArray = [languages.toString()];
         }
         
-        // FIX 4: Process hospital affiliations
+        // Process hospital affiliations
         let hospitalAffiliationsArray = [];
         if (typeof hospitalAffiliations === 'string') {
           hospitalAffiliationsArray = hospitalAffiliations.split(',').map(hospital => ({
@@ -163,16 +228,15 @@ export const registerDoctor = async (req, res) => {
                 current: true
               };
             }
-            return hospital; // Assume it's already in the correct format
+            return hospital;
           });
         } else if (hospitalAffiliations && typeof hospitalAffiliations === 'object') {
           hospitalAffiliationsArray = [hospitalAffiliations];
         }
         
-        // FIX 5: Process experience - extract just the number
+        // Process experience
         let experienceValue = 0;
         if (typeof experience === 'string') {
-          // Extract numbers from strings like "15 years"
           const match = experience.match(/\d+/);
           if (match) {
             experienceValue = parseInt(match[0], 10);
@@ -181,10 +245,9 @@ export const registerDoctor = async (req, res) => {
           experienceValue = experience;
         }
         
-        // FIX 6: Format consultation fee
+        // Process consultation fee
         let consultationFeeObject = {};
         if (typeof consultationFee === 'string' || typeof consultationFee === 'number') {
-          // If a single value is provided, use it for inPerson
           const feeValue = parseInt(consultationFee, 10) || 0;
           consultationFeeObject = {
             inPerson: feeValue,
@@ -192,14 +255,12 @@ export const registerDoctor = async (req, res) => {
             phone: feeValue
           };
         } else if (consultationFee && typeof consultationFee === 'object') {
-          // If an object is provided, ensure inPerson is set
           consultationFeeObject = {
             inPerson: consultationFee.inPerson || 0,
             video: consultationFee.video || consultationFee.inPerson || 0,
             phone: consultationFee.phone || consultationFee.inPerson || 0
           };
         } else {
-          // Default
           consultationFeeObject = {
             inPerson: 0,
             video: 0,
@@ -207,21 +268,70 @@ export const registerDoctor = async (req, res) => {
           };
         }
         
-        // Create doctor profile with fixed data
+        // Process clinic details
+        let clinicDetailsObject = {};
+        if (clinicDetails && typeof clinicDetails === 'object') {
+          clinicDetailsObject = clinicDetails;
+        } else {
+          clinicDetailsObject = {
+            name: '',
+            address: {
+              street: '',
+              city: '',
+              state: '',
+              zipCode: '',
+              country: 'India'
+            },
+            contactNumber: ''
+          };
+        }
+
+        // Process availability slots
+        let availabilityArray = [];
+        if (availability && Array.isArray(availability)) {
+          availabilityArray = availability;
+        } else if (availability && typeof availability === 'object') {
+          // Handle if a single day's availability is provided as an object
+          availabilityArray = [availability];
+        }
+        
+        // Process video consultation settings
+        let videoConsultationObject = {};
+        if (videoConsultation && typeof videoConsultation === 'object') {
+          videoConsultationObject = videoConsultation;
+        } else if (videoConsultation === true || videoConsultation === 'true') {
+          videoConsultationObject = {
+            available: true,
+            platform: 'zoom'
+          };
+        } else {
+          videoConsultationObject = {
+            available: false,
+            platform: 'zoom'
+          };
+        }
+        
+        // Create doctor profile with all the processed data
         const doctorProfile = await Doctor.create([{
           user: user[0]._id,
           gender: gender || '',
           specialties: specialtiesArray,
           qualifications: qualificationsArray,
           registrationNumber,
-          registrationCouncil: "Medical Council of India",
+          registrationCouncil: registrationCouncil || "Medical Council of India",
           experience: experienceValue,
           hospitalAffiliations: hospitalAffiliationsArray,
           languages: languagesArray,
           consultationFee: consultationFeeObject,
-          bio: about || '',
+          bio: bio || '',
           isVerified: false,
-          availability: [] // Default empty availability
+          
+          // New fields
+          clinicDetails: clinicDetailsObject,
+          availability: availabilityArray,
+          videoConsultation: videoConsultationObject,
+          acceptingNewPatients: acceptingNewPatients !== false,
+          customFields: customFields || {}
         }], { session });
         
         // Generate verification token
@@ -270,6 +380,7 @@ export const registerDoctor = async (req, res) => {
             lastName: user[0].lastName,
             email: user[0].email,
             role: user[0].role,
+            profilePicture: user[0].profilePicture,
             isEmailVerified: user[0].isEmailVerified
           },
           doctorProfile: {
@@ -283,7 +394,6 @@ export const registerDoctor = async (req, res) => {
         // Abort transaction on error
         await session.abortTransaction();
         
-        // Log detailed error for debugging
         console.error('Doctor profile creation error:', error);
         
         throw error;
@@ -301,7 +411,6 @@ export const registerDoctor = async (req, res) => {
     }
   };
 
-// Login doctor
 // Login doctor
 export const loginDoctor = async (req, res) => {
     try {
@@ -424,15 +533,16 @@ export const loginDoctor = async (req, res) => {
     }
   };
 
-// Update doctor profile after registration
+// Update doctor profile including profile image
 export const completeDoctorProfile = async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Find doctor profile
+    // Find doctor profile and user
     const doctorProfile = await Doctor.findOne({ user: userId });
+    const user = await User.findById(userId);
     
-    if (!doctorProfile) {
+    if (!doctorProfile || !user) {
       return res.status(404).json({
         success: false,
         message: 'Doctor profile not found'
@@ -448,8 +558,38 @@ export const completeDoctorProfile = async (req, res) => {
       consultationFee,
       languages,
       bio,
-      availability
+      availability,
+      profileImage // Check for profile image as base64
     } = req.body;
+    
+    // Handle profile image upload if provided
+    if (req.file || profileImage) {
+      // Delete old image from Cloudinary if it exists
+      if (user.cloudinaryId) {
+        try {
+          await cloudinary.uploader.destroy(user.cloudinaryId);
+        } catch (error) {
+          console.error('Error deleting old profile image:', error);
+        }
+      }
+      
+      // Upload new image
+      let profileImageData = null;
+      
+      if (req.file) {
+        // Multer file
+        profileImageData = await uploadFile(req.file, 'medimantra/doctors/profiles');
+      } else if (profileImage && typeof profileImage === 'string' && profileImage.startsWith('data:image')) {
+        // Base64 image
+        profileImageData = await uploadBase64Image(profileImage);
+      }
+      
+      if (profileImageData) {
+        user.profilePicture = profileImageData.url;
+        user.cloudinaryId = profileImageData.public_id;
+        await user.save();
+      }
+    }
     
     // Update doctor profile
     if (qualifications) doctorProfile.qualifications = qualifications;
@@ -470,9 +610,18 @@ export const completeDoctorProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Doctor profile updated successfully. Awaiting admin verification.',
-      data: doctorProfile
+      data: {
+        ...doctorProfile._doc,
+        user: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          profilePicture: user.profilePicture
+        }
+      }
     });
   } catch (error) {
+    console.error('Profile update error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update doctor profile',
@@ -481,7 +630,7 @@ export const completeDoctorProfile = async (req, res) => {
   }
 };
 
-// Upload verification documents
+// Upload verification documents with Cloudinary
 export const uploadVerificationDocs = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -504,16 +653,42 @@ export const uploadVerificationDocs = async (req, res) => {
       });
     }
     
-    // Process each file and add to verification documents
-    const documents = req.files.map(file => ({
-      name: file.originalname,
-      url: file.path, // This would be the URL after uploading to cloud storage
-      verified: false
-    }));
+    // Upload each file to Cloudinary
+    const uploadPromises = req.files.map(async (file) => {
+      try {
+        const result = await uploadFile(file, 'medimantra/doctors/documents');
+        
+        return {
+          name: file.originalname || 'Document',
+          url: result.url,
+          public_id: result.public_id,
+          fileType: file.mimetype,
+          verified: false,
+          uploadedAt: new Date()
+        };
+      } catch (error) {
+        console.error(`Failed to upload document:`, error);
+        return null;
+      }
+    });
     
+    // Wait for all uploads to complete
+    const uploadedDocs = await Promise.all(uploadPromises);
+    
+    // Filter out failed uploads
+    const successfulUploads = uploadedDocs.filter(doc => doc !== null);
+    
+    if (successfulUploads.length === 0) {
+      return res.status(500).json({
+        success: false,
+        message: 'Document uploads failed'
+      });
+    }
+    
+    // Add to verification documents
     doctorProfile.verificationDocuments = [
-      ...doctorProfile.verificationDocuments,
-      ...documents
+      ...doctorProfile.verificationDocuments || [],
+      ...successfulUploads
     ];
     
     // Reset verification status
@@ -524,9 +699,13 @@ export const uploadVerificationDocs = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Verification documents uploaded successfully. Awaiting admin verification.',
-      data: doctorProfile.verificationDocuments
+      data: {
+        documents: successfulUploads,
+        totalDocuments: doctorProfile.verificationDocuments.length
+      }
     });
   } catch (error) {
+    console.error('Document upload error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to upload verification documents',

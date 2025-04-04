@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   // Check if user is authenticated on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const storedToken = localStorage.getItem("accessToken");
+      const storedToken = localStorage.getItem("token");
       
       if (storedToken) {
         try {
@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }) => {
           // Fetch current user
           const { data } = await axios.get(`${API_URL}/auth/current-user`);
           
+          localStorage.setItem("Role", data.data.role || data.user.role);
           setUser(data.user || data.data);
           setToken(storedToken);
         } catch (error) {
@@ -69,7 +70,8 @@ export const AuthProvider = ({ children }) => {
       
       // Store tokens
       if (data.accessToken) {
-        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("Role", data.data.role || data.user.role);
+        localStorage.setItem("token", data.accessToken);
         if (data.refreshToken) {
           localStorage.setItem("refreshToken", data.refreshToken);
         }
@@ -99,7 +101,8 @@ export const AuthProvider = ({ children }) => {
       
       // Store tokens
       if (data.accessToken) {
-        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("Role", data.user.role);
+        localStorage.setItem("token", data.accessToken);
         if (data.refreshToken) {
           localStorage.setItem("refreshToken", data.refreshToken);
         }
@@ -131,23 +134,20 @@ export const AuthProvider = ({ children }) => {
       
       const { data } = await axios.post(`${API_URL}/auth/login`, credentials);
       
-     
+    //  console.log("Login data:", data);
       
       setUser(data.patient || data.user);
+      // console.log("done")
       setToken(data.token);
-      localStorage.setItem("accessToken", data.token);
-      
-      localStorage.setItem("UserId", data.userId);
-       // Store tokens
-       if (data.accessToken) {
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("UserId", data.user._id);
-        if (data.refreshToken) {
-          localStorage.setItem("refreshToken", data.refreshToken);
-        }
-        axios.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
-      }
-      
+      // console.log("done")
+      localStorage.setItem("token", data.token);
+      // console.log("done")
+      localStorage.setItem("Role", data.user.role);
+      // console.log("done")
+      localStorage.setItem("userId", data.user.id);
+      // console.log("done")
+      // console.log("User ID:", data.user.id);
+      // console.log("done")
       return data;
     } catch (error) {
       const message = error.response?.data?.message || "Login failed";
@@ -166,8 +166,9 @@ export const AuthProvider = ({ children }) => {
       
       // Store tokens
       if (data.token) {
-        localStorage.setItem("accessToken", data.token);
-        localStorage.setItem("doctorId", data.user._id);
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userId", data.user._id);
+        localStorage.setItem("Role", data.data.role || data.user.role);
         if (data.refreshToken) {  
           localStorage.setItem("refreshToken", data.refreshToken);
         }
@@ -205,7 +206,7 @@ export const AuthProvider = ({ children }) => {
       // Clear state and storage
       setUser(null);
       setToken(null);
-      localStorage.removeItem("accessToken");
+      localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
       delete axios.defaults.headers.common["Authorization"];
       setLoading(false);
@@ -287,7 +288,7 @@ export const AuthProvider = ({ children }) => {
       const { data } = await axios.post(`${API_URL}/auth/refresh-token`, { refreshToken });
       
       // Store new access token
-      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("token", data.accessToken);
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
       
       setToken(data.accessToken);

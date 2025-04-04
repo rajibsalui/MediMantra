@@ -1,5 +1,6 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { upload } from '../utils/fileUpload.js'; // Assuming you have this middleware
 import {
   getPatientProfile,
   updatePatientProfile,
@@ -9,7 +10,9 @@ import {
   updateProfileImage,
   getPatientMedicalRecords,
   getPatientVitalStats,
-  rateDoctorAfterAppointment
+  rateDoctorAfterAppointment,
+  downloadPrescription,
+  uploadMedicalDocument
 } from '../controllers/patient.controller.js';
 
 const router = express.Router();
@@ -54,7 +57,7 @@ router.put('/appointments/:id/cancel', authMiddleware, cancelAppointment);
  * @desc    Update patient profile image
  * @access  Private (Patient only)
  */
-router.put('/profile-image', authMiddleware, updateProfileImage);
+router.put('/profile-image', authMiddleware, upload.single('profileImage'), updateProfileImage);
 
 /**
  * @route   GET /api/patients/medical-records
@@ -62,6 +65,20 @@ router.put('/profile-image', authMiddleware, updateProfileImage);
  * @access  Private (Patient only)
  */
 router.get('/medical-records', authMiddleware, getPatientMedicalRecords);
+
+/**
+ * @route   POST /api/patients/medical-records/upload
+ * @desc    Upload medical document
+ * @access  Private (Patient only)
+ */
+router.post('/medical-records/upload', authMiddleware, upload.single('document'), uploadMedicalDocument);
+
+/**
+ * @route   GET /api/patients/prescriptions/:id/download
+ * @desc    Download prescription
+ * @access  Private (Patient only)
+ */
+router.get('/prescriptions/:id/download', authMiddleware, downloadPrescription);
 
 /**
  * @route   GET /api/patients/vital-stats

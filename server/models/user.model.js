@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
+      index: true,
       required: [true, 'Email is required'],
       unique: true,
       lowercase: true,
@@ -37,7 +38,8 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ['user', 'patient', 'doctor', 'admin'],
-      default: 'user'
+      default: 'user',
+      index: true
     },
     profileImage: {
       type: String,
@@ -80,9 +82,9 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Index for faster lookups
-userSchema.index({ email: 1 });
-userSchema.index({ role: 1 });
+// // Index for faster lookups
+// userSchema.index({ email: 1 });
+// userSchema.index({ role: 1 });
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function() {

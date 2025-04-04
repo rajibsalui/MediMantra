@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
+import { cloudinary } from '../config/cloudinary.config.js';
 
 // Get the directory name using ES module syntax
 const __filename = fileURLToPath(import.meta.url);
@@ -57,77 +58,50 @@ export const upload = multer({
 });
 
 /**
- * Upload a file and return the URL
+ * Upload a file to Cloudinary and return the URL
  * @param {Object} file - The file object from multer
- * @param {String} subFolder - The subfolder to upload to (optional)
- * @returns {Promise<{url: string}>} - URL of the uploaded file
+ * @param {String} folder - The folder to upload to (optional)
+ * @returns {Promise<{url: string, public_id: string}>} - URL of the uploaded file
  */
-export const uploadFile = async (file, subFolder = 'general') => {
-  return new Promise((resolve, reject) => {
-    try {
-      // If file is already uploaded by multer
-      if (file.path) {
-        const relativePath = path.relative(uploadsDir, file.path);
-        return resolve({
-          url: `/uploads/${relativePath.replace(/\\/g, '/')}`
-        });
-      }
-      
-      // Create folder if it doesn't exist
-      const targetFolder = path.join(uploadsDir, subFolder);
-      if (!fs.existsSync(targetFolder)) {
-        fs.mkdirSync(targetFolder, { recursive: true });
-      }
-      
-      // Generate unique file name
-      const fileExt = path.extname(file.originalname);
-      const fileName = `${uuidv4()}${fileExt}`;
-      const filePath = path.join(targetFolder, fileName);
-      
-      // Create write stream and write the file
-      const writeStream = fs.createWriteStream(filePath);
-      writeStream.write(file.buffer);
-      writeStream.end();
-      
-      writeStream.on('finish', () => {
-        resolve({
-          url: `/uploads/${subFolder}/${fileName}`
-        });
-      });
-      
-      writeStream.on('error', (err) => {
-        reject(err);
-      });
-    } catch (error) {
-      reject(error);
+export const uploadFile = async (file, folder = 'medimantra') => {
+  try {
+    // If file was already uploaded by multer-storage-cloudinary
+    if (file.path && file.path.includes('cloudinary')) {
+      return {
+        url: file.path,
+        public_id: file.filename
+      };
     }
-  });
+    
+    // Manual upload to Cloudinary
+    const result = await cloudinary.uploader.upload(file.path || file.buffer, {
+      folder: folder,
+      resource_type: 'auto'
+    });
+    
+    return {
+      url: result.secure_url,
+      public_id: result.public_id
+    };
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    throw new Error('File upload failed');
+  }
 };
 
 /**
- * Delete a file by URL
- * @param {String} fileUrl - The URL of the file to delete
+ * Delete a file from Cloudinary by public_id
+ * @param {String} publicId - The public_id of the file to delete
  * @returns {Promise<boolean>} - Success status
  */
-export const deleteFile = async (fileUrl) => {
+export const deleteFile = async (publicId) => {
   try {
-    if (!fileUrl || !fileUrl.startsWith('/uploads/')) {
-      return false; // Not a valid file URL
-    }
+    if (!publicId) return false;
     
-    // Extract relative path from the URL
-    const relativePath = fileUrl.replace('/uploads/', '');
-    const filePath = path.join(uploadsDir, relativePath);
-    
-    // Check if file exists
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      return true;
-    }
-    
-    return false;
+    const result = await cloudinary.uploader.destroy(publicId);
+    return result.result === 'ok';
   } catch (error) {
-    console.error('Error deleting file:', error);
+    console.error('Error deleting file from Cloudinary:', error);
     return false;
   }
 };

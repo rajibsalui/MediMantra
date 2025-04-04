@@ -21,6 +21,7 @@ export const PatientProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
   const [patientError, setPatientError] = useState(null);
+  const [vitalStats, setVitalStats] = useState([]);
 
   // Configure axios with auth token
   const getAuthHeaders = () => {
@@ -33,7 +34,8 @@ export const PatientProvider = ({ children }) => {
 
   // Fetch patient profile when authenticated
   useEffect(() => {
-    if (isAuthenticated && user?.role === "patient" && token) {
+    const role = localStorage.getItem("Role");
+    if (isAuthenticated && role === "patient" && token) {
       getPatientProfile();
     }
   }, [isAuthenticated, user, token]);
@@ -242,11 +244,42 @@ export const PatientProvider = ({ children }) => {
         `${API_URL}/patients/vital-stats`,
         getAuthHeaders()
       );
+      setVitalStats(data.data || []);
       return data.data || [];
     } catch (error) {
       const message = error.response?.data?.message || "Failed to fetch vital statistics";
       console.error("Error fetching vital stats:", error);
       return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add vital statistics
+  const addVitalStats = async (vitalData) => {
+    if (!token) {
+      toast.error("Authentication required");
+      throw new Error("No authentication token available");
+    }
+
+    try {
+      setLoading(true);
+      const { data } = await axios.post(
+        `${API_URL}/patients/vital-stats`, 
+        vitalData, 
+        getAuthHeaders()
+      );
+      
+      // Update local state
+      const updatedVitalStats = [...(vitalStats || []), data.data];
+      setVitalStats(updatedVitalStats);
+      
+      toast.success("Vital statistics recorded successfully");
+      return data.data;
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to record vital statistics";
+      toast.error(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
@@ -273,8 +306,9 @@ export const PatientProvider = ({ children }) => {
         fetchUpcomingAppointments,
         fetchMedicalRecords,
         fetchVitalStats,
+        addVitalStats,
         medicalRecords: null, // Will be populated by fetchMedicalRecords
-        vitalStats: [], // Will be populated by fetchVitalStats,
+        vitalStats, // Will be populated by fetchVitalStats,
       }}
     >
       {children}

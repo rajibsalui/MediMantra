@@ -118,7 +118,7 @@ export const DoctorProvider = ({ children }) => {
         getAuthHeaders()
       );
       setDashboardStats(data.data);
-      return data.data;
+      return data.data; 
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
       // Set fallback stats with dummy data for testing

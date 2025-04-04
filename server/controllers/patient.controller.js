@@ -138,24 +138,42 @@ export const getPatientAppointments = async (req, res) => {
       });
     }
     
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status, page = 1, limit = 10, startDate, endDate } = req.query;
     const skip = (page - 1) * limit;
     
     // Build filter
     const filter = { patient: patient._id };
     
-    if (status) {
+    // Handle special "upcoming" filter
+    if (status === 'upcoming') {
+      filter.status = 'scheduled'; // Only scheduled appointments
+      filter.appointmentDate = { $gte: new Date() }; // Only future dates
+    } 
+    // Handle other status filters
+    else if (status) {
       filter.status = status;
+    }
+    
+    // Add date range filter if provided
+    if (startDate && endDate) {
+      filter.appointmentDate = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    } else if (startDate) {
+      filter.appointmentDate = { $gte: new Date(startDate) };
+    } else if (endDate) {
+      filter.appointmentDate = { $lte: new Date(endDate) };
     }
     
     // Get appointments with pagination
     const appointments = await Appointment.find(filter)
       .populate({
         path: 'doctor',
-        select: 'user specialties consultationFee',
+        select: 'user specialties consultationFee videoConsultation',
         populate: {
           path: 'user',
-          select: 'firstName lastName profileImage'
+          select: 'firstName lastName email phone profileImage'
         }
       })
       .sort({ appointmentDate: -1, appointmentTime: -1 })
@@ -221,8 +239,8 @@ export const bookAppointment = async (req, res) => {
     // Check if doctor exists and is verified
     const doctor = await mongoose.model('Doctor').findOne({
       _id: doctorId,
-      isVerified: true,
-      acceptingNewPatients: true
+      // isVerified: true,
+      // acceptingNewPatients: true
     });
     
     if (!doctor) {
@@ -253,7 +271,7 @@ export const bookAppointment = async (req, res) => {
     }
     
     const timeSlot = daySchedule.slots.find(
-      slot => slot.startTime === appointmentTime && !slot.isBooked
+      slot => slot.startTime < appointmentTime && slot.endTime > appointmentTime && !slot.isBooked
     );
     
     if (!timeSlot) {
@@ -397,48 +415,61 @@ export const updateProfileImage = async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Get user
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload an image file'
+      });
+    }
+
+    // Find user
+    const User = mongoose.model('User');
     const user = await User.findById(userId);
+    
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-    
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please upload an image'
-      });
+
+    // If user already has a profile image, delete it from Cloudinary
+    if (user.profileImageId) {
+      await deleteFile(user.profileImageId);
     }
     
-    // Delete previous image if exists
-    if (user.profileImage) {
-      await deleteFile(user.profileImage);
-    }
+    // Upload file to Cloudinary
+    const uploadedImage = await uploadFile(req.file, 'patients/profile-images');
     
-    // Upload new image
-    const uploadedFile = await uploadFile(req.file, 'users/profile');
-    
-    // Update user's profile image
-    user.profileImage = uploadedFile.url;
+    // Update user profile with new image URL and public_id
+    user.profileImage = uploadedImage.url;
+    user.profileImageId = uploadedImage.public_id;
     await user.save();
     
     res.status(200).json({
       success: true,
-      message: 'Profile image updated successfully',
       data: {
         profileImage: user.profileImage
-      }
+      },
+      message: 'Profile image updated successfully'
     });
   } catch (error) {
     console.error('Error updating profile image:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error',
+      message: 'Server error while updating profile image',
       error: error.message
     });
+  } finally {
+    // Clean up temporary file if it exists
+    if (req.file && req.file.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (err) {
+        console.error('Error deleting temporary file:', err);
+      }
+    }
   }
 };
 
@@ -536,6 +567,83 @@ export const getPatientMedicalRecords = async (req, res) => {
       message: 'Server error',
       error: error.message
     });
+  }
+};
+
+/**
+ * @desc    Upload medical document
+ * @route   POST /api/patients/medical-records/upload
+ * @access  Private (Patient only)
+ */
+export const uploadMedicalDocument = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { documentType, documentDate, description } = req.body;
+    
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload a document'
+      });
+    }
+    
+    // Get patient
+    const Patient = mongoose.model('Patient');
+    const patient = await Patient.findOne({ user: userId });
+    
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient profile not found'
+      });
+    }
+    
+    // Upload document to Cloudinary
+    const uploadedFile = await uploadFile(req.file, 'patients/medical-documents');
+    
+    // Create medical record
+    const MedicalRecord = mongoose.model('MedicalRecord');
+    const medicalRecord = new MedicalRecord({
+      patient: patient._id,
+      documentType,
+      documentDate: new Date(documentDate) || new Date(),
+      description,
+      fileUrl: uploadedFile.url,
+      fileId: uploadedFile.public_id,
+      fileName: req.file.originalname,
+      fileType: req.file.mimetype,
+      uploadDate: new Date()
+    });
+    
+    // Save medical record
+    await medicalRecord.save();
+    
+    // Add to patient's medical records array
+    patient.medicalRecords.push(medicalRecord._id);
+    await patient.save();
+    
+    res.status(201).json({
+      success: true,
+      data: medicalRecord,
+      message: 'Medical document uploaded successfully'
+    });
+  } catch (error) {
+    console.error('Error uploading medical document:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while uploading document',
+      error: error.message
+    });
+  } finally {
+    // Clean up temporary file if it exists
+    if (req.file && req.file.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (err) {
+        console.error('Error deleting temporary file:', err);
+      }
+    }
   }
 };
 
@@ -722,6 +830,63 @@ export const rateDoctorAfterAppointment = async (req, res) => {
     });
   } catch (error) {
     console.error('Error rating doctor:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Download prescription
+ * @route   GET /api/patients/prescriptions/:id/download
+ * @access  Private (Patient only)
+ */
+export const downloadPrescription = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const prescriptionId = req.params.id;
+    
+    // Get patient
+    const patient = await Patient.findOne({ user: userId });
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient profile not found'
+      });
+    }
+    
+    // Find prescription and verify it belongs to the patient
+    const prescription = await mongoose.model('Prescription').findOne({
+      _id: prescriptionId,
+      patient: patient._id
+    }).populate({
+      path: 'doctor',
+      select: 'user',
+      populate: {
+        path: 'user',
+        select: 'firstName lastName'
+      }
+    });
+    
+    if (!prescription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Prescription not found or access denied'
+      });
+    }
+    
+    // Return prescription details with download URL
+    res.status(200).json({
+      success: true,
+      data: {
+        ...prescription.toJSON(),
+        downloadUrl: prescription.fileUrl || null
+      }
+    });
+  } catch (error) {
+    console.error('Error downloading prescription:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

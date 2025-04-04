@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function AppointmentContent() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { 
     appointmentDetails, 
     updateAppointmentDetails, 
@@ -24,6 +24,7 @@ export default function AppointmentContent() {
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState(null); // Add state for selected doctor
   const [searchTerm, setSearchTerm] = useState(""); // Add state for search term
   const router = useRouter();
   
@@ -41,10 +42,10 @@ export default function AppointmentContent() {
 
   // Check authentication
   useEffect(() => {
-    if (!isAuthenticated && currentStep > 1) {
+    if (!authLoading && !isAuthenticated) {
       router.push("/auth/login?redirect=/appointments");
     }
-  }, [isAuthenticated, currentStep, router]);
+  }, [isAuthenticated, authLoading, router]);
 
   // Handle file upload for prescriptions
   const handleFileChange = (e) => {
@@ -77,9 +78,11 @@ export default function AppointmentContent() {
   const confirmAppointment = async () => {
     try {
       setIsLoading(true);
+      console.log("Booking appointment with details:", appointmentDetails);
       await bookAppointment();
       // Redirect to appointments list after successful booking
-      router.push("/dashboard/appointments");
+      const userID = localStorage.getItem("userId");
+        router.push(`/${user.role}/dashboard/${userID}`);
     } catch (error) {
       console.error("Error booking appointment:", error);
       setIsLoading(false);
@@ -92,15 +95,15 @@ export default function AppointmentContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {isLoading && (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-            <Loader2 className="h-10 w-10 text-blue-600 animate-spin mb-4" />
-            <p className="text-lg font-medium">
+        <div className="fixed inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg text-center">
+            <Loader2 className="h-10 w-10 text-blue-600 dark:text-blue-500 animate-spin mb-4" />
+            <p className="text-lg font-medium text-slate-900 dark:text-slate-100">
               {currentStep === 3 ? "Booking your appointment..." : "Loading..."}
             </p>
-            <p className="text-sm text-muted-foreground mt-1 text-center">
+            <p className="text-sm mt-1 text-center text-slate-600 dark:text-slate-400">
               {currentStep === 3 
                 ? "Please don't close this window." 
                 : "This will only take a moment."}
@@ -112,12 +115,12 @@ export default function AppointmentContent() {
       {/* Header */}
       <div 
         ref={headerRef}
-        className="bg-blue-600 text-white py-8 px-6 md:py-16 md:px-0"
+        className="bg-blue-600 dark:bg-blue-800 text-white py-8 px-6 md:py-16 md:px-0"
       >
         <div className="container mx-auto">
           <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Book Your Doctor Appointment</h1>
-            <p className="text-blue-100 text-lg md:text-xl">Find the right specialist, choose a convenient time, and take control of your health journey.</p>
+            <p className="text-blue-100 dark:text-blue-100 text-lg md:text-xl">Find the right specialist, choose a convenient time, and take control of your health journey.</p>
           </div>
         </div>
       </div>
@@ -134,7 +137,11 @@ export default function AppointmentContent() {
                 selectedDoctor={appointmentDetails.doctor}
                 selectedDate={appointmentDetails.date}
                 selectedTimeSlot={appointmentDetails.timeSlot}
-                onDoctorSelect={(doctor) => updateAppointmentDetails("doctor", doctor)}
+                onDoctorSelect={(doctor) => {
+                  setSelectedDoctor(doctor);
+
+                  updateAppointmentDetails("doctor", doctor)
+                  }}
                 onDateSelect={(date) => updateAppointmentDetails("date", date)}
                 onTimeSlotSelect={(timeSlot) => updateAppointmentDetails("timeSlot", timeSlot)}
                 getAvailableTimeSlots={getAvailableTimeSlots}
@@ -159,9 +166,9 @@ export default function AppointmentContent() {
           
           {currentStep === 3 && (
             <Step3Confirmation
-            // selectedDoctor={appointmentDetails.doctor}
-            //     selectedDate={appointmentDetails.date}
-                // selectedTimeSlot={appointmentDetails.timeSlot}
+              selectedDoctor={appointmentDetails.doctor}
+              selectedDate={appointmentDetails.date}
+              selectedTimeSlot={appointmentDetails.timeSlot}
               appointmentDetails={appointmentDetails}
               onBack={goToPrevStep}
               onConfirm={confirmAppointment}

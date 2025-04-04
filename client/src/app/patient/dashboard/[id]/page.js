@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import { useAppointment } from '@/contexts/AppointmentContext';
 
 // Expected server data shapes for validation
 const dataShapes = {
@@ -73,6 +74,7 @@ export default function HealthRecords() {
     vitalStats,
     loading: patientLoading 
   } = usePatient();
+  const { appointments, loading: appointmentsLoading, getAppointments, cancelAppointment } = useAppointment();
   
   const router = useRouter();
 
@@ -173,7 +175,8 @@ export default function HealthRecords() {
 
   // Calculate data summary for dashboard analytics
   const updateDataSummary = () => {
-    const appointmentsCount = upcomingAppointments?.length || 0;
+    console.log(appointments.length)
+    const appointmentsCount = appointments?.length || 0;
     
     const recordsCount = (
       (medicalRecords?.visits?.length || 0) + 
@@ -198,6 +201,8 @@ export default function HealthRecords() {
 
   // Fetch patient data when authenticated
   useEffect(() => {
+    getAppointments();
+    console.log(dataSummary)
     const loadPatientData = async () => {
       if (isAuthenticated && user) {
         setIsLoading(true);
@@ -359,7 +364,7 @@ export default function HealthRecords() {
             lastUpdated={dataRefreshTimestamps.profile}
           />
           <UpcomingAppointments 
-            appointments={upcomingAppointments || dataShapes.appointments.fallback} 
+            appointments={appointments || dataShapes.appointments.fallback} 
             isLoading={loadingStates.appointments}
             error={errors.appointments}
             onRetry={() => loadData(user?._id, 'appointments')}

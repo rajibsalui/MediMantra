@@ -84,7 +84,7 @@ export default function Step1DoctorSelection({
    
   // GSAP animations
   useEffect(() => {
-    console.log(doctors);
+    doctors && console.log(doctors);
     // Steps animation
     gsap.from(".step-item", {
       scrollTrigger: {
@@ -145,15 +145,15 @@ export default function Step1DoctorSelection({
             desc: "Fill in your information and we'll confirm your appointment." 
           },
         ].map((step, i) => (
-          <Card key={i} className="step-item border-none shadow-md">
+          <Card key={i} className="step-item border-none shadow-md bg-white dark:bg-slate-800">
             <CardHeader>
               <div className="h-12 w-12 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-4">
                 {step.icon}
               </div>
-              <CardTitle>{step.title}</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-slate-100">{step.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">{step.desc}</p>
+              <p className="text-slate-600 dark:text-slate-400">{step.desc}</p>
             </CardContent>
           </Card>
         ))}
@@ -163,13 +163,13 @@ export default function Step1DoctorSelection({
       <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-md">
         <div className="grid md:grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="search">Search Doctors</Label>
+            <Label htmlFor="search" className="text-slate-900 dark:text-slate-200">Search Doctors</Label>
             <div className="relative mt-1.5">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 h-4 w-4" />
               <Input 
                 id="search"
                 placeholder="Doctor name or specialty..."
-                className="pl-9"
+                className="pl-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100"
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}
               />
@@ -177,15 +177,15 @@ export default function Step1DoctorSelection({
           </div>
           
           <div>
-            <Label htmlFor="specialty">Specialty</Label>
+            <Label htmlFor="specialty" className="text-slate-900 dark:text-slate-200">Specialty</Label>
             <Select onValueChange={onSpecialtyChange} value={selectedSpecialty}>
-              <SelectTrigger id="specialty" className="mt-1.5">
+              <SelectTrigger id="specialty" className="mt-1.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
                 <SelectValue placeholder="Select specialty" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Specialties</SelectItem>
+              <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                <SelectItem value="" className="text-slate-900 dark:text-slate-100">All Specialties</SelectItem>
                 {specialties.map((specialty) => (
-                  <SelectItem key={specialty} value={specialty}>
+                  <SelectItem key={specialty} value={specialty} className="text-slate-900 dark:text-slate-100">
                     {specialty}
                   </SelectItem>
                 ))}
@@ -194,25 +194,26 @@ export default function Step1DoctorSelection({
           </div>
           
           <div>
-            <Label htmlFor="date">Appointment Date</Label>
+            <Label htmlFor="date" className="text-slate-900 dark:text-slate-200">Appointment Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   id="date"
                   variant="outline"
-                  className="w-full justify-start text-left font-normal mt-1.5"
+                  className="w-full justify-start text-left font-normal mt-1.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100"
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 h-4 w-4 text-slate-500 dark:text-slate-400" />
                   {format(selectedDate, "PPP")}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
                   onSelect={onDateSelect}
                   initialFocus
                   disabled={(date) => date < new Date()}
+                  className="border-slate-200 dark:border-slate-700"
                 />
               </PopoverContent>
             </Popover>
@@ -223,21 +224,21 @@ export default function Step1DoctorSelection({
       {/* Doctor list */}
       <div ref={doctorsRef} className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
             {loading 
               ? "Loading doctors..." 
               : `${filteredDoctors.length} Doctors Available`}
           </h2>
           <Select defaultValue="recommended">
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="recommended">Recommended</SelectItem>
-              <SelectItem value="rating">Highest Rating</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="availability">Earliest Available</SelectItem>
+            <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+              <SelectItem value="recommended" className="text-slate-900 dark:text-slate-100">Recommended</SelectItem>
+              <SelectItem value="rating" className="text-slate-900 dark:text-slate-100">Highest Rating</SelectItem>
+              <SelectItem value="price-low" className="text-slate-900 dark:text-slate-100">Price: Low to High</SelectItem>
+              <SelectItem value="price-high" className="text-slate-900 dark:text-slate-100">Price: High to Low</SelectItem>
+              <SelectItem value="availability" className="text-slate-900 dark:text-slate-100">Earliest Available</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -246,21 +247,21 @@ export default function Step1DoctorSelection({
           // Loading skeleton UI
           <div className="grid md:grid-cols-2 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <Card key={i} className="border overflow-hidden">
+              <Card key={i} className="border overflow-hidden dark:border-slate-700 dark:bg-slate-800">
                 <div className="flex flex-col md:flex-row h-full">
                   <div className="md:w-1/3 h-48 md:h-auto">
-                    <Skeleton className="h-full w-full" />
+                    <Skeleton className="h-full w-full dark:bg-slate-700" />
                   </div>
                   <div className="p-5 flex flex-col flex-1 space-y-4">
-                    <Skeleton className="h-7 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-7 w-3/4 dark:bg-slate-700" />
+                    <Skeleton className="h-4 w-1/2 dark:bg-slate-700" />
                     <div className="grid grid-cols-2 gap-2">
-                      <Skeleton className="h-5 w-20" />
-                      <Skeleton className="h-5 w-24" />
-                      <Skeleton className="h-5 w-16" />
-                      <Skeleton className="h-5 w-20" />
+                      <Skeleton className="h-5 w-20 dark:bg-slate-700" />
+                      <Skeleton className="h-5 w-24 dark:bg-slate-700" />
+                      <Skeleton className="h-5 w-16 dark:bg-slate-700" />
+                      <Skeleton className="h-5 w-20 dark:bg-slate-700" />
                     </div>
-                    <Skeleton className="h-9 w-full mt-auto" />
+                    <Skeleton className="h-9 w-full mt-auto dark:bg-slate-700" />
                   </div>
                 </div>
               </Card>
@@ -269,18 +270,18 @@ export default function Step1DoctorSelection({
         ) : error ? (
           <div className="text-center py-12">
             <div className="mx-auto h-16 w-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
-              <Search className="h-8 w-8 text-red-500" />
+              <Search className="h-8 w-8 text-red-500 dark:text-red-400" />
             </div>
-            <h3 className="text-lg font-medium mb-2">Error loading doctors</h3>
-            <p className="text-muted-foreground">{error}</p>
+            <h3 className="text-lg font-medium mb-2 text-slate-900 dark:text-slate-100">Error loading doctors</h3>
+            <p className="text-slate-600 dark:text-slate-400">{error}</p>
           </div>
         ) : filteredDoctors.length === 0 ? (
           <div className="text-center py-12">
             <div className="mx-auto h-16 w-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mb-4">
-              <Search className="h-8 w-8 text-slate-400" />
+              <Search className="h-8 w-8 text-slate-400 dark:text-slate-500" />
             </div>
-            <h3 className="text-lg font-medium mb-2">No doctors match your search</h3>
-            <p className="text-muted-foreground">Try adjusting your filters or search term</p>
+            <h3 className="text-lg font-medium mb-2 text-slate-900 dark:text-slate-100">No doctors match your search</h3>
+            <p className="text-slate-600 dark:text-slate-400">Try adjusting your filters or search term</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
@@ -294,8 +295,8 @@ export default function Step1DoctorSelection({
                 <Card 
                   key={formattedDoctor.id} 
                   className={cn(
-                    "doctor-card border overflow-hidden transition-all hover:shadow-lg",
-                    isSelected ? "ring-2 ring-blue-500" : ""
+                    "doctor-card border overflow-hidden transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-800",
+                    isSelected ? "ring-2 ring-blue-500 dark:ring-blue-400" : ""
                   )}
                 >
                   <div className="flex flex-col md:flex-row h-full">
@@ -316,8 +317,8 @@ export default function Step1DoctorSelection({
                     <div className="p-5 flex flex-col flex-1">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h3 className="font-bold text-lg">{formattedDoctor.name}</h3>
-                          <p className="text-muted-foreground">{formattedDoctor.specialty}</p>
+                          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">{formattedDoctor.name}</h3>
+                          <p className="text-slate-600 dark:text-slate-400">{formattedDoctor.specialty}</p>
                         </div>
                         <Badge 
                           variant="outline" 
@@ -330,12 +331,12 @@ export default function Step1DoctorSelection({
                       
                       <div className="grid grid-cols-2 gap-y-2 mb-4 text-sm">
                         <div className="flex items-center gap-1.5">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span>{formattedDoctor.experience}</span>
+                          <Clock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                          <span className="text-slate-700 dark:text-slate-300">{formattedDoctor.experience}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span>{formattedDoctor.location}</span>
+                          <MapPin className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                          <span className="text-slate-700 dark:text-slate-300">{formattedDoctor.location}</span>
                         </div>
                         <div>
                           <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400">
@@ -343,7 +344,7 @@ export default function Step1DoctorSelection({
                           </Badge>
                         </div>
                         <div>
-                          <span className="text-green-600 font-medium">{formattedDoctor.nextAvailable}</span>
+                          <span className="text-green-600 dark:text-green-500 font-medium">{formattedDoctor.nextAvailable}</span>
                         </div>
                       </div>
                       
@@ -372,13 +373,15 @@ export default function Step1DoctorSelection({
       
       {/* Time slot selection popup */}
       <Dialog open={timeSlotDialogOpen && !!selectedDoctor} onOpenChange={setTimeSlotDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
           <DialogHeader>
-            <DialogTitle>Select Time Slot</DialogTitle>
+            <DialogTitle className="text-slate-900 dark:text-slate-100">Select Time Slot</DialogTitle>
           </DialogHeader>
           
           <div className="my-6">
-            <h3 className="font-medium mb-2">Available on {format(selectedDate, "EEEE, MMMM d")}</h3>
+            <h3 className="font-medium mb-2 text-slate-900 dark:text-slate-100">
+              Available on {format(selectedDate, "EEEE, MMMM d")}
+            </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {getTimeSlotsList().map((time) => (
                 <Button
@@ -386,7 +389,9 @@ export default function Step1DoctorSelection({
                   variant={selectedTimeSlot === time ? "default" : "outline"}
                   className={cn(
                     "text-sm h-10",
-                    selectedTimeSlot === time ? "bg-blue-600" : ""
+                    selectedTimeSlot === time 
+                      ? "bg-blue-600 dark:bg-blue-700 text-white" 
+                      : "border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
                   )}
                   onClick={() => onTimeSlotSelect(time)}
                 >
@@ -394,7 +399,7 @@ export default function Step1DoctorSelection({
                 </Button>
               ))}
               {getTimeSlotsList().length === 0 && (
-                <p className="col-span-3 text-center text-muted-foreground py-2">
+                <p className="col-span-3 text-center text-slate-600 dark:text-slate-400 py-2">
                   No time slots available for this date. Please select another date.
                 </p>
               )}
@@ -405,6 +410,7 @@ export default function Step1DoctorSelection({
             <Button 
               variant="outline" 
               onClick={() => setTimeSlotDialogOpen(false)}
+              className="border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               Cancel
             </Button>
@@ -416,6 +422,7 @@ export default function Step1DoctorSelection({
                 }
               }}
               disabled={!selectedTimeSlot}
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
             >
               Confirm
               <ChevronRight className="ml-2 h-4 w-4" />
@@ -436,7 +443,7 @@ export default function Step1DoctorSelection({
             }
           }}
           disabled={!selectedDoctor}
-          className="min-w-[150px]"
+          className="min-w-[150px] bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
         >
           {selectedTimeSlot ? "Continue" : "Select Time"}
           <ChevronRight className="ml-2 h-4 w-4" />

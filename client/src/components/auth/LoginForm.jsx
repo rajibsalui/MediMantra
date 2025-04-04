@@ -43,11 +43,13 @@ export default function LoginForm() {
       if (isDoctor) {
         await loginDoctor(formData);
         toast.success("Doctor login successful!");
-        router.push("/doctor/dashboard");
+        const userID = localStorage.getItem("userId");
+        router.push(`/doctor/dashboard/${userID}`);
       } else {
         await login(formData);
         toast.success("Login successful!");
-        router.push(`/${user.role}/dashboard`);
+        const userID = localStorage.getItem("userId");
+        router.push(`/${user.role}/dashboard/${userID}`);
       }
     } catch (error) {
       console.error("Login failed:", error);
