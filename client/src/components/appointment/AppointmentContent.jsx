@@ -14,23 +14,24 @@ import { useRouter } from "next/navigation";
 
 export default function AppointmentContent() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const { 
-    appointmentDetails, 
-    updateAppointmentDetails, 
-    bookAppointment, 
+  const {
+    appointmentDetails,
+    updateAppointmentDetails,
+    bookAppointment,
     loading,
-    getAvailableTimeSlots
+    getAvailableTimeSlots,
+    getAvailableDates
   } = useAppointment();
-  
+
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState(null); // Add state for selected doctor
+  // We use appointmentDetails.doctor instead of a separate state
   const [searchTerm, setSearchTerm] = useState(""); // Add state for search term
   const router = useRouter();
-  
+
   // Refs for animations
   const headerRef = useRef(null);
-  
+
   // GSAP animations for header
   useEffect(() => {
     gsap.from(headerRef.current, {
@@ -57,32 +58,45 @@ export default function AppointmentContent() {
       ]);
     }
   };
-  
+
   // Remove file from prescriptions
   const removeFile = (index) => {
     const updatedFiles = [...appointmentDetails.prescriptionFiles];
     updatedFiles.splice(index, 1);
     updateAppointmentDetails("prescriptionFiles", updatedFiles);
   };
-  
+
   // Navigation functions
   const goToNextStep = () => {
     setCurrentStep((prev) => prev + 1);
   };
-  
+
   const goToPrevStep = () => {
     setCurrentStep((prev) => prev - 1);
   };
-  
+
   // Confirm appointment booking
   const confirmAppointment = async () => {
     try {
       setIsLoading(true);
       console.log("Booking appointment with details:", appointmentDetails);
+      console.log("Doctor object:", appointmentDetails.doctor);
+
+      // Ensure doctor exists and has a valid ID
+      if (!appointmentDetails.doctor) {
+        console.error("Doctor object is missing");
+        setIsLoading(false);
+        return;
+      } else if (!appointmentDetails.doctor._id && !appointmentDetails.doctor.id) {
+        console.error("Doctor object does not have a valid ID");
+        setIsLoading(false);
+        return;
+      }
+
       await bookAppointment();
       // Redirect to appointments list after successful booking
       const userID = localStorage.getItem("userId");
-        router.push(`/${user.role}/dashboard/${userID}`);
+      router.push(`/${user.role}/dashboard/${userID}`);
     } catch (error) {
       console.error("Error booking appointment:", error);
       setIsLoading(false);
@@ -104,8 +118,8 @@ export default function AppointmentContent() {
               {currentStep === 3 ? "Booking your appointment..." : "Loading..."}
             </p>
             <p className="text-sm mt-1 text-center text-slate-600 dark:text-slate-400">
-              {currentStep === 3 
-                ? "Please don't close this window." 
+              {currentStep === 3
+                ? "Please don't close this window."
                 : "This will only take a moment."}
             </p>
           </div>
@@ -113,7 +127,7 @@ export default function AppointmentContent() {
       )}
 
       {/* Header */}
-      <div 
+      <div
         ref={headerRef}
         className="bg-blue-600 dark:bg-blue-800 text-white py-8 px-6 md:py-16 md:px-0"
       >
@@ -124,7 +138,7 @@ export default function AppointmentContent() {
           </div>
         </div>
       </div>
-      
+
       {/* Progress indicator */}
       <div className="container mx-auto py-8">
         <StepProgress currentStep={currentStep} />
@@ -133,25 +147,45 @@ export default function AppointmentContent() {
         <div className="max-w-6xl mx-auto">
           {currentStep === 1 && (
             <DoctorListProvider>
-              <Step1DoctorSelection 
+              <Step1DoctorSelection
                 selectedDoctor={appointmentDetails.doctor}
                 selectedDate={appointmentDetails.date}
                 selectedTimeSlot={appointmentDetails.timeSlot}
                 onDoctorSelect={(doctor) => {
-                  setSelectedDoctor(doctor);
-
-                  updateAppointmentDetails("doctor", doctor)
-                  }}
+                  // Update the doctor in the appointment context
+                  updateAppointmentDetails("doctor", doctor);
+                  console.log("Selected doctor:", doctor);
+                }}
                 onDateSelect={(date) => updateAppointmentDetails("date", date)}
-                onTimeSlotSelect={(timeSlot) => updateAppointmentDetails("timeSlot", timeSlot)}
-                getAvailableTimeSlots={getAvailableTimeSlots}
+                onTimeSlotSelect={(timeSlot) => {
+                  // Store the selected time slot
+                  updateAppointmentDetails("timeSlot", timeSlot);
+
+                  // Find the slot object to get the display time
+                  const selectedDate = appointmentDetails.date;
+                  if (selectedDate && appointmentDetails.doctor) {
+                    const doctorId = appointmentDetails.doctor._id || appointmentDetails.doctor.id;
+                    getAvailableTimeSlots(doctorId, selectedDate).then(slots => {
+                      const selectedSlot = slots.find(slot => slot.startTime === timeSlot);
+                      if (selectedSlot && selectedSlot.displayTime) {
+                        updateAppointmentDetails("displayTimeSlot", selectedSlot.displayTime);
+                      }
+                    });
+                  }
+                }}
+                getAvailableTimeSlots={(date) => {
+                  if (!appointmentDetails.doctor) return [];
+                  const doctorId = appointmentDetails.doctor._id || appointmentDetails.doctor.id;
+                  return getAvailableTimeSlots(doctorId, date);
+                }}
+                getAvailableDates={getAvailableDates}
                 onNext={goToNextStep}
                 searchTerm={searchTerm}
                 onSearchChange={handleSearchChange}
               />
             </DoctorListProvider>
           )}
-          
+
           {currentStep === 2 && (
             <Step2PatientInfo
               appointmentDetails={appointmentDetails}
@@ -163,7 +197,7 @@ export default function AppointmentContent() {
               onBack={goToPrevStep}
             />
           )}
-          
+
           {currentStep === 3 && (
             <Step3Confirmation
               selectedDoctor={appointmentDetails.doctor}

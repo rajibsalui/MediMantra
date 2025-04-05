@@ -271,7 +271,7 @@ export const bookAppointment = async (req, res) => {
     }
     
     const timeSlot = daySchedule.slots.find(
-      slot => slot.startTime < appointmentTime && slot.endTime > appointmentTime && !slot.isBooked
+      slot => slot.startTime <= appointmentTime && slot.endTime >= appointmentTime && !slot.isBooked
     );
     
     if (!timeSlot) {

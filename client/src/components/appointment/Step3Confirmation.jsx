@@ -34,6 +34,7 @@ export default function Step3Confirmation({
   selectedDoctor,
   selectedDate,
   selectedTimeSlot,
+  appointmentDetails,
   prescriptionFiles = [],
   insuranceProviders = [], // Add default empty array
   onBack,
@@ -41,7 +42,7 @@ export default function Step3Confirmation({
   isLoading
 }) {
   const summaryRef = useRef(null);
-  
+
   // GSAP animations
   useEffect(() => {
     gsap.from(".summary-animate", {
@@ -51,7 +52,7 @@ export default function Step3Confirmation({
       duration: 0.5
     });
   }, []);
-  
+
   console.log("Selected Doctor:", selectedDoctor);
   // Safeguard against undefined selectedDoctor
   if (!selectedDoctor) {
@@ -63,7 +64,7 @@ export default function Step3Confirmation({
       </div>
     );
   }
-  
+
   return (
     <div className="max-w-3xl mx-auto space-y-8" ref={summaryRef}>
       <Card className="border-none shadow-lg overflow-hidden summary-animate bg-white dark:bg-slate-800">
@@ -75,48 +76,58 @@ export default function Step3Confirmation({
             <h2 className="text-2xl font-bold text-green-800 dark:text-green-300 mb-1">Appointment Ready!</h2>
             <p className="text-green-700 dark:text-green-400">Please review the details below and confirm</p>
           </div>
-          
+
           <div className="p-6 space-y-6">
             <div className="flex items-center gap-4">
               <div className="relative h-20 w-20 rounded-md overflow-hidden">
                 <Image
-                  src={selectedDoctor.image}
-                  alt={selectedDoctor.fullName}
+                  src={selectedDoctor.image || selectedDoctor.user?.profileImage || "/placeholder-doctor.jpg"}
+                  alt={selectedDoctor.name || (selectedDoctor.user ? `Dr. ${selectedDoctor.user.firstName} ${selectedDoctor.user.lastName}` : 'Doctor')}
                   fill
                   className="object-cover"
                 />
               </div>
               <div>
-                <h3 className="font-bold text-xl text-slate-900 dark:text-slate-100">{selectedDoctor.fullName}</h3>
-                {selectedDoctor.specialties.map((spec, index) => (
-                  <p key={index} className="text-slate-600 dark:text-slate-400">{spec.degree}</p>
-                ))}
-                
+                <h3 className="font-bold text-xl text-slate-900 dark:text-slate-100">
+                  {selectedDoctor.name || (selectedDoctor.user ? `Dr. ${selectedDoctor.user.firstName} ${selectedDoctor.user.lastName}` : 'Doctor')}
+                </h3>
+                {selectedDoctor.specialties && Array.isArray(selectedDoctor.specialties) ? (
+                  selectedDoctor.specialties.map((spec, index) => (
+                    <p key={index} className="text-slate-600 dark:text-slate-400">
+                      {typeof spec === 'string' ? spec : spec.degree || ''}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-slate-600 dark:text-slate-400">{selectedDoctor.specialty || ''}</p>
+                )}
+
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300"
                   >
                     <CalendarIcon className="h-3 w-3" />
                     {format(selectedDate, "MMMM d, yyyy")}
                   </Badge>
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300"
                   >
                     <Clock className="h-3 w-3" />
-                    {selectedTimeSlot}
+                    {appointmentDetails?.displayTimeSlot || selectedTimeSlot}
                   </Badge>
                 </div>
               </div>
             </div>
 
             <Separator className="dark:bg-slate-700" />
-            
+
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-slate-600 dark:text-slate-400">Location</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">+91 {selectedDoctor.user.phone}</span>
+                <span className="text-slate-600 dark:text-slate-400">Contact</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {selectedDoctor.user?.phone ? `+91 ${selectedDoctor.user.phone}` : 'Contact information unavailable'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Duration</span>
@@ -124,11 +135,16 @@ export default function Step3Confirmation({
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Appointment Type</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">In-person consultation</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {appointmentDetails?.appointmentType === 'video' ? 'Video consultation' :
+                   appointmentDetails?.appointmentType === 'phone' ? 'Phone consultation' : 'In-person consultation'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-600 dark:text-slate-400">Consultation Fee</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">₹{selectedDoctor.consultationFee.inPerson}.00</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  ₹{selectedDoctor.consultationFee?.inPerson || selectedDoctor.price || 0}.00
+                </span>
               </div>
               {prescriptionFiles?.length > 0 && (
                 <div className="flex justify-between">
@@ -137,17 +153,17 @@ export default function Step3Confirmation({
                 </div>
               )}
             </div>
-            
+
             <Separator className="dark:bg-slate-700" />
-            
+
             <div className="flex justify-between font-bold text-lg text-slate-900 dark:text-slate-100">
               <span>Total</span>
-              <span>₹{selectedDoctor.consultationFee.inPerson}.00</span>
+              <span>₹{selectedDoctor.consultationFee?.inPerson || selectedDoctor.price || 0}.00</span>
             </div>
           </div>
         </CardContent>
       </Card>
-      
+
       <div className="summary-animate space-y-6">
         <Card className="border-none shadow-md bg-white dark:bg-slate-800">
           <CardHeader>
@@ -201,8 +217,8 @@ export default function Step3Confirmation({
                       </SelectTrigger>
                       <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                         {insuranceProviders?.map(provider => (
-                          <SelectItem 
-                            key={provider} 
+                          <SelectItem
+                            key={provider}
                             value={provider.toLowerCase().replace(/\s+/g, '-')}
                             className="text-slate-900 dark:text-slate-100"
                           >
@@ -225,17 +241,17 @@ export default function Step3Confirmation({
             </Tabs>
           </CardContent>
         </Card>
-        
+
         <div className="flex justify-between">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onBack}
             disabled={isLoading}
             className="border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             Back to Details
           </Button>
-          <Button 
+          <Button
             size="lg"
             className="min-w-[180px] bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
             onClick={onConfirm}

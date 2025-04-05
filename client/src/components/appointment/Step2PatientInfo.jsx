@@ -1,16 +1,14 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
-import { Upload, AlertCircle, CalendarIcon } from "lucide-react";
+import { Upload, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { insuranceProviders } from "./data";
 
 export default function Step2PatientInfo({
@@ -23,8 +21,7 @@ export default function Step2PatientInfo({
   onBack
 }) {
   const formRef = useRef(null);
-  const [dob, setDob] = useState(null);
-  
+
   // GSAP animations
   useEffect(() => {
     gsap.from(formRef.current, {
@@ -34,12 +31,6 @@ export default function Step2PatientInfo({
       ease: "power2.out"
     });
   }, []);
-
-  // Handle date selection
-  const handleDateSelect = (date) => {
-    setDob(date);
-    updateAppointmentDetails("date", date)
-  };
 
   // Handle form submission
   const handleSubmit = (e) => {
@@ -51,12 +42,12 @@ export default function Step2PatientInfo({
     <div ref={formRef} className="animate-in">
       <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm mb-6">
         <h2 className="text-2xl font-bold mb-6 text-slate-900 dark:text-slate-100">Patient Information</h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Appointment type */}
           <div className="space-y-3">
             <Label className="text-slate-900 dark:text-slate-200">Appointment Type</Label>
-            <RadioGroup 
+            <RadioGroup
               value={appointmentDetails.appointmentType}
               onValueChange={(value) => updateAppointmentDetails("appointmentType", value)}
               className="flex flex-col sm:flex-row gap-4"
@@ -79,9 +70,9 @@ export default function Step2PatientInfo({
           {/* Reason for visit */}
           <div className="space-y-2">
             <Label htmlFor="reason" className="text-slate-900 dark:text-slate-200">Reason for Visit</Label>
-            <Textarea 
-              id="reason" 
-              placeholder="Please describe your symptoms or reason for the appointment" 
+            <Textarea
+              id="reason"
+              placeholder="Please describe your symptoms or reason for the appointment"
               value={appointmentDetails.reason}
               onChange={(e) => updateAppointmentDetails("reason", e.target.value)}
               className="min-h-[100px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus-visible:ring-blue-500 placeholder:text-slate-500 dark:placeholder:text-slate-400"
@@ -91,7 +82,7 @@ export default function Step2PatientInfo({
           {/* Insurance */}
           <div className="space-y-2">
             <Label htmlFor="insurance" className="text-slate-900 dark:text-slate-200">Insurance Provider</Label>
-            <Select 
+            <Select
               value={appointmentDetails.insurance || ""}
               onValueChange={(value) => updateAppointmentDetails("insurance", value)}
             >
@@ -108,37 +99,6 @@ export default function Step2PatientInfo({
             </Select>
           </div>
 
-          {/* Date of Birth - Fixed Calendar Implementation */}
-          <div className="space-y-2">
-            <Label htmlFor="dob" className="text-slate-900 dark:text-slate-200">Date of Birth</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="dob"
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4 text-slate-500 dark:text-slate-400" />
-                  {dob ? (
-                    <span>{dob.toLocaleDateString()}</span>
-                  ) : (
-                    <span className="text-slate-500 dark:text-slate-400">Pick a date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
-                <Calendar
-                  mode="single"
-                  selected={dob}
-                  onSelect={handleDateSelect}
-                  disabled={(date) => date < new Date()}
-                  initialFocus
-                  className="border-slate-200 dark:border-slate-700"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-
           {/* Prescription upload */}
           <div className="space-y-4">
             <Label className="text-slate-900 dark:text-slate-200">Upload Prescriptions (Optional)</Label>
@@ -153,9 +113,9 @@ export default function Step2PatientInfo({
                 accept=".jpg,.jpeg,.png,.pdf"
                 multiple
               />
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 size="sm"
                 className="border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
                 onClick={() => document.getElementById("prescription").click()}
@@ -163,7 +123,7 @@ export default function Step2PatientInfo({
                 Browse files
               </Button>
             </div>
-            
+
             {/* File list */}
             {prescriptionFiles.length > 0 && (
               <div className="space-y-2">
@@ -172,10 +132,10 @@ export default function Step2PatientInfo({
                   {prescriptionFiles.map((file, index) => (
                     <li key={index} className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-sm text-slate-900 dark:text-slate-200">
                       <span className="truncate">{file.name}</span>
-                      <Button 
+                      <Button
                         type="button"
-                        variant="ghost" 
-                        size="sm" 
+                        variant="ghost"
+                        size="sm"
                         className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100"
                         onClick={() => onFileRemove(index)}
                       >
@@ -186,7 +146,7 @@ export default function Step2PatientInfo({
                 </ul>
               </div>
             )}
-            
+
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded p-3 text-sm flex">
               <AlertCircle className="h-5 w-5 text-amber-500 dark:text-amber-400 mr-2 flex-shrink-0" />
               <p className="text-amber-800 dark:text-amber-400">
@@ -194,17 +154,17 @@ export default function Step2PatientInfo({
               </p>
             </div>
           </div>
-          
+
           <div className="flex justify-between pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={onBack}
               className="border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               Back
             </Button>
-            <Button 
+            <Button
               type="submit"
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
             >

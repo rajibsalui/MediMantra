@@ -16,72 +16,53 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useDoctorList } from "@/contexts/DoctorListContext";
+import DoctorAvailabilityCalendar from "./DoctorAvailabilityCalendar";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function Step1DoctorSelection({ 
+export default function Step1DoctorSelection({
   selectedDoctor,
   selectedDate,
   selectedTimeSlot,
   searchTerm,
   selectedSpecialty,
-  onDoctorSelect, 
+  onDoctorSelect,
   onDateSelect,
   onTimeSlotSelect,
   onSearchChange,
   onSpecialtyChange,
   getAvailableTimeSlots,
+  getAvailableDates,
   onNext
 }) {
   const stepsRef = useRef(null);
   const doctorsRef = useRef(null);
   const [timeSlotDialogOpen, setTimeSlotDialogOpen] = useState(false);
-  
+
   // Get doctors from context instead of using props
   const { doctors, specialties, loading, error } = useDoctorList();
-  
-  // Add dummy time slots if none available
-  const getDummyTimeSlots = () => {
-    const slots = [];
-    let hour = 9;
-    
-    // Generate time slots from 9 AM to 5 PM
-    while (hour < 17) {
-      slots.push(`${hour}:00`);
-      slots.push(`${hour}:30`);
-      hour++;
-    }
-    
-    return slots;
-  };
-  
-  // Get time slots with fallback to dummy data
-  const getTimeSlotsList = () => {
-    const availableSlots = getAvailableTimeSlots?.() || [];
-    return availableSlots.length > 0 ? availableSlots : getDummyTimeSlots();
-  };
-  
+
   // Filter doctors based on search and specialty
   const filteredDoctors = doctors.filter(doctor => {
     // Check if doctor has name property (from context data structure)
     if (!doctor?.user) return false; // Skip doctors without user data
-    
+
     const doctorName = `${doctor.user.firstName} ${doctor.user.lastName}`;
     const doctorSpecialties = doctor.specialties || [doctor.specialty];
-    
+
     // Only filter by specialty if one is selected
-    const matchesSpecialty = !selectedSpecialty || selectedSpecialty === "" || 
+    const matchesSpecialty = !selectedSpecialty || selectedSpecialty === "" ||
                            doctorSpecialties.some(s => s.toLowerCase() === selectedSpecialty.toLowerCase());
-    
+
     // If no search term, just filter by specialty
     if (!searchTerm) return matchesSpecialty;
-    
+
     // If search term exists, check both name and specialties
     const matchesSearch = doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doctorSpecialties.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     return matchesSearch && matchesSpecialty;
   });
-   
+
   // GSAP animations
   useEffect(() => {
     doctors && console.log(doctors);
@@ -95,7 +76,7 @@ export default function Step1DoctorSelection({
       stagger: 0.2,
       duration: 0.6
     });
-    
+
     // Doctor cards animation
     gsap.from(".doctor-card", {
       scrollTrigger: {
@@ -107,7 +88,7 @@ export default function Step1DoctorSelection({
       duration: 0.7
     });
   }, []);
-  
+
   // Format doctor for display
   const formatDoctor = (doctor) => {
     // Handle both API-returned doctor objects and hardcoded ones
@@ -124,25 +105,25 @@ export default function Step1DoctorSelection({
       nextAvailable: "Today"
     };
   };
-  
+
   return (
     <div className="space-y-8">
       {/* Process explanation */}
       <div ref={stepsRef} className="grid md:grid-cols-3 gap-6 mb-8">
-        {[{ 
-            icon: <Search className="h-6 w-6 text-blue-500" />, 
-            title: "Find Your Doctor", 
-            desc: "Search by specialty, name, or browse our top-rated physicians." 
+        {[{
+            icon: <Search className="h-6 w-6 text-blue-500" />,
+            title: "Find Your Doctor",
+            desc: "Search by specialty, name, or browse our top-rated physicians."
           },
-          { 
-            icon: <CalendarDays className="h-6 w-6 text-blue-500" />, 
-            title: "Choose a Time Slot", 
-            desc: "Select from available dates and times that work for your schedule." 
+          {
+            icon: <CalendarDays className="h-6 w-6 text-blue-500" />,
+            title: "Choose a Time Slot",
+            desc: "Select from available dates and times that work for your schedule."
           },
-          { 
-            icon: <FileText className="h-6 w-6 text-blue-500" />, 
-            title: "Complete Booking", 
-            desc: "Fill in your information and we'll confirm your appointment." 
+          {
+            icon: <FileText className="h-6 w-6 text-blue-500" />,
+            title: "Complete Booking",
+            desc: "Fill in your information and we'll confirm your appointment."
           },
         ].map((step, i) => (
           <Card key={i} className="step-item border-none shadow-md bg-white dark:bg-slate-800">
@@ -166,7 +147,7 @@ export default function Step1DoctorSelection({
             <Label htmlFor="search" className="text-slate-900 dark:text-slate-200">Search Doctors</Label>
             <div className="relative mt-1.5">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 h-4 w-4" />
-              <Input 
+              <Input
                 id="search"
                 placeholder="Doctor name or specialty..."
                 className="pl-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100"
@@ -175,7 +156,7 @@ export default function Step1DoctorSelection({
               />
             </div>
           </div>
-          
+
           <div>
             <Label htmlFor="specialty" className="text-slate-900 dark:text-slate-200">Specialty</Label>
             <Select onValueChange={onSpecialtyChange} value={selectedSpecialty}>
@@ -192,7 +173,7 @@ export default function Step1DoctorSelection({
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <Label htmlFor="date" className="text-slate-900 dark:text-slate-200">Appointment Date</Label>
             <Popover>
@@ -225,8 +206,8 @@ export default function Step1DoctorSelection({
       <div ref={doctorsRef} className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {loading 
-              ? "Loading doctors..." 
+            {loading
+              ? "Loading doctors..."
               : `${filteredDoctors.length} Doctors Available`}
           </h2>
           <Select defaultValue="recommended">
@@ -287,13 +268,13 @@ export default function Step1DoctorSelection({
           <div className="grid md:grid-cols-2 gap-6">
             {filteredDoctors.map((doctor) => {
               const formattedDoctor = formatDoctor(doctor);
-              const isSelected = selectedDoctor && 
-                                (selectedDoctor.id === formattedDoctor.id || 
+              const isSelected = selectedDoctor &&
+                                (selectedDoctor.id === formattedDoctor.id ||
                                  selectedDoctor._id === doctor._id);
-              
+
               return (
-                <Card 
-                  key={formattedDoctor.id} 
+                <Card
+                  key={formattedDoctor.id}
                   className={cn(
                     "doctor-card border overflow-hidden transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-800",
                     isSelected ? "ring-2 ring-blue-500 dark:ring-blue-400" : ""
@@ -312,7 +293,7 @@ export default function Step1DoctorSelection({
                         }}
                       />
                     </div>
-                    
+
                     {/* Doctor info */}
                     <div className="p-5 flex flex-col flex-1">
                       <div className="flex justify-between items-start mb-2">
@@ -320,15 +301,15 @@ export default function Step1DoctorSelection({
                           <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">{formattedDoctor.name}</h3>
                           <p className="text-slate-600 dark:text-slate-400">{formattedDoctor.specialty}</p>
                         </div>
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className="flex items-center gap-1 bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
                         >
                           <Star className="h-3 w-3 fill-current" />
                           {formattedDoctor.rating}
                         </Badge>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-y-2 mb-4 text-sm">
                         <div className="flex items-center gap-1.5">
                           <Clock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
@@ -347,9 +328,9 @@ export default function Step1DoctorSelection({
                           <span className="text-green-600 dark:text-green-500 font-medium">{formattedDoctor.nextAvailable}</span>
                         </div>
                       </div>
-                      
+
                       <div className="mt-auto">
-                        <Button 
+                        <Button
                           onClick={() => {
                             onDoctorSelect(doctor);
                             if (isSelected) {
@@ -370,51 +351,39 @@ export default function Step1DoctorSelection({
           </div>
         )}
       </div>
-      
+
       {/* Time slot selection popup */}
       <Dialog open={timeSlotDialogOpen && !!selectedDoctor} onOpenChange={setTimeSlotDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+        <DialogContent className="sm:max-w-4xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
           <DialogHeader>
-            <DialogTitle className="text-slate-900 dark:text-slate-100">Select Time Slot</DialogTitle>
+            <DialogTitle className="text-slate-900 dark:text-slate-100">
+              Select Appointment Date & Time
+            </DialogTitle>
           </DialogHeader>
-          
+
           <div className="my-6">
-            <h3 className="font-medium mb-2 text-slate-900 dark:text-slate-100">
-              Available on {format(selectedDate, "EEEE, MMMM d")}
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {getTimeSlotsList().map((time) => (
-                <Button
-                  key={time}
-                  variant={selectedTimeSlot === time ? "default" : "outline"}
-                  className={cn(
-                    "text-sm h-10",
-                    selectedTimeSlot === time 
-                      ? "bg-blue-600 dark:bg-blue-700 text-white" 
-                      : "border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  )}
-                  onClick={() => onTimeSlotSelect(time)}
-                >
-                  {time}
-                </Button>
-              ))}
-              {getTimeSlotsList().length === 0 && (
-                <p className="col-span-3 text-center text-slate-600 dark:text-slate-400 py-2">
-                  No time slots available for this date. Please select another date.
-                </p>
-              )}
-            </div>
+            {selectedDoctor && (
+              <DoctorAvailabilityCalendar
+                doctor={selectedDoctor}
+                selectedDate={selectedDate}
+                selectedTimeSlot={selectedTimeSlot}
+                onDateSelect={onDateSelect}
+                onTimeSlotSelect={onTimeSlotSelect}
+                getAvailableTimeSlots={getAvailableTimeSlots}
+                getAvailableDates={getAvailableDates}
+              />
+            )}
           </div>
-          
+
           <DialogFooter className="sm:justify-end">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setTimeSlotDialogOpen(false)}
               className="border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 if (selectedTimeSlot) {
                   setTimeSlotDialogOpen(false);
@@ -433,7 +402,7 @@ export default function Step1DoctorSelection({
 
       {/* Next button */}
       <div className="pt-8 flex justify-end">
-        <Button 
+        <Button
           size="lg"
           onClick={() => {
             if (selectedDoctor && !selectedTimeSlot) {
