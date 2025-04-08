@@ -1,5 +1,6 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from 'next';
+
+const nextConfig: NextConfig = {
   images: {
     domains: ['plus.unsplash.com', 'images.unsplash.com','via.placeholder.com'],
     remotePatterns: [
@@ -9,6 +10,12 @@ const nextConfig = {
       },
     ],
   },
+  output: 'standalone',
+  // Add this to handle build errors more gracefully
+  onError: async (err: Error) => {
+    console.error('Next.js build error:', err);
+  },
 }
 
 export default nextConfig;
+
