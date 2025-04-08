@@ -104,7 +104,7 @@ export default function AnalyticsDashboard({ dashboardStats }) {
       </div>
 
       <Tabs defaultValue="appointments" className="w-full">
-        <TabsList className="grid grid-cols-3 mb-4">
+        <TabsList key="tabs-list" className="grid grid-cols-3 mb-4">
           <TabsTrigger value="appointments" className="flex items-center">
             <Users className="w-4 h-4 mr-2" />
             Appointments

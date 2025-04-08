@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Calendar,
   FileText,
@@ -21,43 +21,41 @@ import {
   Bot,
   Settings,
   HelpCircle,
-  Search
-} from "lucide-react"
+  Search,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { motion } from "framer-motion"
-import ChatbotDialog from "@/components/chatbot/ChatbotDialog"
-import ThemeSwitcher from "../ui/ThemeSwitcher"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import ChatbotDialog from "@/components/chatbot/ChatbotDialog";
+import ThemeSwitcher from "../ui/ThemeSwitcher";
 
 export default function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const pathname = usePathname()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userRole, setUserRole] = useState(null)
-  const [scrolled, setScrolled] = useState(false)
-  const [chatbotOpen, setChatbotOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [chatbotOpen, setChatbotOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10)
-    }
+      setScrolled(window.scrollY > 10);
+    };
 
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  // Check for authentication token and user role in localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+  const check = () => {
+    if (typeof window !== "undefined") {
       try {
-        const token = localStorage.getItem('token');
-        const role = localStorage.getItem('Role');
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("Role");
 
         setIsLoggedIn(!!token);
 
@@ -65,12 +63,16 @@ export default function Header() {
           setUserRole(role);
         }
       } catch (error) {
-        console.error('Error accessing localStorage:', error);
+        console.error("Error accessing localStorage:", error);
         setIsLoggedIn(false);
         setUserRole(null);
       }
     }
-  }, []);
+  };
+  // Check for authentication token and user role in localStorage
+  useEffect(() => {
+    check();
+  }, [check]);
 
   const navItems = [
     {
@@ -82,22 +84,22 @@ export default function Header() {
       name: "Symptom Checker",
       href: "/symptom-checker",
       icon: <FileText className="h-4 w-4 mr-2" />,
-    }
-  ]
+    },
+  ];
 
-  const router = useRouter()
+  const router = useRouter();
 
   // Handle logout function
   const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('Role');
-      localStorage.removeItem('userId');
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      localStorage.removeItem("Role");
+      localStorage.removeItem("userId");
       setIsLoggedIn(false);
       setUserRole(null);
-      router.push('/');
+      router.push("/");
     }
-  }
+  };
 
   return (
     <motion.header
@@ -186,7 +188,11 @@ export default function Header() {
 
           {/* Notifications */}
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-            <Button variant="ghost" size="icon" className="hidden md:flex relative dark:text-gray-200 dark:hover:bg-gray-800">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden md:flex relative dark:text-gray-200 dark:hover:bg-gray-800"
+            >
               <Bell className="h-5 w-5" />
               <motion.span
                 initial={{ scale: 0 }}
@@ -199,30 +205,41 @@ export default function Header() {
           {isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                  <Button variant="ghost" size="icon" className="rounded-full dark:bg-gray-800/50 dark:text-gray-200 dark:hover:bg-gray-800">
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full dark:bg-gray-800/50 dark:text-gray-200 dark:hover:bg-gray-800"
+                  >
                     <UserCircle className="h-6 w-6" />
                   </Button>
                 </motion.div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="backdrop-blur-lg bg-white/90 dark:bg-gray-800/90 border dark:border-gray-700">
+              <DropdownMenuContent
+                align="end"
+                className="backdrop-blur-lg bg-white/90 dark:bg-gray-800/90 border dark:border-gray-700"
+              >
                 <div className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200">
-                  My Account {userRole && `(${userRole.charAt(0).toUpperCase() + userRole.slice(1)})`}
+                  My Account{" "}
+                  {userRole &&
+                    `(${userRole.charAt(0).toUpperCase() + userRole.slice(1)})`}
                 </div>
                 <DropdownMenuSeparator className="dark:border-gray-700" />
 
                 {/* Common menu items for both roles */}
                 <DropdownMenuItem
-                  onClick={() =>{
-                    const userId = localStorage.getItem('userId')
-                    if(!userId) return
-                    if(userRole === 'doctor') {
-                      router.push(`/doctor/dashboard/${userId}`)
+                  onClick={() => {
+                    const userId = localStorage.getItem("userId");
+                    if (!userId) return;
+                    if (userRole === "doctor") {
+                      router.push(`/doctor/dashboard/${userId}`);
+                    } else {
+                      router.push(`/patient/dashboard/${userId}`);
                     }
-                    else{
-                      router.push(`/patient/dashboard/${userId}`)
-                    }
-                    } }
+                  }}
                   className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                 >
                   <User className="mr-2 h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -230,7 +247,7 @@ export default function Header() {
                 </DropdownMenuItem>
 
                 {/* Doctor-specific menu items */}
-                {userRole === 'doctor' && (
+                {userRole === "doctor" && (
                   <>
                     <DropdownMenuItem
                       onClick={() => router.push("/doctor/appointments")}
@@ -257,7 +274,7 @@ export default function Header() {
                 )}
 
                 {/* Patient-specific menu items */}
-                {userRole === 'patient' && (
+                {userRole === "patient" && (
                   <>
                     <DropdownMenuItem
                       onClick={() => router.push("/patient/appointments")}
@@ -304,7 +321,10 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <div className="hidden md:flex space-x-2">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
                   variant="outline"
                   onClick={() => router.push("/login")}
@@ -317,7 +337,10 @@ export default function Header() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <Button className="bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 hover:from-blue-700 hover:to-cyan-600 dark:hover:from-blue-600 dark:hover:to-cyan-500 text-white">
                       <UserPlus className="mr-2 h-4 w-4" />
                       Sign Up
@@ -325,7 +348,10 @@ export default function Header() {
                     </Button>
                   </motion.div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="backdrop-blur-lg bg-white/90 dark:bg-gray-800/90 border dark:border-gray-700">
+                <DropdownMenuContent
+                  align="end"
+                  className="backdrop-blur-lg bg-white/90 dark:bg-gray-800/90 border dark:border-gray-700"
+                >
                   <DropdownMenuItem
                     onClick={() => router.push("/signup")}
                     className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
@@ -449,7 +475,9 @@ export default function Header() {
                   Sign In
                 </Button>
 
-                <div className="text-xs font-medium text-center my-2 text-gray-500 dark:text-gray-400">Sign up as:</div>
+                <div className="text-xs font-medium text-center my-2 text-gray-500 dark:text-gray-400">
+                  Sign up as:
+                </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <Button
@@ -483,5 +511,5 @@ export default function Header() {
       {/* AI Chatbot Dialog */}
       <ChatbotDialog open={chatbotOpen} onOpenChange={setChatbotOpen} />
     </motion.header>
-  )
+  );
 }

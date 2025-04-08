@@ -361,7 +361,7 @@ export default function PatientAppointments() {
 
         <div className="bg-card rounded-xl p-6 shadow-sm border">
           <Tabs defaultValue="upcoming" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-6 grid w-full grid-cols-3 md:w-auto md:inline-flex">
+            <TabsList key="tabs-list" className="mb-6 grid w-full grid-cols-3 md:w-auto md:inline-flex">
               <TabsTrigger key="upcoming-tab" value="upcoming" className="font-medium">
                 <Calendar className="mr-2 h-4 w-4" /> Upcoming
               </TabsTrigger>

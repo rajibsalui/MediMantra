@@ -95,10 +95,10 @@ export default function PatientPrescriptions() {
   const filteredPrescriptions = prescriptions.filter(prescription => {
     // Check if prescription is active based on date
     const isActive = new Date(prescription.endDate) >= new Date();
-    
+
     // Check if prescription is completed based on status
     const isCompleted = prescription.status === "completed";
-    
+
     if (activeTab === "active") {
       // For active tab: show prescriptions that are not expired AND not completed
       return isActive && !isCompleted;
@@ -279,9 +279,9 @@ export default function PatientPrescriptions() {
         </div>
 
         <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="active">Active Prescriptions</TabsTrigger>
-            <TabsTrigger value="past">Past Prescriptions</TabsTrigger>
+          <TabsList key="tabs-list" className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="active" key="active-tab">Active Prescriptions</TabsTrigger>
+            <TabsTrigger value="past" key="past-tab">Past Prescriptions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="active" className="mt-0">

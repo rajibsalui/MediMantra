@@ -333,7 +333,7 @@ export default function DoctorDashboard() {
 
         {/* Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4">
+          <TabsList key="tabs-list" className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4">
             <TabsTrigger value="overview" className="flex items-center justify-center">
               <CalendarDays className="w-4 h-4 mr-2" />
               Overview
