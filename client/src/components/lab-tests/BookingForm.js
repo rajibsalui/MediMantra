@@ -16,28 +16,28 @@ export default function BookingForm({ test, onSubmit }) {
     time: null,
     location: null
   });
-  
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-  
-  const handleDateTimeChange = (date, time) => {
-    setFormData({ ...formData, date, time });
+
+  const handleDateTimeChange = (dateTimeObj) => {
+    setFormData({ ...formData, date: dateTimeObj.date, time: dateTimeObj.time });
   };
-  
+
   const handleLocationChange = (location) => {
     setFormData({ ...formData, location });
   };
-  
+
   const handleNext = () => {
     setStep(prev => Math.min(prev + 1, 3));
   };
-  
+
   const handleBack = () => {
     setStep(prev => Math.max(prev - 1, 1));
   };
-  
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({
@@ -45,9 +45,9 @@ export default function BookingForm({ test, onSubmit }) {
       ...formData
     });
   };
-  
+
   return (
-    <motion.div 
+    <motion.div
       className="bg-white rounded-lg shadow-lg overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -57,7 +57,7 @@ export default function BookingForm({ test, onSubmit }) {
       <div className="p-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-1">Book Test</h2>
         <p className="text-blue-600 font-medium mb-4">{test.name}</p>
-        
+
         {/* Progress steps */}
         <div className="flex mb-6">
           {[1, 2, 3].map((i) => (
@@ -73,11 +73,11 @@ export default function BookingForm({ test, onSubmit }) {
             </div>
           ))}
         </div>
-        
+
         <form onSubmit={handleSubmit}>
           {/* Step 1: Personal Information */}
           {step === 1 && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -126,7 +126,7 @@ export default function BookingForm({ test, onSubmit }) {
               </motion.button>
             </motion.div>
           )}
-          
+
           {/* Step 2: Date and Location */}
           {step === 2 && (
             <motion.div
@@ -136,7 +136,7 @@ export default function BookingForm({ test, onSubmit }) {
             >
               <DateTimePicker onChange={handleDateTimeChange} />
               <LocationSelector onChange={handleLocationChange} />
-              
+
               <div className="flex gap-3 mt-6">
                 <motion.button
                   type="button"
@@ -159,7 +159,7 @@ export default function BookingForm({ test, onSubmit }) {
               </div>
             </motion.div>
           )}
-          
+
           {/* Step 3: Summary and Confirmation */}
           {step === 3 && (
             <motion.div
@@ -168,7 +168,7 @@ export default function BookingForm({ test, onSubmit }) {
               exit={{ opacity: 0 }}
             >
               <BookingSummary test={test} formData={formData} />
-              
+
               <div className="flex gap-3 mt-6">
                 <motion.button
                   type="button"

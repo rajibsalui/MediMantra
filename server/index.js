@@ -11,6 +11,12 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import connectDB from './config/dbconnect.js';
 import { cloudinary } from './config/cloudinary.config.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Import models to ensure they're registered with Mongoose
 import './models/prescription.model.js';
@@ -56,6 +62,14 @@ app.use(cors());
 
 // Database connection
 connectDB();
+
+// Serve static files from Next.js build
+app.use(express.static(path.join(__dirname, '../client/.next')));
+
+// Serve Next.js pages
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/.next/server/pages/index.html'));
+});
 
 // API Routes
 app.get('/api/health', (req, res) => res.status(200).json({ status: 'healthy' }));
