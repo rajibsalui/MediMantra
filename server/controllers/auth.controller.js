@@ -20,9 +20,22 @@ const generateToken = (id) => {
 export const register = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  
+
   try {
-    const { firstName, lastName, email, password, phone, role, dateOfBirth, gender } = req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      phone,
+      role,
+      dateOfBirth,
+      gender,
+      address,
+      medicalInformation,
+      emergencyContact,
+      agreeToTerms
+    } = req.body;
 
     // Check if user already exists
     const userExists = await User.findOne({ email });
@@ -31,6 +44,28 @@ export const register = async (req, res) => {
         success: false,
         message: 'User with this email already exists'
       });
+    }
+
+    // Validate required fields for patient registration
+    if (role === 'patient' || !role) {
+      if (!dateOfBirth) {
+        return res.status(400).json({
+          success: false,
+          message: 'Date of birth is required for patient registration'
+        });
+      }
+      if (!gender) {
+        return res.status(400).json({
+          success: false,
+          message: 'Gender is required for patient registration'
+        });
+      }
+      if (!emergencyContact || !emergencyContact.name || !emergencyContact.phone || !emergencyContact.relationship) {
+        return res.status(400).json({
+          success: false,
+          message: 'Emergency contact information is required for patient registration'
+        });
+      }
     }
 
     // Create new user
@@ -42,7 +77,9 @@ export const register = async (req, res) => {
       phone,
       role: role || 'user',
       dateOfBirth,
-      gender
+      gender,
+      address,
+      agreeToTerms: agreeToTerms || false
     });
 
     await user.save({ session });
@@ -50,10 +87,23 @@ export const register = async (req, res) => {
     // If role is patient, create patient profile
     if (role === 'patient' || !role) {
       const patient = new Patient({
-        user: user._id
+        user: user._id,
+        medicalInformation: {
+          allergies: medicalInformation?.allergies || '',
+          chronicConditions: medicalInformation?.chronicConditions || '',
+          currentMedications: medicalInformation?.currentMedications || '',
+          familyMedicalHistory: medicalInformation?.familyMedicalHistory || '',
+          surgicalHistory: medicalInformation?.surgicalHistory || '',
+          immunizationHistory: medicalInformation?.immunizationHistory || ''
+        },
+        emergencyContact: {
+          name: emergencyContact.name,
+          phone: emergencyContact.phone,
+          relationship: emergencyContact.relationship
+        }
       });
       await patient.save({ session });
-      
+
       // Update user role to patient
       user.role = 'patient';
       await user.save({ session });
@@ -67,7 +117,7 @@ export const register = async (req, res) => {
     res.status(201).json({
       success: true,
       token,
-      userId:user._id,
+      userId: user._id,
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -77,7 +127,8 @@ export const register = async (req, res) => {
         role: user.role,
         profileImage: user.profileImage,
         dateOfBirth: user.dateOfBirth,
-        gender: user.gender
+        gender: user.gender,
+        address: user.address
       }
     });
   } catch (error) {
@@ -168,7 +219,7 @@ export const login = async (req, res) => {
 export const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -233,7 +284,7 @@ export const forgotPassword = async (req, res) => {
 
     // TODO: Send email with reset token
     // For now, just return the token (in production, you would email this)
-    
+
     res.status(200).json({
       success: true,
       message: 'Password reset email sent',
@@ -399,6 +450,80 @@ export const changePassword = async (req, res) => {
 };
 
 /**
+ * @desc    Update email address
+ * @route   PUT /api/auth/update-email
+ * @access  Private
+ */
+export const updateEmail = async (req, res) => {
+  try {
+    const { newEmail, password } = req.body;
+
+    // Validate input
+    if (!newEmail || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'New email and password are required'
+      });
+    }
+
+    // Check if email is already in use
+    const existingUser = await User.findOne({ email: newEmail });
+    if (existingUser && existingUser._id.toString() !== req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already in use by another account'
+      });
+    }
+
+    // Find user with password
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Verify password
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Password is incorrect'
+      });
+    }
+
+    // Update email
+    user.email = newEmail;
+    user.isEmailVerified = false; // Require verification of new email
+
+    // Generate new verification token
+    const verificationToken = user.getEmailVerificationToken();
+
+    await user.save();
+
+    // TODO: Send verification email to new address
+    // For now, just return success
+
+    res.status(200).json({
+      success: true,
+      message: 'Email updated successfully. Please verify your new email address.',
+      data: {
+        email: newEmail,
+        isEmailVerified: false
+      }
+    });
+  } catch (error) {
+    console.error('Update email error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+/**
  * @desc    Logout user (invalidate tokens)
  * @route   POST /api/auth/logout
  * @access  Private
@@ -443,7 +568,7 @@ export const refreshAccessToken = async (req, res) => {
     // Verify refresh token (you would need to implement verification logic)
     // This is a simplified example
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    
+
     // Generate new access token
     const accessToken = generateToken(decoded.id);
 
@@ -492,7 +617,7 @@ export const verifyEmail = async (req, res) => {
     user.isEmailVerified = true;
     user.emailVerificationToken = undefined;
     user.emailVerificationExpire = undefined;
-    
+
     await user.save();
 
     res.status(200).json({

@@ -3,7 +3,6 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { toast } from "react-hot-toast";
 
 // Create context
 const AuthContext = createContext();
@@ -24,21 +23,21 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const storedToken = localStorage.getItem("token");
-      
+
       if (storedToken) {
         try {
-          // Set default auth header  
+          // Set default auth header
           axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
-          
+
           // Fetch current user
           const { data } = await axios.get(`${API_URL}/auth/current-user`);
-          
+
           localStorage.setItem("Role", data.data.role || data.user.role);
           setUser(data.user || data.data);
           setToken(storedToken);
         } catch (error) {
           console.error("Auth check error:", error);
-          
+
           // If token is invalid or expired, try to refresh
           const refreshToken = localStorage.getItem("refreshToken");
           if (refreshToken) {
@@ -67,23 +66,24 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await axios.post(`${API_URL}/auth/register`, userData);
-      
+
       // Store tokens
-      if (data.accessToken) {
-        localStorage.setItem("Role", data.data.role || data.user.role);
-        localStorage.setItem("token", data.accessToken);
+      if (data.token) {
+        localStorage.setItem("Role", data.user.role);
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("userId", data.userId || data.user.id);
         if (data.refreshToken) {
           localStorage.setItem("refreshToken", data.refreshToken);
         }
-        axios.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
+        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
       }
-      
+
       // Set user if available
-      if (data.patient || data.user) {
-        setUser(data.patient || data.user);
-        setToken(data.accessToken);
+      if (data.user) {
+        setUser(data.user);
+        setToken(data.token);
       }
-      
+
       return data;
     } catch (error) {
       const message = error.response?.data?.message || "Registration failed";
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await axios.post(`${API_URL}/auth/doctor/register`, doctorData);
-      
+
       // Store tokens
       if (data.accessToken) {
         localStorage.setItem("Role", data.user.role);
@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }) => {
         }
         axios.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
       }
-      
+
       // Set user if available
       if (data.user) {
         setUser({
@@ -117,7 +117,7 @@ export const AuthProvider = ({ children }) => {
         });
         setToken(data.accessToken);
       }
-      
+
       return data;
     } catch (error) {
       const message = error.response?.data?.message || "Doctor registration failed";
@@ -131,11 +131,11 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       setLoading(true);
-      
+
       const { data } = await axios.post(`${API_URL}/auth/login`, credentials);
-      
+
     //  console.log("Login data:", data);
-      
+
       setUser(data.patient || data.user);
       // console.log("done")
       setToken(data.token);
@@ -161,28 +161,48 @@ export const AuthProvider = ({ children }) => {
   const loginDoctor = async (credentials) => {
     try {
       setLoading(true);
-      
+      console.log("done")
+
       const { data } = await axios.post(`${API_URL}/auth/doctor/login`, credentials);
-      
+      console.log("done")
+
       // Store tokens
-      if (data.token) {
-        localStorage.setItem("token", data.token);
+      if (data.accessToken) {
+      console.log("done")
+
+        localStorage.setItem("token", data.accessToken);
+      console.log("done")
+
         localStorage.setItem("userId", data.user._id);
-        localStorage.setItem("Role", data.data.role || data.user.role);
-        if (data.refreshToken) {  
-          localStorage.setItem("refreshToken", data.refreshToken);
-        }
-        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
-      }
+      console.log("done")
+
+        localStorage.setItem("Role", data.user.role);
+      console.log("done")
+
+        // if (data.refreshToken) {
+        //   localStorage.setItem("refreshToken", data.refreshToken);
+        // }
+        axios.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
+        console.log("done")
       
+      }
+
       // Set user with doctor profile data
+      console.log("done")
+
       setUser({
         ...data.user,
         doctorProfile: data.doctorProfile
       });
-      setToken(data.token);
-      
+      console.log("done")
+
+      setToken(data.accessToken);
+      console.log("done")
+
+
       return data;
+      console.log("done")
+
     } catch (error) {
       const message = error.response?.data?.message || "Doctor login failed";
       throw new Error(message);
@@ -195,7 +215,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       setLoading(true);
-      
+
       // Call API to invalidate token on server
       if (token) {
         await axios.post(`${API_URL}/auth/logout`);
@@ -210,7 +230,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("refreshToken");
       delete axios.defaults.headers.common["Authorization"];
       setLoading(false);
-      
+
       // Redirect to login
       router.push("/login");
     }
@@ -221,13 +241,13 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await axios.put(`${API_URL}/auth/doctor/complete-profile`, profileData);
-      
+
       // Update user state with doctor profile
       setUser(prevUser => ({
         ...prevUser,
         doctorProfile: data.data
       }));
-      
+
       return data;
     } catch (error) {
       const message = error.response?.data?.message || "Failed to complete doctor profile";
@@ -241,9 +261,9 @@ export const AuthProvider = ({ children }) => {
   const uploadVerificationDocs = async (documents) => {
     try {
       setLoading(true);
-      
+
       const formData = new FormData();
-      
+
       // Append each file to form data
       if (Array.isArray(documents)) {
         documents.forEach((file, index) => {
@@ -253,8 +273,8 @@ export const AuthProvider = ({ children }) => {
         // Single file upload
         formData.append('document', documents);
       }
-      
-      const { data } = await axios.post(`${API_URL}/auth/doctor/verification-documents`, 
+
+      const { data } = await axios.post(`${API_URL}/auth/doctor/verification-documents`,
         formData,
         {
           headers: {
@@ -262,7 +282,7 @@ export const AuthProvider = ({ children }) => {
           }
         }
       );
-      
+
       // Update user state with verification documents
       setUser(prevUser => ({
         ...prevUser,
@@ -271,7 +291,7 @@ export const AuthProvider = ({ children }) => {
           verificationDocuments: data.data
         }
       }));
-      
+
       return data;
     } catch (error) {
       const message = error.response?.data?.message || "Failed to upload verification documents";
@@ -286,13 +306,13 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await axios.post(`${API_URL}/auth/refresh-token`, { refreshToken });
-      
+
       // Store new access token
       localStorage.setItem("token", data.accessToken);
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
-      
+
       setToken(data.accessToken);
-      
+
       return data;
     } catch (error) {
       const message = error.response?.data?.message || "Failed to refresh token";
@@ -342,6 +362,35 @@ export const AuthProvider = ({ children }) => {
       return data;
     } catch (error) {
       const message = error.response?.data?.message || "Password change failed";
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update password - alias for changePassword for consistency with settings page
+  const updatePassword = async (currentPassword, newPassword) => {
+    return changePassword(currentPassword, newPassword);
+  };
+
+  // Update email
+  const updateEmail = async (newEmail, password) => {
+    try {
+      setLoading(true);
+      const { data } = await axios.put(`${API_URL}/auth/update-email`, {
+        newEmail,
+        password
+      });
+
+      // Update user state with new email
+      setUser({
+        ...user,
+        email: newEmail
+      });
+
+      return data;
+    } catch (error) {
+      const message = error.response?.data?.message || "Email update failed";
       throw new Error(message);
     } finally {
       setLoading(false);
@@ -423,6 +472,8 @@ export const AuthProvider = ({ children }) => {
         forgotPassword,
         resetPassword,
         changePassword,
+        updatePassword,
+        updateEmail,
         verifyEmail,
         resendVerificationEmail,
         verifyPhone,

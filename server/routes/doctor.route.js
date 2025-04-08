@@ -1,6 +1,6 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
-import { 
+import {
   getDoctors,
   getDoctorById,
   updateDoctorProfile,
@@ -8,6 +8,10 @@ import {
   uploadVerificationDocuments,
   getDoctorAppointments,
   getDoctorPatients,
+  getPatientById,
+  getPatientAppointments,
+  getPatientPrescriptions,
+  getPatientMedicalRecords,
   getDoctorReviews,
   addEducation,
   removeEducation,
@@ -17,10 +21,14 @@ import {
   verifyDoctor,
   rejectDoctor,
   searchDoctors,
+  searchPatients,
   filterDoctorsBySpecialty,
   toggleDoctorAvailability,
   deleteDoctor,
-  getDoctorAvailability
+  getDoctorAvailability,
+  getAppointmentById,
+  updateAppointmentStatus,
+  updateAppointmentDetails
 } from '../controllers/doctor.controller.js';
 
 const router = express.Router();
@@ -53,6 +61,12 @@ router.get('/specialty/:specialty', filterDoctorsBySpecialty);
  */
 router.get('/profile', authMiddleware, getDoctorProfile);
 
+/**
+ * @route   GET /api/doctors/patients/search
+ * @desc    Search patients by name or email
+ * @access  Private (Doctor only)
+ */
+router.get('/patients/search', authMiddleware, searchPatients);
 
 
 /**
@@ -96,6 +110,34 @@ router.get('/appointments', authMiddleware, getDoctorAppointments);
  * @access  Private (Doctor only)
  */
 router.get('/patients', authMiddleware, getDoctorPatients);
+
+/**
+ * @route   GET /api/doctors/patients/:id
+ * @desc    Get a specific patient by ID
+ * @access  Private (Doctor only)
+ */
+router.get('/patients/:id', authMiddleware, getPatientById);
+
+/**
+ * @route   GET /api/doctors/patients/:id/appointments
+ * @desc    Get appointments for a specific patient
+ * @access  Private (Doctor only)
+ */
+router.get('/patients/:id/appointments', authMiddleware, getPatientAppointments);
+
+/**
+ * @route   GET /api/doctors/patients/:id/prescriptions
+ * @desc    Get prescriptions for a specific patient
+ * @access  Private (Doctor only)
+ */
+router.get('/patients/:id/prescriptions', authMiddleware, getPatientPrescriptions);
+
+/**
+ * @route   GET /api/doctors/patients/:id/medical-records
+ * @desc    Get medical records for a specific patient
+ * @access  Private (Doctor only)
+ */
+router.get('/patients/:id/medical-records', authMiddleware, getPatientMedicalRecords);
 
 /**
  * @route   GET /api/doctors/reviews
@@ -159,6 +201,27 @@ router.put('/toggle-availability', authMiddleware, toggleDoctorAvailability);
  * @access  Private (Doctor only)
  */
 router.delete('/', authMiddleware, deleteDoctor);
+
+/**
+ * @route   GET /api/doctors/appointments/:id
+ * @desc    Get a single appointment by ID
+ * @access  Private (Doctor only)
+ */
+router.get('/appointments/:id', authMiddleware, getAppointmentById);
+
+/**
+ * @route   PUT /api/doctors/appointments/:id/status
+ * @desc    Update appointment status
+ * @access  Private (Doctor only)
+ */
+router.put('/appointments/:id/status', authMiddleware, updateAppointmentStatus);
+
+/**
+ * @route   PUT /api/doctors/appointments/:id
+ * @desc    Update appointment details
+ * @access  Private (Doctor only)
+ */
+router.put('/appointments/:id', authMiddleware, updateAppointmentDetails);
 
 /**
  * @route   GET /api/doctors/:id

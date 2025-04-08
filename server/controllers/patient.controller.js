@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
 import Patient from '../models/patient.model.js';
 import User from '../models/user.model.js';
+import Doctor from '../models/doctor.model.js';
 import Appointment from '../models/appointment.model.js';
+import Message from '../models/message.model.js';
+import Conversation from '../models/conversation.model.js';
 import { uploadFile, deleteFile } from '../utils/fileUpload.js';
 
 /**
@@ -12,7 +15,7 @@ import { uploadFile, deleteFile } from '../utils/fileUpload.js';
 export const getPatientProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     const patient = await Patient.findOne({ user: userId })
       .populate('user', 'firstName lastName email phone profileImage dateOfBirth gender')
       .populate('primaryCarePhysician', 'user')
@@ -23,14 +26,14 @@ export const getPatientProfile = async (req, res) => {
           select: 'firstName lastName profileImage'
         }
       });
-    
+
     if (!patient) {
       return res.status(404).json({
         success: false,
         message: 'Patient profile not found'
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: patient
@@ -69,16 +72,16 @@ export const updatePatientProfile = async (req, res) => {
       insuranceInfo,
       primaryCarePhysician
     } = req.body;
-    
+
     // Find patient or create if not exists
     let patient = await Patient.findOne({ user: userId });
-    
+
     if (!patient) {
       patient = new Patient({
         user: userId
       });
     }
-    
+
     // Update fields if provided
     if (bloodGroup) patient.bloodGroup = bloodGroup;
     if (height) patient.height = height;
@@ -94,7 +97,7 @@ export const updatePatientProfile = async (req, res) => {
     if (preferredPharmacy) patient.preferredPharmacy = preferredPharmacy;
     if (insuranceInfo) patient.insuranceInfo = insuranceInfo;
     if (primaryCarePhysician) patient.primaryCarePhysician = primaryCarePhysician;
-    
+
     // Check if profile is completed
     patient.profileCompleted = Boolean(
       patient.bloodGroup &&
@@ -103,9 +106,9 @@ export const updatePatientProfile = async (req, res) => {
       (patient.address?.city || patient.address?.state) &&
       patient.emergencyContact?.phone
     );
-    
+
     await patient.save();
-    
+
     res.status(200).json({
       success: true,
       data: patient,
@@ -129,7 +132,7 @@ export const updatePatientProfile = async (req, res) => {
 export const getPatientAppointments = async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     const patient = await Patient.findOne({ user: userId });
     if (!patient) {
       return res.status(404).json({
@@ -137,23 +140,23 @@ export const getPatientAppointments = async (req, res) => {
         message: 'Patient profile not found'
       });
     }
-    
+
     const { status, page = 1, limit = 10, startDate, endDate } = req.query;
     const skip = (page - 1) * limit;
-    
+
     // Build filter
     const filter = { patient: patient._id };
-    
+
     // Handle special "upcoming" filter
     if (status === 'upcoming') {
       filter.status = 'scheduled'; // Only scheduled appointments
       filter.appointmentDate = { $gte: new Date() }; // Only future dates
-    } 
+    }
     // Handle other status filters
     else if (status) {
       filter.status = status;
     }
-    
+
     // Add date range filter if provided
     if (startDate && endDate) {
       filter.appointmentDate = {
@@ -165,7 +168,7 @@ export const getPatientAppointments = async (req, res) => {
     } else if (endDate) {
       filter.appointmentDate = { $lte: new Date(endDate) };
     }
-    
+
     // Get appointments with pagination
     const appointments = await Appointment.find(filter)
       .populate({
@@ -179,10 +182,10 @@ export const getPatientAppointments = async (req, res) => {
       .sort({ appointmentDate: -1, appointmentTime: -1 })
       .skip(skip)
       .limit(parseInt(limit));
-    
+
     // Count total for pagination
     const total = await Appointment.countDocuments(filter);
-    
+
     res.status(200).json({
       success: true,
       data: appointments,
@@ -218,7 +221,7 @@ export const bookAppointment = async (req, res) => {
       appointmentType,
       reason
     } = req.body;
-    
+
     // Validate input
     if (!doctorId || !appointmentDate || !appointmentTime) {
       return res.status(400).json({
@@ -226,7 +229,7 @@ export const bookAppointment = async (req, res) => {
         message: 'Doctor ID, appointment date, and time are required'
       });
     }
-    
+
     // Get patient
     const patient = await Patient.findOne({ user: userId });
     if (!patient) {
@@ -235,21 +238,21 @@ export const bookAppointment = async (req, res) => {
         message: 'Patient profile not found'
       });
     }
-    
+
     // Check if doctor exists and is verified
     const doctor = await mongoose.model('Doctor').findOne({
       _id: doctorId,
       // isVerified: true,
       // acceptingNewPatients: true
     });
-    
+
     if (!doctor) {
       return res.status(404).json({
         success: false,
         message: 'Doctor not found or not accepting appointments'
       });
     }
-    
+
     // Validate appointment date and time
     const appointmentDateTime = new Date(appointmentDate);
     if (appointmentDateTime < new Date()) {
@@ -258,29 +261,29 @@ export const bookAppointment = async (req, res) => {
         message: 'Cannot book appointment in the past'
       });
     }
-    
+
     // Check if time slot is available
     const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][appointmentDateTime.getDay()];
     const daySchedule = doctor.availability.find(a => a.day === dayOfWeek && a.isAvailable);
-    
+
     if (!daySchedule) {
       return res.status(400).json({
         success: false,
         message: `Doctor is not available on ${dayOfWeek}`
       });
     }
-    
+
     const timeSlot = daySchedule.slots.find(
       slot => slot.startTime <= appointmentTime && slot.endTime >= appointmentTime && !slot.isBooked
     );
-    
+
     if (!timeSlot) {
       return res.status(400).json({
         success: false,
         message: 'This time slot is not available'
       });
     }
-    
+
     // Check if there's already an appointment at this time
     const existingAppointment = await Appointment.findOne({
       doctor: doctorId,
@@ -291,14 +294,14 @@ export const bookAppointment = async (req, res) => {
       appointmentTime,
       status: { $nin: ['cancelled', 'no-show'] }
     });
-    
+
     if (existingAppointment) {
       return res.status(400).json({
         success: false,
         message: 'This time slot is already booked'
       });
     }
-    
+
     // Create appointment
     const newAppointment = new Appointment({
       doctor: doctorId,
@@ -313,7 +316,7 @@ export const bookAppointment = async (req, res) => {
         status: 'pending'
       }
     });
-    
+
     // If it's a video appointment, add video call details
     if (appointmentType === 'video' && doctor.videoConsultation.available) {
       newAppointment.videoCallDetails = {
@@ -321,9 +324,9 @@ export const bookAppointment = async (req, res) => {
         // Generate link later when appointment is confirmed
       };
     }
-    
+
     await newAppointment.save();
-    
+
     res.status(201).json({
       success: true,
       message: 'Appointment booked successfully',
@@ -349,7 +352,7 @@ export const cancelAppointment = async (req, res) => {
     const userId = req.user.id;
     const { id } = req.params;
     const { reason } = req.body;
-    
+
     // Get patient
     const patient = await Patient.findOne({ user: userId });
     if (!patient) {
@@ -358,40 +361,40 @@ export const cancelAppointment = async (req, res) => {
         message: 'Patient profile not found'
       });
     }
-    
+
     // Find appointment
     const appointment = await Appointment.findOne({
       _id: id,
       patient: patient._id,
       status: 'scheduled'
     });
-    
+
     if (!appointment) {
       return res.status(404).json({
         success: false,
         message: 'Appointment not found or cannot be cancelled'
       });
     }
-    
+
     // Check cancellation time (e.g., 24 hours before appointment)
     const appointmentTime = new Date(appointment.appointmentDate);
     const now = new Date();
     const hoursDifference = (appointmentTime - now) / (1000 * 60 * 60);
-    
+
     if (hoursDifference < 24) {
       return res.status(400).json({
         success: false,
         message: 'Appointments can only be cancelled at least 24 hours in advance'
       });
     }
-    
+
     // Update appointment
     appointment.status = 'cancelled';
     appointment.cancellationReason = reason || 'Cancelled by patient';
     appointment.cancelledBy = 'patient';
-    
+
     await appointment.save();
-    
+
     res.status(200).json({
       success: true,
       message: 'Appointment cancelled successfully'
@@ -414,7 +417,7 @@ export const cancelAppointment = async (req, res) => {
 export const updateProfileImage = async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Check if file was uploaded
     if (!req.file) {
       return res.status(400).json({
@@ -426,7 +429,7 @@ export const updateProfileImage = async (req, res) => {
     // Find user
     const User = mongoose.model('User');
     const user = await User.findById(userId);
-    
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -438,15 +441,15 @@ export const updateProfileImage = async (req, res) => {
     if (user.profileImageId) {
       await deleteFile(user.profileImageId);
     }
-    
+
     // Upload file to Cloudinary
     const uploadedImage = await uploadFile(req.file, 'patients/profile-images');
-    
+
     // Update user profile with new image URL and public_id
     user.profileImage = uploadedImage.url;
     user.profileImageId = uploadedImage.public_id;
     await user.save();
-    
+
     res.status(200).json({
       success: true,
       data: {
@@ -481,7 +484,7 @@ export const updateProfileImage = async (req, res) => {
 export const getPatientMedicalRecords = async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Find patient
     const patient = await Patient.findOne({ user: userId });
     if (!patient) {
@@ -490,11 +493,22 @@ export const getPatientMedicalRecords = async (req, res) => {
         message: 'Patient profile not found'
       });
     }
-    
-    // Find medical records including prescriptions, test results, etc.
-    // For more complex applications, this could be in a separate collection
+
+    // Initialize medical records object with default empty values
     const medicalRecords = {
-      visits: await Appointment.find({
+      visits: [],
+      prescriptions: [],
+      testResults: [],
+      allergies: patient.allergies || [],
+      chronicConditions: patient.chronicConditions || [],
+      surgicalHistory: patient.surgicalHistory || [],
+      immunizationHistory: patient.immunizationHistory || [],
+      documents: []
+    };
+
+    // Safely fetch completed appointments/visits
+    try {
+      medicalRecords.visits = await Appointment.find({
         patient: patient._id,
         status: 'completed'
       })
@@ -507,9 +521,15 @@ export const getPatientMedicalRecords = async (req, res) => {
         }
       })
       .sort({ appointmentDate: -1 })
-      .lean(),
-      
-      prescriptions: await mongoose.model('Prescription').find({
+      .lean();
+    } catch (err) {
+      console.error('Error fetching patient visits:', err.message);
+      // Continue with empty visits array
+    }
+
+    // Safely fetch prescriptions
+    try {
+      medicalRecords.prescriptions = await mongoose.model('Prescription').find({
         patient: patient._id
       })
       .populate('doctor', 'user')
@@ -521,41 +541,36 @@ export const getPatientMedicalRecords = async (req, res) => {
         }
       })
       .sort({ createdAt: -1 })
-      .lean()
-      .catch(err => {
-        console.log('No Prescription model found or error:', err.message);
-        return [];
-      }),
-      
-      testResults: await mongoose.model('TestResult').find({
+      .lean();
+    } catch (err) {
+      console.error('Error fetching prescriptions:', err.message);
+      // Continue with empty prescriptions array
+    }
+
+    // Safely fetch test results
+    try {
+      medicalRecords.testResults = await mongoose.model('TestResult').find({
         patient: patient._id
       })
       .sort({ testDate: -1 })
-      .lean()
-      .catch(err => {
-        console.log('No TestResult model found or error:', err.message);
-        return [];
-      }),
-      
-      allergies: patient.allergies || [],
-      
-      chronicConditions: patient.chronicConditions || [],
-      
-      surgicalHistory: patient.surgicalHistory || [],
-      
-      immunizationHistory: patient.immunizationHistory || [],
-      
-      documents: await mongoose.model('MedicalDocument').find({
+      .lean();
+    } catch (err) {
+      console.error('Error fetching test results:', err.message);
+      // Continue with empty test results array
+    }
+
+    // Safely fetch medical documents
+    try {
+      medicalRecords.documents = await mongoose.model('MedicalDocument').find({
         patient: patient._id
       })
       .sort({ uploadDate: -1 })
-      .lean()
-      .catch(err => {
-        console.log('No MedicalDocument model found or error:', err.message);
-        return [];
-      })
-    };
-    
+      .lean();
+    } catch (err) {
+      console.error('Error fetching medical documents:', err.message);
+      // Continue with empty documents array
+    }
+
     res.status(200).json({
       success: true,
       data: medicalRecords
@@ -579,7 +594,7 @@ export const uploadMedicalDocument = async (req, res) => {
   try {
     const userId = req.user.id;
     const { documentType, documentDate, description } = req.body;
-    
+
     // Check if file was uploaded
     if (!req.file) {
       return res.status(400).json({
@@ -587,21 +602,21 @@ export const uploadMedicalDocument = async (req, res) => {
         message: 'Please upload a document'
       });
     }
-    
+
     // Get patient
     const Patient = mongoose.model('Patient');
     const patient = await Patient.findOne({ user: userId });
-    
+
     if (!patient) {
       return res.status(404).json({
         success: false,
         message: 'Patient profile not found'
       });
     }
-    
+
     // Upload document to Cloudinary
     const uploadedFile = await uploadFile(req.file, 'patients/medical-documents');
-    
+
     // Create medical record
     const MedicalRecord = mongoose.model('MedicalRecord');
     const medicalRecord = new MedicalRecord({
@@ -615,14 +630,14 @@ export const uploadMedicalDocument = async (req, res) => {
       fileType: req.file.mimetype,
       uploadDate: new Date()
     });
-    
+
     // Save medical record
     await medicalRecord.save();
-    
+
     // Add to patient's medical records array
     patient.medicalRecords.push(medicalRecord._id);
     await patient.save();
-    
+
     res.status(201).json({
       success: true,
       data: medicalRecord,
@@ -655,7 +670,7 @@ export const uploadMedicalDocument = async (req, res) => {
 export const getPatientVitalStats = async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Find patient
     const patient = await Patient.findOne({ user: userId });
     if (!patient) {
@@ -664,10 +679,10 @@ export const getPatientVitalStats = async (req, res) => {
         message: 'Patient profile not found'
       });
     }
-    
+
     // Get vital stats from visits - can be expanded with a dedicated model later
     let vitalStats = [];
-    
+
     try {
       // Check if VitalStat model exists
       vitalStats = await mongoose.model('VitalStat').find({
@@ -679,16 +694,16 @@ export const getPatientVitalStats = async (req, res) => {
     } catch (err) {
       // If model doesn't exist, generate sample data
       console.log('No VitalStat model found or error:', err.message);
-      
+
       // Generate mock data if no real data exists
       // This will help in testing and initial setup
       const today = new Date();
-      
+
       // Generate data for the last 6 months
       for (let i = 0; i < 6; i++) {
         const date = new Date(today);
         date.setMonth(date.getMonth() - i);
-        
+
         vitalStats.push({
           recordedAt: date,
           bloodPressure: {
@@ -704,7 +719,7 @@ export const getPatientVitalStats = async (req, res) => {
         });
       }
     }
-    
+
     // Format vital stats for easier frontend charting
     const formattedVitalStats = {
       labels: vitalStats.map(stat => new Date(stat.recordedAt).toLocaleDateString()),
@@ -721,7 +736,7 @@ export const getPatientVitalStats = async (req, res) => {
       },
       data: vitalStats // Include raw data
     };
-    
+
     res.status(200).json({
       success: true,
       data: formattedVitalStats
@@ -746,7 +761,7 @@ export const rateDoctorAfterAppointment = async (req, res) => {
     const { doctorId } = req.params;
     const { rating, comment, appointmentId } = req.body;
     const userId = req.user.id;
-    
+
     // Validate input
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({
@@ -754,7 +769,7 @@ export const rateDoctorAfterAppointment = async (req, res) => {
         message: 'Rating must be between 1 and 5'
       });
     }
-    
+
     // Get patient
     const patient = await Patient.findOne({ user: userId });
     if (!patient) {
@@ -763,7 +778,7 @@ export const rateDoctorAfterAppointment = async (req, res) => {
         message: 'Patient profile not found'
       });
     }
-    
+
     // Verify the appointment exists and is completed
     const appointment = await Appointment.findOne({
       _id: appointmentId,
@@ -771,14 +786,14 @@ export const rateDoctorAfterAppointment = async (req, res) => {
       patient: patient._id,
       status: 'completed'
     });
-    
+
     if (!appointment) {
       return res.status(404).json({
         success: false,
         message: 'No completed appointment found with this doctor'
       });
     }
-    
+
     // Get doctor profile
     const doctor = await mongoose.model('Doctor').findById(doctorId);
     if (!doctor) {
@@ -787,12 +802,12 @@ export const rateDoctorAfterAppointment = async (req, res) => {
         message: 'Doctor not found'
       });
     }
-    
+
     // Check if review already exists
     const existingReviewIndex = doctor.reviews.findIndex(
       r => r.patient.toString() === patient._id.toString()
     );
-    
+
     if (existingReviewIndex > -1) {
       // Update existing review
       doctor.reviews[existingReviewIndex].rating = rating;
@@ -807,19 +822,19 @@ export const rateDoctorAfterAppointment = async (req, res) => {
         date: Date.now()
       });
     }
-    
+
     // Update appointment feedback
     appointment.feedback = {
       submitted: true,
       rating,
       comments: comment
     };
-    
+
     await appointment.save();
-    
+
     // Update doctor's average rating
     await doctor.updateAverageRating();
-    
+
     res.status(200).json({
       success: true,
       message: 'Rating submitted successfully',
@@ -847,7 +862,7 @@ export const downloadPrescription = async (req, res) => {
   try {
     const userId = req.user.id;
     const prescriptionId = req.params.id;
-    
+
     // Get patient
     const patient = await Patient.findOne({ user: userId });
     if (!patient) {
@@ -856,7 +871,7 @@ export const downloadPrescription = async (req, res) => {
         message: 'Patient profile not found'
       });
     }
-    
+
     // Find prescription and verify it belongs to the patient
     const prescription = await mongoose.model('Prescription').findOne({
       _id: prescriptionId,
@@ -869,14 +884,14 @@ export const downloadPrescription = async (req, res) => {
         select: 'firstName lastName'
       }
     });
-    
+
     if (!prescription) {
       return res.status(404).json({
         success: false,
         message: 'Prescription not found or access denied'
       });
     }
-    
+
     // Return prescription details with download URL
     res.status(200).json({
       success: true,
@@ -890,6 +905,70 @@ export const downloadPrescription = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Search for doctors by name, specialization, or email
+ * @route   GET /api/patients/doctors/search
+ * @access  Private (Patient only)
+ */
+export const searchDoctors = async (req, res) => {
+  try {
+    const { query } = req.query;
+    const patientId = req.user._id;
+
+    if (!query || query.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query must be at least 2 characters'
+      });
+    }
+
+    // Find doctors by name, specialization, or email
+    const doctorUsers = await User.find({
+      role: 'doctor',
+      $or: [
+        { firstName: { $regex: query, $options: 'i' } },
+        { lastName: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } }
+      ]
+    }).select('_id firstName lastName email profileImage');
+
+    // Get doctor profiles to include specialization
+    const doctorIds = doctorUsers.map(user => user._id);
+    const doctorProfiles = await Doctor.find({
+      user: { $in: doctorIds },
+      registrationStatus: 'approved' // Only return approved doctors
+    }).select('user specialization');
+
+    // Merge user data with doctor profile data
+    const doctors = doctorUsers.map(user => {
+      const doctorProfile = doctorProfiles.find(
+        profile => profile.user.toString() === user._id.toString()
+      );
+
+      return {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        profileImage: user.profileImage,
+        specialization: doctorProfile?.specialization || ''
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: doctors
+    });
+  } catch (error) {
+    console.error('Error searching doctors:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to search doctors',
       error: error.message
     });
   }

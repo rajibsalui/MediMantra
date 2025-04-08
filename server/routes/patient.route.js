@@ -12,7 +12,8 @@ import {
   getPatientVitalStats,
   rateDoctorAfterAppointment,
   downloadPrescription,
-  uploadMedicalDocument
+  uploadMedicalDocument,
+  searchDoctors
 } from '../controllers/patient.controller.js';
 
 const router = express.Router();
@@ -30,6 +31,13 @@ router.get('/profile', authMiddleware, getPatientProfile);
  * @access  Private (Patient only)
  */
 router.put('/profile', authMiddleware, updatePatientProfile);
+
+/**
+ * @route   GET /api/patients/doctors/search
+ * @desc    Search doctors by name, specialization, or email
+ * @access  Private (Patient only)
+ */
+router.get('/doctors/search', authMiddleware, searchDoctors);
 
 /**
  * @route   GET /api/patients/appointments

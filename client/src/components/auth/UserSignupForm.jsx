@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext"; // Added AuthContext import
 const UserSignupForm = () => {
   const router = useRouter();
   const { register } = useAuth(); // Get register function from AuthContext
-  
+
   // Form state with all requested fields
   const [formData, setFormData] = useState({
     firstName: "",
@@ -32,17 +32,17 @@ const UserSignupForm = () => {
     role: "patient",
     agreeToTerms: false
   });
-  
+
   // UI state
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
-  
+
   // Error state
   const [errors, setErrors] = useState({});
-  
+
   // Handle input change
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
@@ -50,7 +50,7 @@ const UserSignupForm = () => {
       ...formData,
       [name]: type === 'checkbox' ? checked : value
     });
-    
+
     // Clear error when field is modified
     if (errors[name]) {
       setErrors({
@@ -59,7 +59,7 @@ const UserSignupForm = () => {
       });
     }
   };
-  
+
   // Navigate between form steps
   const nextStep = () => {
     if (validateCurrentStep()) {
@@ -69,58 +69,58 @@ const UserSignupForm = () => {
       toast.error('Please complete all required fields correctly');
     }
   };
-  
+
   const prevStep = () => {
     setCurrentStep(currentStep - 1);
     window.scrollTo(0, 0);
   };
-  
+
   // Validate current step fields
   const validateCurrentStep = () => {
     const newErrors = {};
-    
+
     if (currentStep === 1) {
       // Personal information validation
       if (!formData.firstName.trim()) {
         newErrors.firstName = 'First name is required';
       }
-      
+
       if (!formData.lastName.trim()) {
         newErrors.lastName = 'Last name is required';
       }
-      
+
       if (!formData.email) {
         newErrors.email = 'Email is required';
       } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
         newErrors.email = 'Email is invalid';
       }
-      
+
       if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/[^\d]/g, ''))) {
         newErrors.phone = 'Please enter a valid 10-digit phone number';
       }
-      
+
       if (!formData.dateOfBirth) {
         newErrors.dateOfBirth = 'Date of birth is required';
       }
-      
+
       if (!formData.gender) {
         newErrors.gender = 'Please select your gender';
       }
-    } 
+    }
     else if (currentStep === 2) {
       // Address validation
       if (!formData.address.trim()) {
         newErrors.address = 'Address is required';
       }
-      
+
       if (!formData.city.trim()) {
         newErrors.city = 'City is required';
       }
-      
+
       if (!formData.state.trim()) {
         newErrors.state = 'State is required';
       }
-      
+
       if (!formData.zipCode.trim()) {
         newErrors.zipCode = 'ZIP code is required';
       } else if (!/^[1-9][0-9]{5}$/.test(formData.zipCode.trim())) {
@@ -132,13 +132,13 @@ const UserSignupForm = () => {
       if (!formData.emergencyContactName.trim()) {
         newErrors.emergencyContactName = 'Emergency contact name is required';
       }
-      
+
       if (!formData.emergencyContactPhone.trim()) {
         newErrors.emergencyContactPhone = 'Emergency contact phone is required';
       } else if (!/^\d{10}$/.test(formData.emergencyContactPhone.replace(/[^\d]/g, ''))) {
         newErrors.emergencyContactPhone = 'Please enter a valid 10-digit phone number';
       }
-      
+
       if (!formData.emergencyContactRelation.trim()) {
         newErrors.emergencyContactRelation = 'Relationship is required';
       }
@@ -152,94 +152,100 @@ const UserSignupForm = () => {
       } else if (!/(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])/.test(formData.password)) {
         newErrors.password = 'Password must include uppercase, lowercase, number, and special character';
       }
-      
+
       if (!formData.confirmPassword) {
         newErrors.confirmPassword = 'Please confirm your password';
       } else if (formData.confirmPassword !== formData.password) {
         newErrors.confirmPassword = 'Passwords do not match';
       }
-      
+
       if (!formData.agreeToTerms) {
         newErrors.agreeToTerms = 'You must agree to the terms and conditions';
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   // Validate all form fields before submission
   const validateForm = () => {
     const requiredFields = [
       'firstName', 'lastName', 'email', 'dateOfBirth', 'gender',
-      'address', 'city', 'state', 'zipCode', 
+      'address', 'city', 'state', 'zipCode',
       'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelation',
       'password', 'confirmPassword'
     ];
-    
+
     const newErrors = {};
-    
+
     requiredFields.forEach(field => {
       if (!formData[field] || (typeof formData[field] === 'string' && !formData[field].trim())) {
         newErrors[field] = `${field.replace(/([A-Z])/g, ' $1').replace(/^\w/, c => c.toUpperCase())} is required`;
       }
     });
-    
+
     // Email validation
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     // Phone validation
     if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/[^\d]/g, ''))) {
       newErrors.phone = 'Please enter a valid 10-digit phone number';
     }
-    
+
     // Emergency phone validation
-    if (formData.emergencyContactPhone && 
+    if (formData.emergencyContactPhone &&
         !/^\d{10}$/.test(formData.emergencyContactPhone.replace(/[^\d]/g, ''))) {
       newErrors.emergencyContactPhone = 'Please enter a valid 10-digit phone number';
     }
-    
+
     // ZIP code validation
     if (formData.zipCode && !/^[1-9][0-9]{5}$/.test(formData.zipCode)) {
       newErrors.zipCode = 'Please enter a valid 6-digit PIN code';
     }
-    
+
     // Password validation
     if (formData.password && formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
-    } else if (formData.password && 
+    } else if (formData.password &&
               !/(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])/.test(formData.password)) {
       newErrors.password = 'Password must include uppercase, lowercase, number, and special character';
     }
-    
+
     // Password matching
     if (formData.confirmPassword && formData.confirmPassword !== formData.password) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     // Terms agreement
     if (!formData.agreeToTerms) {
       newErrors.agreeToTerms = 'You must agree to the terms and conditions';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error('Please complete all required fields correctly');
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
+      // Format allergies, chronic conditions, and medications as arrays if they contain comma-separated values
+      const formatTextToArray = (text) => {
+        if (!text) return [];
+        return text.split(',').map(item => item.trim()).filter(item => item);
+      };
+
       const payload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -252,7 +258,8 @@ const UserSignupForm = () => {
           street: formData.address,
           city: formData.city,
           state: formData.state,
-          zipCode: formData.zipCode
+          zipCode: formData.zipCode,
+          country: 'India'
         },
         medicalInformation: {
           allergies: formData.allergies,
@@ -265,13 +272,19 @@ const UserSignupForm = () => {
           relationship: formData.emergencyContactRelation
         },
         role: "patient",
+        agreeToTerms: formData.agreeToTerms
       };
-      
+
       // Call the register function from AuthContext
-      await register(payload);
-      
+      const response = await register(payload);
+
       toast.success('Account created! Welcome to MediMantra.');
-      
+
+      // Store user ID in local storage if needed
+      if (response && response.userId) {
+        localStorage.setItem("userId", response.userId);
+      }
+
       // Redirect to login page or verification page
       router.push('/verify-email');
     } catch (error) {
@@ -281,34 +294,34 @@ const UserSignupForm = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Toggle password visibility
   const togglePassword = () => setShowPassword(!showPassword);
   const toggleConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
-  
+
   // Progress indicator
   const renderProgressBar = () => {
     return (
       <div className="w-full mb-6">
         <div className="flex mb-2 justify-between">
           {Array.from({ length: totalSteps }, (_, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className={`step-item ${i + 1 <= currentStep ? 'active' : ''}`}
             >
               <div className={`step-counter ${i + 1 === currentStep ? 'current' : i + 1 < currentStep ? 'completed' : ''}`}>
                 {i + 1 < currentStep ? '✓' : i + 1}
               </div>
               <div className="step-name text-xs mt-1">
-                {i === 0 ? 'Personal' : 
-                 i === 1 ? 'Address' : 
+                {i === 0 ? 'Personal' :
+                 i === 1 ? 'Address' :
                  i === 2 ? 'Emergency' : 'Account'}
               </div>
             </div>
           ))}
         </div>
         <div className="w-full bg-gray-200 h-1 rounded-full">
-          <div 
+          <div
             className="bg-blue-600 h-1 rounded-full transition-all duration-300"
             style={{ width: `${(currentStep / totalSteps) * 100}%` }}
           ></div>
@@ -316,13 +329,13 @@ const UserSignupForm = () => {
       </div>
     );
   };
-  
+
   // Step 1: Personal Information
   const renderPersonalInfoStep = () => {
     return (
       <>
         <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="form-control w-full">
             <label className="label">
@@ -342,7 +355,7 @@ const UserSignupForm = () => {
               </label>
             )}
           </div>
-          
+
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text text-gray-700 font-medium">Last Name*</span>
@@ -362,7 +375,7 @@ const UserSignupForm = () => {
             )}
           </div>
         </div>
-        
+
         <div className="form-control w-full mt-2">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Email*</span>
@@ -381,7 +394,7 @@ const UserSignupForm = () => {
             </label>
           )}
         </div>
-        
+
         <div className="form-control w-full mt-2">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Phone Number</span>
@@ -400,7 +413,7 @@ const UserSignupForm = () => {
             </label>
           )}
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
           <div className="form-control w-full">
             <label className="label">
@@ -419,7 +432,7 @@ const UserSignupForm = () => {
               </label>
             )}
           </div>
-          
+
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text text-gray-700 font-medium">Gender*</span>
@@ -446,13 +459,13 @@ const UserSignupForm = () => {
       </>
     );
   };
-  
+
   // Step 2: Address Information
   const renderAddressStep = () => {
     return (
       <>
         <h3 className="text-lg font-semibold mb-4">Address Information</h3>
-        
+
         <div className="form-control w-full">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Street Address*</span>
@@ -471,7 +484,7 @@ const UserSignupForm = () => {
             </label>
           )}
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
           <div className="form-control w-full">
             <label className="label">
@@ -491,7 +504,7 @@ const UserSignupForm = () => {
               </label>
             )}
           </div>
-          
+
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text text-gray-700 font-medium">State*</span>
@@ -511,7 +524,7 @@ const UserSignupForm = () => {
             )}
           </div>
         </div>
-        
+
         <div className="form-control w-full mt-2">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">ZIP Code*</span>
@@ -530,9 +543,9 @@ const UserSignupForm = () => {
             </label>
           )}
         </div>
-        
+
         <h3 className="text-lg font-semibold mt-6 mb-4">Medical Information</h3>
-        
+
         <div className="form-control w-full">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Allergies</span>
@@ -545,7 +558,7 @@ const UserSignupForm = () => {
             className="textarea textarea-bordered bg-white w-full h-24"
           />
         </div>
-        
+
         <div className="form-control w-full mt-2">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Chronic Conditions</span>
@@ -558,7 +571,7 @@ const UserSignupForm = () => {
             className="textarea textarea-bordered bg-white w-full h-24"
           />
         </div>
-        
+
         <div className="form-control w-full mt-2">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Current Medications</span>
@@ -574,13 +587,13 @@ const UserSignupForm = () => {
       </>
     );
   };
-  
+
   // Step 3: Emergency Contact
   const renderEmergencyContactStep = () => {
     return (
       <>
         <h3 className="text-lg font-semibold mb-4">Emergency Contact Information</h3>
-        
+
         <div className="form-control w-full">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Emergency Contact Name*</span>
@@ -599,7 +612,7 @@ const UserSignupForm = () => {
             </label>
           )}
         </div>
-        
+
         <div className="form-control w-full mt-2">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Emergency Contact Phone*</span>
@@ -618,7 +631,7 @@ const UserSignupForm = () => {
             </label>
           )}
         </div>
-        
+
         <div className="form-control w-full mt-2">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Relationship to Emergency Contact*</span>
@@ -640,13 +653,13 @@ const UserSignupForm = () => {
       </>
     );
   };
-  
+
   // Step 4: Account Setup
   const renderAccountStep = () => {
     return (
       <>
         <h3 className="text-lg font-semibold mb-4">Account Setup</h3>
-        
+
         <div className="form-control w-full">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Password*</span>
@@ -683,11 +696,11 @@ const UserSignupForm = () => {
             </label>
           )}
           <p className="text-xs mt-1 text-gray-500">
-            Password must be at least 8 characters long and include uppercase, lowercase, 
+            Password must be at least 8 characters long and include uppercase, lowercase,
             number, and special character (!@#$%^&*).
           </p>
         </div>
-        
+
         <div className="form-control w-full mt-2">
           <label className="label">
             <span className="label-text text-gray-700 font-medium">Confirm Password*</span>
@@ -724,7 +737,7 @@ const UserSignupForm = () => {
             </label>
           )}
         </div>
-        
+
         <div className="form-control mt-4">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -754,7 +767,7 @@ const UserSignupForm = () => {
       </>
     );
   };
-  
+
   // Render the current step content based on state
   const renderStepContent = () => {
     switch (currentStep) {
@@ -770,7 +783,7 @@ const UserSignupForm = () => {
         return null;
     }
   };
-  
+
   // Navigation buttons for multi-step form
   const renderStepButtons = () => {
     return (
@@ -784,7 +797,7 @@ const UserSignupForm = () => {
             Back
           </button>
         )}
-        
+
         {currentStep < totalSteps ? (
           <button
             type="button"
@@ -812,20 +825,20 @@ const UserSignupForm = () => {
       </div>
     );
   };
-  
+
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-6">
           <h2 className="text-2xl font-bold text-center mb-6">Create Your MediMantra Account</h2>
-          
+
           {renderProgressBar()}
-          
+
           <form onSubmit={handleSubmit}>
             {renderStepContent()}
             {renderStepButtons()}
           </form>
-          
+
           <div className="text-center mt-6">
             Already have an account?{" "}
             <Link href="/login" className="text-blue-600 hover:underline">
@@ -834,16 +847,16 @@ const UserSignupForm = () => {
           </div>
         </div>
       </div>
-      
+
       <Toaster position="top-center" reverseOrder={false} />
-      
+
       <style jsx global>{`
         .step-item {
           flex: 1;
           text-align: center;
           position: relative;
         }
-        
+
         .step-counter {
           width: 30px;
           height: 30px;
@@ -857,17 +870,17 @@ const UserSignupForm = () => {
           font-weight: bold;
           font-size: 14px;
         }
-        
+
         .step-counter.current {
           background-color: #3b82f6;
           color: white;
         }
-        
+
         .step-counter.completed {
           background-color: #10b981;
           color: white;
         }
-        
+
         .step-item.active .step-name {
           color: #3b82f6;
           font-weight: 500;

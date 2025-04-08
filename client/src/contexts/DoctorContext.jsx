@@ -63,7 +63,7 @@ export const DoctorProvider = ({ children }) => {
     try {
       setDataLoading(prev => ({ ...prev, profile: true }));
       const { data } = await axios.get(
-        `${API_URL}/doctors/profile`, 
+        `${API_URL}/doctors/profile`,
         getAuthHeaders()
       );
       setDoctor(data.data);
@@ -92,11 +92,11 @@ export const DoctorProvider = ({ children }) => {
       });
 
       const { data } = await axios.get(
-        `${API_URL}/doctors/appointments?${params.toString()}`, 
+        `${API_URL}/doctors/appointments?${params.toString()}`,
         getAuthHeaders()
       );
       setAppointments(data.data);
-      return data.data;
+      return data;
     } catch (error) {
       console.error("Error fetching doctor appointments:", error);
       return [];
@@ -114,11 +114,11 @@ export const DoctorProvider = ({ children }) => {
     try {
       setDataLoading(prev => ({ ...prev, stats: true }));
       const { data } = await axios.get(
-        `${API_URL}/doctors/dashboard-stats`, 
+        `${API_URL}/doctors/dashboard-stats`,
         getAuthHeaders()
       );
       setDashboardStats(data.data);
-      return data.data; 
+      return data.data;
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
       // Set fallback stats with dummy data for testing
@@ -160,7 +160,7 @@ export const DoctorProvider = ({ children }) => {
     try {
       setDataLoading(prev => ({ ...prev, patients: true }));
       const { data } = await axios.get(
-        `${API_URL}/doctors/patients`, 
+        `${API_URL}/doctors/patients`,
         getAuthHeaders()
       );
       setPatients(data.data);
@@ -182,7 +182,7 @@ export const DoctorProvider = ({ children }) => {
     try {
       setDataLoading(prev => ({ ...prev, reviews: true }));
       const { data } = await axios.get(
-        `${API_URL}/doctors/reviews`, 
+        `${API_URL}/doctors/reviews`,
         getAuthHeaders()
       );
       setReviews(data.data);
@@ -195,8 +195,8 @@ export const DoctorProvider = ({ children }) => {
     }
   };
 
-  // Update appointment status
-  const updateAppointmentStatus = async (appointmentId, status) => {
+  // Update doctor profile
+  const updateDoctorProfile = async (profileData) => {
     if (!token) {
       toast.error("Authentication required");
       throw new Error("No authentication token available");
@@ -205,16 +205,125 @@ export const DoctorProvider = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await axios.put(
-        `${API_URL}/doctors/appointments/${appointmentId}/status`, 
-        { status }, 
+        `${API_URL}/doctors/profile`,
+        profileData,
+        getAuthHeaders()
+      );
+      setDoctor(data.data);
+      toast.success("Profile updated successfully");
+      return data.data;
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to update profile";
+      toast.error(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update profile image
+  const updateProfileImage = async (formData) => {
+    if (!token) {
+      toast.error("Authentication required");
+      throw new Error("No authentication token available");
+    }
+
+    try {
+      setLoading(true);
+      const config = {
+        ...getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders().headers,
+          'Content-Type': 'multipart/form-data'
+        }
+      };
+
+      const { data } = await axios.put(
+        `${API_URL}/doctors/profile-image`,
+        formData,
+        config
+      );
+      // Update doctor state with new image
+      await getDoctorProfile();
+      toast.success("Profile image updated successfully");
+      return data;
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to update profile image";
+      toast.error(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get a single appointment by ID
+  const getAppointmentById = async (appointmentId) => {
+    if (!token) {
+      toast.error("Authentication required");
+      throw new Error("No authentication token available");
+    }
+
+    try {
+      setLoading(true);
+      const { data } = await axios.get(
+        `${API_URL}/doctors/appointments/${appointmentId}`,
+        getAuthHeaders()
+      );
+      return data.data;
+    } catch (error) {
+      const message = error.response?.data?.message || `Failed to get appointment details`;
+      toast.error(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update appointment status
+  const updateAppointmentStatus = async (appointmentId, status, cancellationReason) => {
+    if (!token) {
+      toast.error("Authentication required");
+      throw new Error("No authentication token available");
+    }
+
+    try {
+      setLoading(true);
+      const { data } = await axios.put(
+        `${API_URL}/doctors/appointments/${appointmentId}/status`,
+        { status, cancellationReason },
         getAuthHeaders()
       );
       // Refresh appointments list
       getDoctorAppointments();
       toast.success(`Appointment ${status} successfully`);
-      return data;
+      return data.data;
     } catch (error) {
       const message = error.response?.data?.message || `Failed to update appointment status`;
+      toast.error(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update appointment details
+  const updateAppointmentDetails = async (appointmentId, details) => {
+    if (!token) {
+      toast.error("Authentication required");
+      throw new Error("No authentication token available");
+    }
+
+    try {
+      setLoading(true);
+      const { data } = await axios.put(
+        `${API_URL}/doctors/appointments/${appointmentId}`,
+        details,
+        getAuthHeaders()
+      );
+      toast.success("Appointment details updated successfully");
+      return data.data;
+    } catch (error) {
+      const message = error.response?.data?.message || `Failed to update appointment details`;
       toast.error(message);
       throw new Error(message);
     } finally {
@@ -237,7 +346,11 @@ export const DoctorProvider = ({ children }) => {
         getDoctorPatients,
         getDoctorReviews,
         getDashboardStats,
-        updateAppointmentStatus
+        getAppointmentById,
+        updateAppointmentStatus,
+        updateAppointmentDetails,
+        updateDoctorProfile,
+        updateProfileImage
       }}
     >
       {children}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +17,8 @@ import {
   Stethoscope,
   CreditCard,
   Calendar,
+  FileText,
+  Pill,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -25,6 +28,8 @@ import { AnimatedTooltip } from "@/components/ui/animated-tooltip";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { CardSpotlight } from "@/components/ui/card-spotlight";
 import { Badge } from "@/components/ui/badge";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+
 
 export default function DoctorDashboard() {
   const router = useRouter();
@@ -34,7 +39,6 @@ export default function DoctorDashboard() {
     appointments,
     dashboardStats,
     loading,
-    dataLoading,
     getDoctorProfile,
     getDoctorAppointments,
     getDashboardStats,
@@ -44,6 +48,7 @@ export default function DoctorDashboard() {
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [recentPatients, setRecentPatients] = useState([]);
   const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
   // Handle theme detection after mounting
   useEffect(() => {
@@ -70,7 +75,6 @@ export default function DoctorDashboard() {
   // Check for token on component mount
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const doctorId = localStorage.getItem("doctorId");
 
     if (!token) {
       toast.error("Authentication required. Please log in.");
@@ -159,12 +163,21 @@ export default function DoctorDashboard() {
     }
   }, [appointments]);
 
+  // Import the components we created
+  const AnalyticsDashboard = dynamic(() => import('@/components/doctor/AnalyticsDashboard'));
+  const PatientManagement = dynamic(() => import('@/components/doctor/PatientManagement'));
+  const AppointmentCalendar = dynamic(() => import('@/components/doctor/AppointmentCalendar'));
+  const PrescriptionManagement = dynamic(() => import('@/components/doctor/PrescriptionManagement'));
+  const MedicalRecordManagement = dynamic(() => import('@/components/doctor/MedicalRecordManagement'));
+  const ScheduleManager = dynamic(() => import('@/components/doctor/ScheduleManager'));
+
   // If loading, show skeleton
   if (authLoading || loading || !doctor || !mounted) {
     return <DashboardSkeleton />;
   }
 
   return (
+    <DashboardLayout>
     <div
       className={`min-h-screen ${
         document.documentElement.classList.contains("dark")
@@ -272,7 +285,7 @@ export default function DoctorDashboard() {
                 variant="outline"
                 size="icon"
                 onClick={toggleTheme}
-                className="rounded-full bg-white text-gray-800 border-gray-200 hover:bg-gray-100 shadow-sm 
+                className="rounded-full bg-white text-gray-800 border-gray-200 hover:bg-gray-100 shadow-sm
              dark:bg-gray-800/80 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 dark:shadow-inner"
               >
                 {/* Sun icon (shows in dark mode) */}
@@ -318,9 +331,341 @@ export default function DoctorDashboard() {
           </div>
         </motion.div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <motion.div
+        {/* Dashboard Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+          <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4">
+            <TabsTrigger value="overview" className="flex items-center justify-center">
+              <CalendarDays className="w-4 h-4 mr-2" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="patients" className="flex items-center justify-center">
+              <Users className="w-4 h-4 mr-2" />
+              Patients
+            </TabsTrigger>
+            <TabsTrigger value="appointments" className="flex items-center justify-center">
+              <Calendar className="w-4 h-4 mr-2" />
+              Appointments
+            </TabsTrigger>
+            <TabsTrigger value="prescriptions" className="flex items-center justify-center">
+              <Pill className="w-4 h-4 mr-2" />
+              Prescriptions
+            </TabsTrigger>
+            <TabsTrigger value="records" className="flex items-center justify-center">
+              <FileText className="w-4 h-4 mr-2" />
+              Records
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="flex items-center justify-center">
+              <Clock className="w-4 h-4 mr-2" />
+              Schedule
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab Content */}
+          <TabsContent value="overview" className="mt-0">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                <CardSpotlight
+                  className={`h-full ${
+                    document.documentElement.classList.contains("dark")
+                      ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 shadow-md shadow-blue-900/10"
+                      : "bg-white"
+                  } rounded-xl p-6`}
+                  glareColor={
+                    document.documentElement.classList.contains("dark")
+                      ? "rgba(59, 130, 246, 0.2)"
+                      : "rgba(59, 130, 246, 0.15)"
+                  }
+                  borderColor={
+                    document.documentElement.classList.contains("dark")
+                      ? "rgba(59, 130, 246, 0.2)"
+                      : "rgba(59, 130, 246, 0.15)"
+                  }
+                >
+                  <div className="flex items-center">
+                    <div
+                      className={`rounded-lg ${
+                        document.documentElement.classList.contains("dark")
+                          ? "bg-blue-500/10 ring-1 ring-blue-600/20"
+                          : "bg-blue-100"
+                      } p-3 mr-4`}
+                    >
+                      <CalendarDays
+                        className={`w-6 h-6 ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-blue-400"
+                            : "text-blue-600"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <p
+                        className={`text-sm ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-gray-400"
+                            : "text-gray-500"
+                        } font-medium`}
+                      >
+                        Today's Appointments
+                      </p>
+                      <h3
+                        className={`text-2xl font-bold ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-white"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        {todayAppointments.length}
+                      </h3>
+                    </div>
+                  </div>
+                </CardSpotlight>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                <CardSpotlight
+                  className={`h-full ${
+                    document.documentElement.classList.contains("dark")
+                      ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 shadow-md shadow-green-900/10"
+                      : "bg-white"
+                  } rounded-xl p-6`}
+                  glareColor={
+                    document.documentElement.classList.contains("dark")
+                      ? "rgba(34, 197, 94, 0.2)"
+                      : "rgba(34, 197, 94, 0.15)"
+                  }
+                  borderColor={
+                    document.documentElement.classList.contains("dark")
+                      ? "rgba(34, 197, 94, 0.2)"
+                      : "rgba(34, 197, 94, 0.15)"
+                  }
+                >
+                  <div className="flex items-center">
+                    <div
+                      className={`rounded-lg ${
+                        document.documentElement.classList.contains("dark")
+                          ? "bg-green-500/10 ring-1 ring-green-600/20"
+                          : "bg-green-100"
+                      } p-3 mr-4`}
+                    >
+                      <Users
+                        className={`w-6 h-6 ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-green-400"
+                            : "text-green-600"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <p
+                        className={`text-sm ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-gray-400"
+                            : "text-gray-500"
+                        } font-medium`}
+                      >
+                        Total Patients
+                      </p>
+                      <h3
+                        className={`text-2xl font-bold ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-white"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        {dashboardStats?.totalPatients || 0}
+                      </h3>
+                    </div>
+                  </div>
+                </CardSpotlight>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                <CardSpotlight
+                  className={`h-full ${
+                    document.documentElement.classList.contains("dark")
+                      ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 shadow-md shadow-violet-900/10"
+                      : "bg-white"
+                  } rounded-xl p-6`}
+                  glareColor={
+                    document.documentElement.classList.contains("dark")
+                      ? "rgba(139, 92, 246, 0.2)"
+                      : "rgba(139, 92, 246, 0.15)"
+                  }
+                  borderColor={
+                    document.documentElement.classList.contains("dark")
+                      ? "rgba(139, 92, 246, 0.2)"
+                      : "rgba(139, 92, 246, 0.15)"
+                  }
+                >
+                  <div className="flex items-center">
+                    <div
+                      className={`rounded-lg ${
+                        document.documentElement.classList.contains("dark")
+                          ? "bg-violet-500/10 ring-1 ring-violet-600/20"
+                          : "bg-purple-100"
+                      } p-3 mr-4`}
+                    >
+                      <Star
+                        className={`w-6 h-6 ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-violet-400"
+                            : "text-purple-600"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <p
+                        className={`text-sm ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-gray-400"
+                            : "text-gray-500"
+                        } font-medium`}
+                      >
+                        Rating
+                      </p>
+                      <div className="flex items-baseline">
+                        <h3
+                          className={`text-2xl font-bold ${
+                            document.documentElement.classList.contains("dark")
+                              ? "text-white"
+                              : "text-gray-900"
+                          }`}
+                        >
+                          {doctor.averageRating?.toFixed(1) || "N/A"}
+                        </h3>
+                        <span
+                          className={`ml-1 text-sm ${
+                            document.documentElement.classList.contains("dark")
+                              ? "text-gray-400"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          / 5
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardSpotlight>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                <CardSpotlight
+                  className={`h-full ${
+                    document.documentElement.classList.contains("dark")
+                      ? "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 shadow-md shadow-amber-900/10"
+                      : "bg-white"
+                  } rounded-xl p-6`}
+                  glareColor={
+                    document.documentElement.classList.contains("dark")
+                      ? "rgba(245, 158, 11, 0.2)"
+                      : "rgba(245, 158, 11, 0.15)"
+                  }
+                  borderColor={
+                    document.documentElement.classList.contains("dark")
+                      ? "rgba(245, 158, 11, 0.2)"
+                      : "rgba(245, 158, 11, 0.15)"
+                  }
+                >
+                  <div className="flex items-center">
+                    <div
+                      className={`rounded-lg ${
+                        document.documentElement.classList.contains("dark")
+                          ? "bg-amber-500/10 ring-1 ring-amber-600/20"
+                          : "bg-amber-100"
+                      } p-3 mr-4`}
+                    >
+                      <CreditCard
+                        className={`w-6 h-6 ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-amber-400"
+                            : "text-amber-600"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <p
+                        className={`text-sm ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-gray-400"
+                            : "text-gray-500"
+                        } font-medium`}
+                      >
+                        Earnings (Month)
+                      </p>
+                      <h3
+                        className={`text-2xl font-bold ${
+                          document.documentElement.classList.contains("dark")
+                            ? "text-white"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        ₹{dashboardStats?.monthlyEarnings?.toLocaleString() || 0}
+                      </h3>
+                    </div>
+                  </div>
+                </CardSpotlight>
+              </motion.div>
+            </div>
+
+            <Suspense fallback={<div className="p-12 text-center">Loading analytics...</div>}>
+              <AnalyticsDashboard dashboardStats={dashboardStats} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="patients" className="mt-0">
+            <Suspense fallback={<div className="p-12 text-center">Loading patient management...</div>}>
+              <PatientManagement patients={recentPatients} loading={loading} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="appointments" className="mt-0">
+            <Suspense fallback={<div className="p-12 text-center">Loading appointment calendar...</div>}>
+              <AppointmentCalendar appointments={appointments} loading={loading} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="prescriptions" className="mt-0">
+            <Suspense fallback={<div className="p-12 text-center">Loading prescription management...</div>}>
+              <PrescriptionManagement prescriptions={[]} loading={loading} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="records" className="mt-0">
+            <Suspense fallback={<div className="p-12 text-center">Loading medical records...</div>}>
+              <MedicalRecordManagement medicalRecords={[]} loading={loading} />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="schedule" className="mt-0">
+            <Suspense fallback={<div className="p-12 text-center">Loading schedule manager...</div>}>
+              <ScheduleManager availability={doctor.availability || []} loading={loading} />
+            </Suspense>
+          </TabsContent>
+        </Tabs>
+
+        {/* Quick Actions */}
+        <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
@@ -1536,7 +1881,7 @@ export default function DoctorDashboard() {
           </Card>
         </motion.div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 
@@ -1567,8 +1912,12 @@ function DashboardSkeleton() {
           </div>
         ))}
       </div>
-      
-      {/* More skeleton items... */}
+
+      {/* Tabs skeleton */}
+      <div className="mb-8">
+        <div className="h-10 bg-gray-800 rounded-md w-full mb-6 animate-pulse"></div>
+        <div className="h-64 bg-gray-800 rounded-xl w-full animate-pulse"></div>
+      </div>
     </div>
   );
 }

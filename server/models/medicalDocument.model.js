@@ -6,14 +6,15 @@ const medicalDocumentSchema = new mongoose.Schema({
     ref: 'Patient',
     required: true
   },
-  documentType: {
+  title: {
     type: String,
-    enum: ['prescription', 'lab_result', 'imaging', 'vaccination', 'discharge_summary', 'other'],
-    required: true
+    required: true,
+    trim: true
   },
-  documentDate: {
-    type: Date,
-    default: Date.now
+  category: {
+    type: String,
+    enum: ['prescription', 'lab_report', 'imaging', 'discharge_summary', 'insurance', 'other'],
+    default: 'other'
   },
   description: {
     type: String,
@@ -24,20 +25,34 @@ const medicalDocumentSchema = new mongoose.Schema({
     required: true
   },
   fileId: {
-    type: String
+    type: String,
+    required: true
   },
   fileName: {
-    type: String
+    type: String,
+    required: true
   },
   fileType: {
-    type: String
+    type: String,
+    required: true
   },
   uploadDate: {
     type: Date,
     default: Date.now
-  }
-}, {
-  timestamps: true
+  },
+  documentDate: {
+    type: Date
+  },
+  isSharedWithDoctor: {
+    type: Boolean,
+    default: false
+  },
+  sharedWith: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Doctor'
+  }]
+}, { 
+  timestamps: true 
 });
 
 const MedicalDocument = mongoose.model('MedicalDocument', medicalDocumentSchema);

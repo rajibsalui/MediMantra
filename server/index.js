@@ -6,8 +6,19 @@ import compression from 'compression';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import chalk from 'chalk';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
 import connectDB from './config/dbconnect.js';
 import { cloudinary } from './config/cloudinary.config.js';
+
+// Import models to ensure they're registered with Mongoose
+import './models/prescription.model.js';
+import './models/medicalRecord.model.js';
+import './models/testResult.model.js';
+import './models/medicalDocument.model.js';
+import './models/message.model.js';
+import './models/conversation.model.js';
 
 // Routes
 import authRoutes from './routes/auth.route.js';
@@ -15,10 +26,23 @@ import patientRoutes from './routes/patient.route.js';
 import doctorRoutes from './routes/doctor.route.js';
 import chatbotRoutes from './routes/chatbot.route.js';
 import symptomRoutes from './routes/symptom.route.js';
+import prescriptionRoutes from './routes/prescription.route.js';
+import messageRoutes from './routes/message.route.js';
+
+// Socket.io handlers
+import { setupSocketHandlers } from './socket/socketHandlers.js';
 
 // Initialize
 dotenv.config();
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -40,12 +64,14 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/symptom-checker', symptomRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/messages', messageRoutes);
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ 
-    success: false, 
-    message: 'Resource not found' 
+  res.status(404).json({
+    success: false,
+    message: 'Resource not found'
   });
 });
 
@@ -58,8 +84,11 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Setup Socket.io
+setupSocketHandlers(io);
+
 // Start server
-const server = app.listen(PORT, () => {
+const server = httpServer.listen(PORT, () => {
   const mode = process.env.NODE_ENV || 'development';
   const divider = chalk.gray('-----------------------------------');
   console.log(divider);
@@ -69,6 +98,7 @@ const server = app.listen(PORT, () => {
   console.log(`🌐 ${chalk.yellow('Environment:')} ${chalk.cyan(mode)}`);
   console.log(`🚪 ${chalk.yellow('Port:')}        ${chalk.cyan(PORT)}`);
   console.log(`☁️  ${chalk.yellow('Cloudinary:')}  ${chalk.cyan('Connected')}`);
+  console.log(`🔌 ${chalk.yellow('Socket.io:')}   ${chalk.cyan('Initialized')}`);
   console.log(`⏱️  ${chalk.yellow('Timestamp:')}   ${chalk.cyan(new Date().toLocaleString())}`);
   console.log(divider);
 });

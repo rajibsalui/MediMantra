@@ -1,9 +1,9 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.middleware.js';
 import { checkRole } from '../middleware/auth.middleware.js';
-import { 
-  register, 
-  login, 
+import {
+  register,
+  login,
   logout,
   refreshAccessToken,
   verifyEmail,
@@ -12,6 +12,7 @@ import {
   forgotPassword,
   resetPassword,
   changePassword,
+  updateEmail,
   getCurrentUser
 } from '../controllers/auth.controller.js';
 
@@ -35,6 +36,7 @@ router.post('/verify-phone', verifyPhone);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.put('/change-password', authMiddleware, changePassword);
+router.put('/update-email', authMiddleware, updateEmail);
 router.get('/current-user', authMiddleware, getCurrentUser);
 
 // Doctor specific routes

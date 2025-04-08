@@ -6,95 +6,174 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { toast } from 'react-hot-toast';
 import { usePatient } from '@/contexts/PatientContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LoaderCircle, Upload, Save, User, X } from 'lucide-react';
+import { LoaderCircle, Upload, Save, X } from 'lucide-react';
 
 const schema = yup.object({
   firstName: yup.string().required('First name is required'),
   lastName: yup.string().required('Last name is required'),
-  phone: yup.string().required('Phone number is required'),
+  email: yup.string().email('Invalid email format').required('Email is required'),
+  phone: yup.string()
+    .required('Phone number is required')
+    .matches(/^\d{10}$/, 'Phone number must be 10 digits'),
   dateOfBirth: yup.string().required('Date of birth is required'),
   gender: yup.string().required('Gender is required'),
   bloodGroup: yup.string(),
-  height: yup.number().positive('Height must be positive').typeError('Height must be a number'),
-  weight: yup.number().positive('Weight must be positive').typeError('Weight must be a number'),
+  height: yup.number().positive('Height must be positive').typeError('Height must be a number').nullable(),
+  weight: yup.number().positive('Weight must be positive').typeError('Weight must be a number').nullable(),
   allergies: yup.string(),
   chronicConditions: yup.string(),
-  emergencyContactName: yup.string(),
-  emergencyContactPhone: yup.string(),
+  currentMedications: yup.string(),
+  emergencyContactName: yup.string().required('Emergency contact name is required'),
+  emergencyContactPhone: yup.string()
+    .required('Emergency contact phone is required')
+    .matches(/^\d{10}$/, 'Phone number must be 10 digits'),
+  emergencyContactRelation: yup.string().required('Relationship is required'),
   address: yup.object({
-    street: yup.string(),
-    city: yup.string(),
-    state: yup.string(),
-    zipCode: yup.string(),
-    country: yup.string()
+    street: yup.string().required('Street address is required'),
+    city: yup.string().required('City is required'),
+    state: yup.string().required('State is required'),
+    zipCode: yup.string()
+      .required('ZIP code is required')
+      .matches(/^[1-9][0-9]{5}$/, 'ZIP code must be 6 digits'),
+    country: yup.string().default('India')
   })
 });
 
 export default function ProfileManager() {
   const { patient, updatePatientProfile, updateProfileImage, loading } = usePatient();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('personal');
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [uploading, setUploading] = useState(false);
-  
-  const { register, handleSubmit, reset, formState: { errors, isDirty }, setValue } = useForm({
-    resolver: yupResolver(schema)
-  });
 
-  useEffect(() => {
-    if (patient) {
-      reset({
-        firstName: patient.firstName || '',
-        lastName: patient.lastName || '',
-        phone: patient.phone || '',
-        dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().split('T')[0] : '',
-        gender: patient.gender || '',
-        bloodGroup: patient.bloodGroup || '',
-        height: patient.height || '',
-        weight: patient.weight || '',
-        allergies: patient.allergies?.join(', ') || '',
-        chronicConditions: patient.chronicConditions?.join(', ') || '',
-        emergencyContactName: patient.emergencyContact?.name || '',
-        emergencyContactPhone: patient.emergencyContact?.phone || '',
-        address: {
-          street: patient.address?.street || '',
-          city: patient.address?.city || '',
-          state: patient.address?.state || '',
-          zipCode: patient.address?.zipCode || '',
-          country: patient.address?.country || ''
-        }
-      });
-      
-      if (patient.profileImage) {
-        setImagePreview(patient.profileImage);
+  const { register, handleSubmit, reset, formState: { errors }, setValue, watch, trigger } = useForm({
+    resolver: yupResolver(schema),
+    mode: 'onChange',
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      dateOfBirth: '',
+      gender: '',
+      bloodGroup: '',
+      height: '',
+      weight: '',
+      allergies: '',
+      chronicConditions: '',
+      currentMedications: '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      emergencyContactRelation: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: 'India'
       }
     }
-  }, [patient, reset]);
+  });
+
+  // For debugging
+  const formValues = watch();
+
+  // Log form values when they change
+  useEffect(() => {
+    console.log('Form values:', formValues);
+  }, [formValues]);
+
+  useEffect(() => {
+    if (patient && user) {
+      // Combine user and patient data for the form
+      reset({
+        firstName: user.firstName || patient.firstName || '',
+        lastName: user.lastName || patient.lastName || '',
+        email: user.email || '',
+        phone: user.phone || patient.phone || '',
+        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] :
+                    (patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().split('T')[0] : ''),
+        gender: user.gender || patient.gender || '',
+        bloodGroup: patient.bloodGroup || '',
+        height: patient.height?.value || '',
+        weight: patient.weight?.value || '',
+        allergies: patient.medicalInformation?.allergies || patient.allergies?.join(', ') || '',
+        chronicConditions: patient.medicalInformation?.chronicConditions || patient.chronicConditions?.join(', ') || '',
+        currentMedications: patient.medicalInformation?.currentMedications || '',
+        emergencyContactName: patient.emergencyContact?.name || '',
+        emergencyContactPhone: patient.emergencyContact?.phone || '',
+        emergencyContactRelation: patient.emergencyContact?.relationship || '',
+        address: {
+          street: user.address?.street || patient.address?.street || '',
+          city: user.address?.city || patient.address?.city || '',
+          state: user.address?.state || patient.address?.state || '',
+          zipCode: user.address?.zipCode || patient.address?.zipCode || '',
+          country: user.address?.country || patient.address?.country || 'India'
+        }
+      });
+
+      // Set image preview if available
+      if (user.profileImage || patient.profileImage) {
+        setImagePreview(user.profileImage || patient.profileImage);
+      }
+    }
+  }, [patient, user, reset]);
 
   const onSubmit = async (data) => {
     try {
+      console.log('Form submitted with data:', data);
+
       // Format the data
       const formattedData = {
         ...data,
-        allergies: data.allergies ? data.allergies.split(',').map(item => item.trim()).filter(Boolean) : [],
-        chronicConditions: data.chronicConditions ? data.chronicConditions.split(',').map(item => item.trim()).filter(Boolean) : [],
+        medicalInformation: {
+          allergies: data.allergies || '',
+          chronicConditions: data.chronicConditions || '',
+          currentMedications: data.currentMedications || ''
+        },
         emergencyContact: {
           name: data.emergencyContactName,
-          phone: data.emergencyContactPhone
+          phone: data.emergencyContactPhone,
+          relationship: data.emergencyContactRelation
         }
       };
-      
+
+      console.log('Formatted data:', formattedData);
+
+      // Remove fields that are now in nested objects
+      delete formattedData.allergies;
+      delete formattedData.chronicConditions;
+      delete formattedData.currentMedications;
       delete formattedData.emergencyContactName;
       delete formattedData.emergencyContactPhone;
-      
+      delete formattedData.emergencyContactRelation;
+
+      // Convert height and weight to proper format if provided
+      if (data.height) {
+        formattedData.height = {
+          value: parseFloat(data.height),
+          unit: 'cm'
+        };
+      }
+
+      if (data.weight) {
+        formattedData.weight = {
+          value: parseFloat(data.weight),
+          unit: 'kg'
+        };
+      }
+
       await updatePatientProfile(formattedData);
       toast.success("Profile updated successfully");
     } catch (error) {
@@ -115,12 +194,12 @@ export default function ProfileManager() {
       toast.error("Please select an image to upload");
       return;
     }
-    
+
     try {
       setUploading(true);
       const formData = new FormData();
       formData.append('image', profileImage);
-      
+
       await updateProfileImage(formData);
       toast.success("Profile image updated successfully");
       setProfileImage(null);
@@ -153,25 +232,25 @@ export default function ProfileManager() {
                 {patient?.firstName?.[0]}{patient?.lastName?.[0]}
               </AvatarFallback>
             </Avatar>
-            
+
             <div className="mt-4 flex flex-col gap-2">
               <Label htmlFor="profile-image" className="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-md flex items-center justify-center text-sm font-medium">
                 <Upload className="h-4 w-4 mr-1.5" />
                 Change Photo
               </Label>
-              <Input 
+              <Input
                 id="profile-image"
                 type="file"
                 onChange={handleImageChange}
                 accept="image/*"
                 className="hidden"
               />
-              
+
               {profileImage && (
                 <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    onClick={handleImageUpload} 
+                  <Button
+                    size="sm"
+                    onClick={handleImageUpload}
                     disabled={uploading}
                     className="w-full"
                   >
@@ -181,9 +260,9 @@ export default function ProfileManager() {
                       <><Save className="h-4 w-4 mr-1" /> Save</>
                     )}
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={clearSelectedImage}
                     className="px-2"
                   >
@@ -193,46 +272,79 @@ export default function ProfileManager() {
               )}
             </div>
           </div>
-          
+
           <div className="flex-1 text-center md:text-left">
             <h2 className="text-2xl font-bold mb-1">
-              {patient?.firstName} {patient?.lastName}
+              {user?.firstName || patient?.firstName} {user?.lastName || patient?.lastName}
             </h2>
-            <p className="text-gray-500 dark:text-gray-400 mb-2">{patient?.email}</p>
-            
-            {patient?.bloodGroup && (
-              <div className="inline-block bg-red-50 text-red-700 px-2 py-1 rounded-md text-sm font-medium">
-                Blood Type: {patient.bloodGroup}
-              </div>
-            )}
-            
-            <div className="mt-4 space-y-1 text-sm text-gray-500 dark:text-gray-400">
-              {patient?.dateOfBirth && (
-                <p>Date of Birth: {new Date(patient.dateOfBirth).toLocaleDateString()}</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-2">{user?.email || patient?.email}</p>
+
+            <div className="flex flex-wrap gap-2 mb-3">
+              {patient?.bloodGroup && patient?.bloodGroup !== 'unknown' && (
+                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                  Blood Type: {patient.bloodGroup}
+                </Badge>
               )}
-              {patient?.phone && <p>Phone: {patient.phone}</p>}
-              {patient?.address?.city && patient?.address?.state && (
-                <p>Location: {patient.address.city}, {patient.address.state}</p>
+
+              {user?.gender && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  {user.gender.charAt(0).toUpperCase() + user.gender.slice(1)}
+                </Badge>
+              )}
+
+              {patient?.medicalInformation?.allergies && (
+                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                  Allergies
+                </Badge>
+              )}
+            </div>
+
+            <div className="mt-4 space-y-1 text-sm text-gray-500 dark:text-gray-400">
+              {user?.dateOfBirth && (
+                <p className="flex items-center gap-2">
+                  <span className="font-medium">Date of Birth:</span>
+                  {new Date(user.dateOfBirth).toLocaleDateString()}
+                </p>
+              )}
+
+              {user?.phone && (
+                <p className="flex items-center gap-2">
+                  <span className="font-medium">Phone:</span> {user.phone}
+                </p>
+              )}
+
+              {(user?.address?.city || patient?.address?.city) && (user?.address?.state || patient?.address?.state) && (
+                <p className="flex items-center gap-2">
+                  <span className="font-medium">Location:</span>
+                  {user?.address?.city || patient?.address?.city}, {user?.address?.state || patient?.address?.state}
+                </p>
+              )}
+
+              {patient?.emergencyContact?.name && (
+                <p className="flex items-center gap-2">
+                  <span className="font-medium">Emergency Contact:</span>
+                  {patient.emergencyContact.name} ({patient.emergencyContact.relationship})
+                </p>
               )}
             </div>
           </div>
         </div>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-3">
-            <TabsTrigger value="personal">Personal Info</TabsTrigger>
-            <TabsTrigger value="medical">Medical Details</TabsTrigger>
-            <TabsTrigger value="address">Address</TabsTrigger>
-          </TabsList>
-          
-          <form onSubmit={handleSubmit(onSubmit)}>
+
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid grid-cols-4">
+              <TabsTrigger value="personal">Personal Info</TabsTrigger>
+              <TabsTrigger value="medical">Medical Details</TabsTrigger>
+              <TabsTrigger value="emergency">Emergency Contact</TabsTrigger>
+              <TabsTrigger value="address">Address</TabsTrigger>
+            </TabsList>
             <TabsContent value="personal" className="space-y-4 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name</Label>
-                  <Input 
-                    id="firstName" 
-                    placeholder="First Name" 
+                  <Input
+                    id="firstName"
+                    placeholder="First Name"
                     {...register('firstName')}
                     error={errors.firstName?.message}
                   />
@@ -242,9 +354,9 @@ export default function ProfileManager() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName">Last Name</Label>
-                  <Input 
-                    id="lastName" 
-                    placeholder="Last Name" 
+                  <Input
+                    id="lastName"
+                    placeholder="Last Name"
                     {...register('lastName')}
                   />
                   {errors.lastName && (
@@ -252,25 +364,40 @@ export default function ProfileManager() {
                   )}
                 </div>
               </div>
-              
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Email Address"
+                  {...register('email')}
+                  disabled
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                )}
+                <p className="text-xs text-gray-500">Email address cannot be changed. Contact support for assistance.</p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input 
-                  id="phone" 
-                  placeholder="Phone Number" 
+                <Input
+                  id="phone"
+                  placeholder="Phone Number"
                   {...register('phone')}
                 />
                 {errors.phone && (
                   <p className="text-sm text-red-500">{errors.phone.message}</p>
                 )}
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input 
-                    id="dateOfBirth" 
-                    type="date" 
+                  <Input
+                    id="dateOfBirth"
+                    type="date"
                     {...register('dateOfBirth')}
                   />
                   {errors.dateOfBirth && (
@@ -279,9 +406,11 @@ export default function ProfileManager() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="gender">Gender</Label>
-                  <Select 
-                    onValueChange={(value) => setValue('gender', value)} 
-                    defaultValue={patient?.gender}
+                  <input type="hidden" {...register('gender')} />
+                  <Select
+                    onValueChange={(value) => setValue('gender', value)}
+                    defaultValue={patient?.gender || ''}
+                    name="gender"
                   >
                     <SelectTrigger id="gender">
                       <SelectValue placeholder="Select gender" />
@@ -298,13 +427,13 @@ export default function ProfileManager() {
                   )}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
-                  <Input 
-                    id="emergencyContactName" 
-                    placeholder="Emergency Contact Name" 
+                  <Input
+                    id="emergencyContactName"
+                    placeholder="Emergency Contact Name"
                     {...register('emergencyContactName')}
                   />
                   {errors.emergencyContactName && (
@@ -313,9 +442,9 @@ export default function ProfileManager() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
-                  <Input 
-                    id="emergencyContactPhone" 
-                    placeholder="Emergency Contact Phone" 
+                  <Input
+                    id="emergencyContactPhone"
+                    placeholder="Emergency Contact Phone"
                     {...register('emergencyContactPhone')}
                   />
                   {errors.emergencyContactPhone && (
@@ -324,14 +453,16 @@ export default function ProfileManager() {
                 </div>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="medical" className="space-y-4 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="bloodGroup">Blood Group</Label>
-                  <Select 
-                    onValueChange={(value) => setValue('bloodGroup', value)} 
-                    defaultValue={patient?.bloodGroup}
+                  <input type="hidden" {...register('bloodGroup')} />
+                  <Select
+                    onValueChange={(value) => setValue('bloodGroup', value)}
+                    defaultValue={patient?.bloodGroup || ''}
+                    name="bloodGroup"
                   >
                     <SelectTrigger id="bloodGroup">
                       <SelectValue placeholder="Select blood group" />
@@ -345,14 +476,15 @@ export default function ProfileManager() {
                       <SelectItem value="AB-">AB-</SelectItem>
                       <SelectItem value="O+">O+</SelectItem>
                       <SelectItem value="O-">O-</SelectItem>
+                      <SelectItem value="unknown">Unknown</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="height">Height (cm)</Label>
-                  <Input 
-                    id="height" 
-                    placeholder="Height in cm" 
+                  <Input
+                    id="height"
+                    placeholder="Height in cm"
                     {...register('height')}
                   />
                   {errors.height && (
@@ -361,9 +493,9 @@ export default function ProfileManager() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="weight">Weight (kg)</Label>
-                  <Input 
-                    id="weight" 
-                    placeholder="Weight in kg" 
+                  <Input
+                    id="weight"
+                    placeholder="Weight in kg"
                     {...register('weight')}
                   />
                   {errors.weight && (
@@ -371,82 +503,133 @@ export default function ProfileManager() {
                   )}
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="allergies">Allergies (comma separated)</Label>
-                <Textarea 
-                  id="allergies" 
-                  placeholder="Penicillin, Peanuts, etc." 
+                <Textarea
+                  id="allergies"
+                  placeholder="Penicillin, Peanuts, etc."
                   {...register('allergies')}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="chronicConditions">Chronic Conditions (comma separated)</Label>
-                <Textarea 
-                  id="chronicConditions" 
-                  placeholder="Diabetes, Hypertension, etc." 
+                <Textarea
+                  id="chronicConditions"
+                  placeholder="Diabetes, Hypertension, etc."
                   {...register('chronicConditions')}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="currentMedications">Current Medications</Label>
+                <Textarea
+                  id="currentMedications"
+                  placeholder="List any medications you are currently taking"
+                  {...register('currentMedications')}
+                />
+              </div>
             </TabsContent>
-            
+
+            <TabsContent value="emergency" className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
+                <Input
+                  id="emergencyContactName"
+                  placeholder="Full name of emergency contact"
+                  {...register('emergencyContactName')}
+                />
+                {errors.emergencyContactName && (
+                  <p className="text-sm text-red-500">{errors.emergencyContactName.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
+                <Input
+                  id="emergencyContactPhone"
+                  placeholder="Emergency contact phone number"
+                  {...register('emergencyContactPhone')}
+                />
+                {errors.emergencyContactPhone && (
+                  <p className="text-sm text-red-500">{errors.emergencyContactPhone.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="emergencyContactRelation">Relationship to Emergency Contact</Label>
+                <Input
+                  id="emergencyContactRelation"
+                  placeholder="E.g., Parent, Spouse, Sibling, Friend"
+                  {...register('emergencyContactRelation')}
+                />
+                {errors.emergencyContactRelation && (
+                  <p className="text-sm text-red-500">{errors.emergencyContactRelation.message}</p>
+                )}
+              </div>
+            </TabsContent>
+
             <TabsContent value="address" className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="street">Street Address</Label>
-                <Input 
-                  id="street" 
-                  placeholder="Street address" 
+                <Input
+                  id="street"
+                  placeholder="Street address"
                   {...register('address.street')}
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="city">City</Label>
-                  <Input 
-                    id="city" 
-                    placeholder="City" 
+                  <Input
+                    id="city"
+                    placeholder="City"
                     {...register('address.city')}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="state">State</Label>
-                  <Input 
-                    id="state" 
-                    placeholder="State" 
+                  <Input
+                    id="state"
+                    placeholder="State"
                     {...register('address.state')}
                   />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="zipCode">ZIP Code</Label>
-                  <Input 
-                    id="zipCode" 
-                    placeholder="ZIP Code" 
+                  <Input
+                    id="zipCode"
+                    placeholder="ZIP Code"
                     {...register('address.zipCode')}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="country">Country</Label>
-                  <Input 
-                    id="country" 
-                    placeholder="Country" 
+                  <Input
+                    id="country"
+                    placeholder="Country"
                     {...register('address.country')}
                   />
                 </div>
               </div>
             </TabsContent>
-            
-            <div className="mt-6">
-              <Button type="submit" className="w-full" disabled={loading || !isDirty}>
-                {loading ? <><LoaderCircle className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Save Changes'}
-              </Button>
-            </div>
-          </form>
-        </Tabs>
+
+          </Tabs>
+          <div className="mt-6">
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? <><LoaderCircle className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : 'Save Changes'}
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

@@ -6,15 +6,12 @@ import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
-  Search,
   Calendar,
-  Activity,
   FileText,
   Menu,
   X,
   UserCircle,
   Bell,
-  Phone,
   ChevronDown,
   User,
   LogIn,
@@ -22,9 +19,9 @@ import {
   Stethoscope,
   Heart,
   Bot,
-  MessageSquare,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Search
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -42,36 +39,32 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userRole, setUserRole] = useState(null) // New state for user role
+  const [userRole, setUserRole] = useState(null)
   const [scrolled, setScrolled] = useState(false)
   const [chatbotOpen, setChatbotOpen] = useState(false)
-  
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10)
     }
-    
+
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   // Check for authentication token and user role in localStorage
   useEffect(() => {
-    // Make sure we're running on the client side
     if (typeof window !== 'undefined') {
       try {
         const token = localStorage.getItem('token');
-        const role = localStorage.getItem('Role'); // Get user role from localStorage
-        
-        // Update login state based on token presence
+        const role = localStorage.getItem('Role');
+
         setIsLoggedIn(!!token);
-        
-        // Set user role if available
+
         if (role) {
           setUserRole(role);
         }
       } catch (error) {
-        // Handle potential localStorage errors
         console.error('Error accessing localStorage:', error);
         setIsLoggedIn(false);
         setUserRole(null);
@@ -89,7 +82,7 @@ export default function Header() {
       name: "Symptom Checker",
       href: "/symptom-checker",
       icon: <FileText className="h-4 w-4 mr-2" />,
-    },
+    }
   ]
 
   const router = useRouter()
@@ -97,8 +90,9 @@ export default function Header() {
   // Handle logout function
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('userRole'); // Also remove the role
+      localStorage.removeItem('token');
+      localStorage.removeItem('Role');
+      localStorage.removeItem('userId');
       setIsLoggedIn(false);
       setUserRole(null);
       router.push('/');
@@ -106,26 +100,26 @@ export default function Header() {
   }
 
   return (
-    <motion.header 
+    <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
-        scrolled 
-          ? "bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm dark:shadow-gray-800/10" 
+        scrolled
+          ? "bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm dark:shadow-gray-800/10"
           : "bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm"
       )}
     >
       <div className="container flex h-16 items-center justify-between px-4 sm:px-8">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <Link 
+          <Link
             onClick={() => router.push("/")}
-            href="/" 
+            href="/"
             className="flex items-center space-x-2"
           >
-            <motion.span 
+            <motion.span
               className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent"
               initial={{ scale: 1 }}
               whileHover={{ scale: 1.05 }}
@@ -151,8 +145,8 @@ export default function Header() {
                 href={item.href}
                 className={cn(
                   "flex items-center text-sm font-medium transition-colors",
-                  pathname === item.href 
-                    ? "text-blue-600 dark:text-blue-400" 
+                  pathname === item.href
+                    ? "text-blue-600 dark:text-blue-400"
                     : "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
                 )}
               >
@@ -160,7 +154,7 @@ export default function Header() {
                 {item.name}
               </Link>
               {pathname === item.href && (
-                <motion.div 
+                <motion.div
                   className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-blue-500 to-cyan-400 dark:from-blue-400 dark:to-cyan-300"
                   layoutId="navbar-active-indicator"
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -174,15 +168,15 @@ export default function Header() {
         <div className="flex items-center space-x-2">
           <ThemeSwitcher />
           {/* AI Chatbot Button */}
-          <motion.div 
-            whileHover={{ scale: 1.1 }} 
+          <motion.div
+            whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             className="hidden md:block"
           >
-            <Button 
+            <Button
               onClick={() => setChatbotOpen(true)}
-              variant="ghost" 
-              size="icon" 
+              variant="ghost"
+              size="icon"
               className="bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/50 rounded-full"
               aria-label="Open AI Medical Assistant"
             >
@@ -190,23 +184,11 @@ export default function Header() {
             </Button>
           </motion.div>
 
-          {/* Emergency */}
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="hidden md:flex text-red-500 dark:text-red-400 border-red-500 dark:border-red-400/70 hover:bg-red-50 dark:hover:bg-red-950/50"
-            >
-              <Phone className="mr-2 h-4 w-4" />
-              Emergency
-            </Button>
-          </motion.div>
-          
           {/* Notifications */}
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
             <Button variant="ghost" size="icon" className="hidden md:flex relative dark:text-gray-200 dark:hover:bg-gray-800">
               <Bell className="h-5 w-5" />
-              <motion.span 
+              <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-red-600 dark:bg-red-500"
@@ -228,9 +210,9 @@ export default function Header() {
                   My Account {userRole && `(${userRole.charAt(0).toUpperCase() + userRole.slice(1)})`}
                 </div>
                 <DropdownMenuSeparator className="dark:border-gray-700" />
-                
+
                 {/* Common menu items for both roles */}
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() =>{
                     const userId = localStorage.getItem('userId')
                     if(!userId) return
@@ -246,25 +228,25 @@ export default function Header() {
                   <User className="mr-2 h-4 w-4 text-gray-600 dark:text-gray-400" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                
+
                 {/* Doctor-specific menu items */}
                 {userRole === 'doctor' && (
                   <>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => router.push("/doctor/appointments")}
                       className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                     >
                       <Calendar className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
                       <span>My Schedule</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => router.push("/doctor/patients")}
                       className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                     >
                       <Heart className="mr-2 h-4 w-4 text-red-500 dark:text-red-400" />
                       <span>My Patients</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => router.push("/doctor/prescriptions")}
                       className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                     >
@@ -273,59 +255,45 @@ export default function Header() {
                     </DropdownMenuItem>
                   </>
                 )}
-                
+
                 {/* Patient-specific menu items */}
                 {userRole === 'patient' && (
                   <>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => router.push("/patient/appointments")}
                       className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                     >
                       <Calendar className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
                       <span>My Appointments</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => router.push("/patient/medical-history")}
                       className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                     >
                       <FileText className="mr-2 h-4 w-4 text-green-600 dark:text-green-400" />
                       <span>Medical History</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => router.push("/patient/prescriptions")}
+                    <DropdownMenuItem
+                      onClick={() => router.push("/patient/settings")}
                       className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                     >
-                      <Activity className="mr-2 h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      <span>Prescriptions</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => router.push("/doctors")}
-                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
-                    >
-                      <Stethoscope className="mr-2 h-4 w-4 text-blue-500 dark:text-blue-400" />
-                      <span>Find Doctors</span>
+                      <Settings className="mr-2 h-4 w-4 text-gray-600 dark:text-gray-400" />
+                      <span>Settings</span>
                     </DropdownMenuItem>
                   </>
                 )}
-                
-                {/* Common settings and support items */}
-                <DropdownMenuItem 
-                  onClick={() => router.push("/settings")}
-                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
-                >
-                  <Settings className="mr-2 h-4 w-4 text-gray-600 dark:text-gray-400" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
+
+                {/* Common support item */}
+                <DropdownMenuItem
                   onClick={() => router.push("/support")}
                   className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                 >
                   <HelpCircle className="mr-2 h-4 w-4 text-purple-600 dark:text-purple-400" />
                   <span>Help & Support</span>
                 </DropdownMenuItem>
-                
+
                 <DropdownMenuSeparator className="dark:border-gray-700" />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={handleLogout}
                   className="cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 dark:focus:bg-red-900/20"
                 >
@@ -337,8 +305,8 @@ export default function Header() {
           ) : (
             <div className="hidden md:flex space-x-2">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => router.push("/login")}
                   className="dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                 >
@@ -346,7 +314,7 @@ export default function Header() {
                   Sign In
                 </Button>
               </motion.div>
-              
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -358,15 +326,15 @@ export default function Header() {
                   </motion.div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="backdrop-blur-lg bg-white/90 dark:bg-gray-800/90 border dark:border-gray-700">
-                  <DropdownMenuItem 
-                    onClick={() => router.push("/signup")} 
+                  <DropdownMenuItem
+                    onClick={() => router.push("/signup")}
                     className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                   >
                     <Heart className="mr-2 h-4 w-4 text-red-500 dark:text-red-400" />
                     <span>As a Patient</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => router.push("/signup/doctor")} 
+                  <DropdownMenuItem
+                    onClick={() => router.push("/signup/doctor")}
                     className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/70 dark:focus:bg-gray-700"
                   >
                     <Stethoscope className="mr-2 h-4 w-4 text-blue-500 dark:text-blue-400" />
@@ -379,10 +347,10 @@ export default function Header() {
 
           {/* Mobile menu button */}
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="md:hidden dark:text-gray-200 dark:hover:bg-gray-800" 
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden dark:text-gray-200 dark:hover:bg-gray-800"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? (
@@ -397,7 +365,7 @@ export default function Header() {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <motion.div 
+        <motion.div
           className="md:hidden"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
@@ -414,7 +382,7 @@ export default function Header() {
                 className="w-full rounded-md bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 pl-8"
               />
             </div>
-            
+
             {navItems.map((item, index) => (
               <motion.div
                 key={item.href}
@@ -427,8 +395,8 @@ export default function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     "flex items-center py-2 px-3 text-base font-medium rounded-md",
-                    pathname === item.href 
-                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" 
+                    pathname === item.href
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                       : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   )}
                 >
@@ -437,40 +405,10 @@ export default function Header() {
                 </Link>
               </motion.div>
             ))}
-            
+
             <div className="py-2">
               <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
             </div>
-
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Link
-                href="/health-records" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center py-2 px-3 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Health Records
-              </Link>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Link
-                href="/doctors" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center py-2 px-3 text-base font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-              >
-                <UserCircle className="h-4 w-4 mr-2" />
-                Find Doctors
-              </Link>
-            </motion.div>
 
             {/* Mobile AI Chatbot button */}
             <motion.div
@@ -479,7 +417,7 @@ export default function Header() {
               transition={{ delay: 0.3 }}
               className="mt-4"
             >
-              <Button 
+              <Button
                 onClick={() => {
                   setChatbotOpen(true);
                   setMobileMenuOpen(false);
@@ -491,32 +429,17 @@ export default function Header() {
               </Button>
             </motion.div>
 
-            {/* Emergency button - mobile */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <Button 
-                variant="outline" 
-                className="w-full mt-2 text-red-500 dark:text-red-400 border-red-500 dark:border-red-400/70 hover:bg-red-50 dark:hover:bg-red-950/50"
-              >
-                <Phone className="mr-2 h-4 w-4" />
-                Emergency Helpline
-              </Button>
-            </motion.div>
-
             {/* Auth buttons - mobile */}
             {!isLoggedIn && (
-              <motion.div 
+              <motion.div
                 className="mt-4 space-y-2"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
               >
-                <Button 
-                  variant="outline" 
-                  className="w-full border-gray-300 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800" 
+                <Button
+                  variant="outline"
+                  className="w-full border-gray-300 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                   onClick={() => {
                     router.push("/login");
                     setMobileMenuOpen(false);
@@ -525,12 +448,12 @@ export default function Header() {
                   <LogIn className="mr-2 h-4 w-4" />
                   Sign In
                 </Button>
-                
+
                 <div className="text-xs font-medium text-center my-2 text-gray-500 dark:text-gray-400">Sign up as:</div>
-                
+
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 hover:from-blue-700 hover:to-cyan-600 dark:hover:from-blue-600 dark:hover:to-cyan-500 text-white" 
+                  <Button
+                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-500 dark:to-cyan-400 hover:from-blue-700 hover:to-cyan-600 dark:hover:from-blue-600 dark:hover:to-cyan-500 text-white"
                     onClick={() => {
                       router.push("/signup");
                       setMobileMenuOpen(false);
@@ -539,9 +462,9 @@ export default function Header() {
                     <Heart className="mr-1 h-4 w-4" />
                     Patient
                   </Button>
-                  
-                  <Button 
-                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 dark:from-cyan-400 dark:to-blue-500 hover:from-cyan-600 hover:to-blue-700 dark:hover:from-cyan-500 dark:hover:to-blue-600 text-white" 
+
+                  <Button
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 dark:from-cyan-400 dark:to-blue-500 hover:from-cyan-600 hover:to-blue-700 dark:hover:from-cyan-500 dark:hover:to-blue-600 text-white"
                     onClick={() => {
                       router.push("/signup/doctor");
                       setMobileMenuOpen(false);

@@ -51,7 +51,7 @@ export const PatientProvider = ({ children }) => {
       setLoading(true);
       setPatientError(null);
       const { data } = await axios.get(
-        `${API_URL}/patients/profile`, 
+        `${API_URL}/patients/profile`,
         getAuthHeaders()
       );
       setPatient(data.data);
@@ -68,22 +68,39 @@ export const PatientProvider = ({ children }) => {
 
   // Update patient profile
   const updatePatientProfile = async (profileData) => {
+    console.log('updatePatientProfile called with:', profileData);
+
     if (!token) {
+      console.error('No authentication token available');
       toast.error("Authentication required");
       throw new Error("No authentication token available");
     }
 
     try {
       setLoading(true);
+      console.log('Making API request to update profile');
+      console.log('API URL:', `${API_URL}/patients/profile`);
+      console.log('Headers:', getAuthHeaders());
+
+      // Create a copy of the data to avoid mutation issues
+      const dataToSend = JSON.parse(JSON.stringify(profileData));
+
       const { data } = await axios.put(
-        `${API_URL}/patients/profile`, 
-        profileData, 
+        `${API_URL}/patients/profile`,
+        dataToSend,
         getAuthHeaders()
       );
+
+      console.log('Profile update API response:', data);
       setPatient(data.data);
       toast.success("Profile updated successfully");
       return data.data;
     } catch (error) {
+      console.error('Error updating profile:', error);
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        console.error('Status code:', error.response.status);
+      }
       const message = error.response?.data?.message || "Failed to update profile";
       toast.error(message);
       throw new Error(message);
@@ -108,7 +125,7 @@ export const PatientProvider = ({ children }) => {
       });
 
       const { data } = await axios.get(
-        `${API_URL}/patients/appointments?${params.toString()}`, 
+        `${API_URL}/patients/appointments?${params.toString()}`,
         getAuthHeaders()
       );
       setAppointments(data.data);
@@ -132,8 +149,8 @@ export const PatientProvider = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await axios.post(
-        `${API_URL}/patients/appointments`, 
-        appointmentData, 
+        `${API_URL}/patients/appointments`,
+        appointmentData,
         getAuthHeaders()
       );
       // Refresh appointments list
@@ -159,8 +176,8 @@ export const PatientProvider = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await axios.put(
-        `${API_URL}/patients/appointments/${appointmentId}/cancel`, 
-        { reason }, 
+        `${API_URL}/patients/appointments/${appointmentId}/cancel`,
+        { reason },
         getAuthHeaders()
       );
       // Refresh appointments list
@@ -192,10 +209,10 @@ export const PatientProvider = ({ children }) => {
           'Content-Type': 'multipart/form-data'
         }
       };
-      
+
       const { data } = await axios.put(
-        `${API_URL}/patients/profile-image`, 
-        formData, 
+        `${API_URL}/patients/profile-image`,
+        formData,
         config
       );
       // Update patient state with new image
@@ -217,7 +234,14 @@ export const PatientProvider = ({ children }) => {
   };
 
   const fetchUpcomingAppointments = async (userId) => {
-    return await getPatientAppointments({ status: 'upcoming' });
+    try {
+      const response = await getPatientAppointments({ status: 'upcoming' });
+      // Ensure we return an array of appointments
+      return Array.isArray(response?.data) ? response.data : [];
+    } catch (error) {
+      console.error("Error fetching upcoming appointments:", error);
+      return [];
+    }
   };
 
   const fetchMedicalRecords = async (userId) => {
@@ -238,7 +262,7 @@ export const PatientProvider = ({ children }) => {
   };
 
   const fetchVitalStats = async (userId) => {
-    try { 
+    try {
       setLoading(true);
       const { data } = await axios.get(
         `${API_URL}/patients/vital-stats`,
@@ -265,15 +289,15 @@ export const PatientProvider = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await axios.post(
-        `${API_URL}/patients/vital-stats`, 
-        vitalData, 
+        `${API_URL}/patients/vital-stats`,
+        vitalData,
         getAuthHeaders()
       );
-      
+
       // Update local state
       const updatedVitalStats = [...(vitalStats || []), data.data];
       setVitalStats(updatedVitalStats);
-      
+
       toast.success("Vital statistics recorded successfully");
       return data.data;
     } catch (error) {

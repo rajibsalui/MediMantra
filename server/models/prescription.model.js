@@ -25,26 +25,22 @@ const medicationSchema = new mongoose.Schema({
     type: String,
     trim: true
   }
-}, { _id: true });
+}, { _id: false });
 
 const prescriptionSchema = new mongoose.Schema({
-  patient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Patient',
-    required: true
-  },
   doctor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Doctor',
     required: true
   },
+  patient: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Patient',
+    required: true
+  },
   appointment: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Appointment'
-  },
-  date: {
-    type: Date,
-    default: Date.now
   },
   medications: [medicationSchema],
   diagnosis: {
@@ -55,22 +51,43 @@ const prescriptionSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  followUp: {
-    recommended: {
-      type: Boolean,
-      default: false
-    },
-    date: Date,
-    notes: String
+  startDate: {
+    type: Date,
+    default: Date.now
+  },
+  endDate: {
+    type: Date,
+    required: true
   },
   fileUrl: {
     type: String
   },
   fileId: {
     type: String
+  },
+  status: {
+    type: String,
+    enum: ['active', 'completed', 'cancelled'],
+    default: 'active'
   }
-}, {
-  timestamps: true
+}, { 
+  timestamps: true 
+});
+
+// Pre-save hook to set endDate if not provided
+prescriptionSchema.pre('save', function(next) {
+  if (!this.endDate) {
+    // Default to 30 days from start date
+    const endDate = new Date(this.startDate);
+    endDate.setDate(endDate.getDate() + 30);
+    this.endDate = endDate;
+  }
+  next();
+});
+
+// Virtual for checking if prescription is active
+prescriptionSchema.virtual('isActive').get(function() {
+  return new Date() <= new Date(this.endDate) && this.status === 'active';
 });
 
 const Prescription = mongoose.model('Prescription', prescriptionSchema);

@@ -30,35 +30,62 @@ const patientSchema = new mongoose.Schema(
         default: 'kg',
       },
     },
-    address: {
-      street: {
+    medicalInformation: {
+      allergies: {
         type: String,
+        trim: true,
+        default: ''
       },
-      city: {
+      chronicConditions: {
         type: String,
+        trim: true,
+        default: ''
       },
-      state: {
+      currentMedications: {
         type: String,
+        trim: true,
+        default: ''
       },
-      zipCode: {
+      familyMedicalHistory: {
         type: String,
+        trim: true,
+        default: ''
       },
-      country: {
+      surgicalHistory: {
         type: String,
-        default: 'India',
+        trim: true,
+        default: ''
+      },
+      immunizationHistory: {
+        type: String,
+        trim: true,
+        default: ''
       },
     },
     emergencyContact: {
-      name: String,
-      phone: String,
-      relationship: String,
+      name: {
+        type: String,
+        trim: true,
+        required: [true, 'Emergency contact name is required']
+      },
+      phone: {
+        type: String,
+        trim: true,
+        required: [true, 'Emergency contact phone is required'],
+        validate: {
+          validator: function(v) {
+            // Validate phone number format (10 digits)
+            return !v || /^\d{10}$/.test(v.replace(/[^\d]/g, ''));
+          },
+          message: props => `${props.value} is not a valid phone number! Please enter a 10-digit number.`
+        }
+      },
+      relationship: {
+        type: String,
+        trim: true,
+        required: [true, 'Relationship to emergency contact is required']
+      },
     },
-    allergies: [String],
-    chronicConditions: [String],
-    currentMedications: [String],
-    familyMedicalHistory: [String],
-    surgicalHistory: [String],
-    immunizationHistory: [String],
     preferredPharmacy: {
       name: String,
       address: String,
@@ -91,6 +118,8 @@ const patientSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
 

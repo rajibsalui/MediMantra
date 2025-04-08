@@ -5,18 +5,20 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePatient } from '@/contexts/PatientContext';
 import ProfileManager from '@/components/patient/ProfileManager';
+import ProfileDetails from '@/components/patient/ProfileDetails';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Shield, LockKeyhole, User, ArrowLeft } from 'lucide-react';
+import { Loader2, Shield, LockKeyhole, User, ArrowLeft, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function PatientProfile() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('profile');
+  const [isEditMode, setIsEditMode] = useState(false);
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { patient, getPatientProfile, loading: patientLoading } = usePatient();
-  
+
   useEffect(() => {
     // Redirect if not authenticated or not a patient
     if (!authLoading && !isAuthenticated) {
@@ -26,14 +28,26 @@ export default function PatientProfile() {
       toast.error("Access denied. This page is for patients only.");
       router.push('/');
     }
-  }, [isAuthenticated, authLoading, user, router]);
-  
+  }, [isAuthenticated, authLoading, router]);
+
   useEffect(() => {
     if (isAuthenticated) {
       getPatientProfile();
     }
-  }, [isAuthenticated, getPatientProfile]);
-  
+  }, [isAuthenticated]);
+
+  // Refresh profile data when switching from edit to view mode
+  const handleViewModeSwitch = () => {
+    setIsEditMode(false);
+    getPatientProfile(); // Refresh data
+    toast.success("Profile view updated with latest information");
+  };
+
+  // Switch to edit mode
+  const handleEditModeSwitch = () => {
+    setIsEditMode(true);
+  };
+
   // Show loading state
   if (authLoading || patientLoading || !patient) {
     return (
@@ -43,13 +57,13 @@ export default function PatientProfile() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center mb-8">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.back()}
             className="mr-4"
           >
@@ -58,7 +72,7 @@ export default function PatientProfile() {
           </Button>
           <h1 className="text-2xl font-bold">My Profile</h1>
         </div>
-        
+
         <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="profile" key="profile-tab">
@@ -74,11 +88,28 @@ export default function PatientProfile() {
               Privacy
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="profile" className="space-y-6" key="profile-content">
-            <ProfileManager />
+            {isEditMode ? (
+              <div className="relative">
+                <div className="absolute right-0 top-0 z-10">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleViewModeSwitch}
+                    className="flex items-center gap-1"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View Mode
+                  </Button>
+                </div>
+                <ProfileManager />
+              </div>
+            ) : (
+              <ProfileDetails onEditClick={handleEditModeSwitch} />
+            )}
           </TabsContent>
-          
+
           <TabsContent value="security" className="space-y-6" key="security-content">
             <Card>
               <CardHeader>
@@ -88,7 +119,7 @@ export default function PatientProfile() {
                 <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md" key="security-notice">
                   Security settings will be implemented in the next update.
                 </div>
-                
+
                 {/* Placeholder for security settings */}
                 <div className="space-y-6 opacity-60 pointer-events-none" key="security-placeholder">
                   <div className="space-y-2" key="password-section">
@@ -96,13 +127,13 @@ export default function PatientProfile() {
                     <p className="text-sm text-gray-500">Change your password or enable two-factor authentication</p>
                     <Button disabled>Change Password</Button>
                   </div>
-                  
+
                   <div className="space-y-2" key="login-history-section">
                     <h3 className="font-medium">Login History</h3>
                     <p className="text-sm text-gray-500">View your recent login activity</p>
                     <Button disabled variant="outline">View History</Button>
                   </div>
-                  
+
                   <div className="space-y-2" key="2fa-section">
                     <h3 className="font-medium">Two-Factor Authentication</h3>
                     <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
@@ -112,7 +143,7 @@ export default function PatientProfile() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="privacy" className="space-y-6" key="privacy-content">
             <Card>
               <CardHeader>
@@ -122,7 +153,7 @@ export default function PatientProfile() {
                 <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md" key="privacy-notice">
                   Privacy settings will be implemented in the next update.
                 </div>
-                
+
                 {/* Placeholder for privacy settings */}
                 <div className="space-y-6 opacity-60 pointer-events-none" key="privacy-placeholder">
                   <div className="space-y-2" key="data-sharing-section">
@@ -130,13 +161,13 @@ export default function PatientProfile() {
                     <p className="text-sm text-gray-500">Control how your medical data is shared with healthcare providers</p>
                     <Button disabled>Manage Data Sharing</Button>
                   </div>
-                  
+
                   <div className="space-y-2" key="marketing-section">
                     <h3 className="font-medium">Marketing Preferences</h3>
                     <p className="text-sm text-gray-500">Choose what types of communications you receive</p>
                     <Button disabled variant="outline">Update Preferences</Button>
                   </div>
-                  
+
                   <div className="space-y-2" key="download-data-section">
                     <h3 className="font-medium">Download Your Data</h3>
                     <p className="text-sm text-gray-500">Get a copy of all your personal data</p>

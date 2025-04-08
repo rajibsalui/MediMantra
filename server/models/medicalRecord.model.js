@@ -8,7 +8,7 @@ const medicalRecordSchema = new mongoose.Schema({
   },
   documentType: {
     type: String,
-    enum: ['prescription', 'lab_result', 'imaging', 'vaccination', 'discharge_summary', 'other'],
+    enum: ['lab_report', 'imaging', 'prescription', 'discharge_summary', 'other'],
     required: true
   },
   documentDate: {
@@ -20,23 +20,31 @@ const medicalRecordSchema = new mongoose.Schema({
     trim: true
   },
   fileUrl: {
-    type: String
+    type: String,
+    required: true
   },
   fileId: {
-    type: String
+    type: String,
+    required: true
   },
   fileName: {
-    type: String
+    type: String,
+    required: true
   },
   fileType: {
-    type: String
+    type: String,
+    required: true
   },
   uploadDate: {
     type: Date,
     default: Date.now
+  },
+  isArchived: {
+    type: Boolean,
+    default: false
   }
-}, {
-  timestamps: true
+}, { 
+  timestamps: true 
 });
 
 const MedicalRecord = mongoose.model('MedicalRecord', medicalRecordSchema);

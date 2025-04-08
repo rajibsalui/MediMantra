@@ -27,13 +27,27 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      trim: true
+      trim: true,
+      validate: {
+        validator: function(v) {
+          // Validate phone number format (10 digits)
+          return !v || /^\d{10}$/.test(v.replace(/[^\d]/g, ''));
+        },
+        message: props => `${props.value} is not a valid phone number! Please enter a 10-digit number.`
+      }
     },
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
-      select: false
+      minlength: [8, 'Password must be at least 8 characters'],
+      select: false,
+      validate: {
+        validator: function(v) {
+          // Password must include uppercase, lowercase, number, and special character
+          return /(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])/.test(v);
+        },
+        message: 'Password must include uppercase, lowercase, number, and special character'
+      }
     },
     role: {
       type: String,
@@ -46,11 +60,43 @@ const userSchema = new mongoose.Schema(
       default: ''
     },
     dateOfBirth: {
-      type: Date
+      type: Date,
+      required: [function() { return this.role === 'patient'; }, 'Date of birth is required for patients']
     },
     gender: {
       type: String,
-      enum: ['male', 'female', 'other', '']
+      enum: ['male', 'female', 'other', 'prefer-not-to-say', ''],
+      required: [function() { return this.role === 'patient'; }, 'Gender is required for patients']
+    },
+    address: {
+      street: {
+        type: String,
+        trim: true
+      },
+      city: {
+        type: String,
+        trim: true
+      },
+      state: {
+        type: String,
+        trim: true
+      },
+      zipCode: {
+        type: String,
+        trim: true,
+        validate: {
+          validator: function(v) {
+            // Validate Indian PIN code format (6 digits)
+            return !v || /^[1-9][0-9]{5}$/.test(v);
+          },
+          message: props => `${props.value} is not a valid PIN code! Please enter a 6-digit PIN code.`
+        }
+      },
+      country: {
+        type: String,
+        default: 'India',
+        trim: true
+      }
     },
     isEmailVerified: {
       type: Boolean,
@@ -75,7 +121,19 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
-    twoFactorSecret: String
+    twoFactorSecret: String,
+    agreeToTerms: {
+      type: Boolean,
+      // required: [true, 'You must agree to the terms and conditions']
+    },
+    registrationDate: {
+      type: Date,
+      default: Date.now
+    },
+    lastUpdated: {
+      type: Date,
+      default: Date.now
+    }
   },
   {
     timestamps: true
@@ -97,11 +155,11 @@ userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
     return next();
   }
-  
+
   try {
     // Generate salt
     const salt = await bcrypt.genSalt(10);
-    
+
     // Hash password
     this.password = await bcrypt.hash(this.password, salt);
     next();

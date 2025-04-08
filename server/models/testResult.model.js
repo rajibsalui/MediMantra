@@ -10,36 +10,35 @@ const testResultSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Doctor'
   },
+  appointment: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Appointment'
+  },
   testName: {
     type: String,
     required: true,
     trim: true
   },
+  testDate: {
+    type: Date,
+    default: Date.now
+  },
   testType: {
     type: String,
     enum: ['blood', 'urine', 'imaging', 'pathology', 'other'],
-    required: true
-  },
-  testDate: {
-    type: Date,
-    required: true
+    default: 'other'
   },
   results: {
-    type: String,
-    trim: true
+    type: Map,
+    of: String
   },
-  normalRange: {
-    type: String,
-    trim: true
+  normalRanges: {
+    type: Map,
+    of: String
   },
   interpretation: {
     type: String,
     trim: true
-  },
-  laboratory: {
-    name: String,
-    address: String,
-    contactInfo: String
   },
   fileUrl: {
     type: String
@@ -47,12 +46,20 @@ const testResultSchema = new mongoose.Schema({
   fileId: {
     type: String
   },
-  uploadDate: {
-    type: Date,
-    default: Date.now
+  labName: {
+    type: String,
+    trim: true
+  },
+  isAbnormal: {
+    type: Boolean,
+    default: false
+  },
+  notes: {
+    type: String,
+    trim: true
   }
-}, {
-  timestamps: true
+}, { 
+  timestamps: true 
 });
 
 const TestResult = mongoose.model('TestResult', testResultSchema);
