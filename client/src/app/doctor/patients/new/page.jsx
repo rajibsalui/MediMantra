@@ -24,6 +24,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { API_URL } from "@/config/environment";
 import {
   Form,
   FormControl,
@@ -33,9 +34,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Form schema
 const formSchema = z.object({

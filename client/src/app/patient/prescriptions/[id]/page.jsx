@@ -6,6 +6,7 @@ import Link from "next/link";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
+import { API_URL } from "@/config/environment";
 
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -28,9 +29,6 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function PatientPrescriptionDetailPage({ params }) {
   const router = useRouter();

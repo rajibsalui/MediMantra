@@ -18,8 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Bot, Send, X, Sparkles, Brain, User } from "lucide-react"
 import MedicalDisclaimer from "./MedicalDisclaimer"
 import axios from "axios"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+import { API_URL } from "@/config/environment"
 
 export default function ChatbotDialog({ open, onOpenChange }) {
   const [messages, setMessages] = useState([
@@ -57,26 +56,26 @@ export default function ChatbotDialog({ open, onOpenChange }) {
       content: input,
       timestamp: new Date(),
     }
-    
+
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
 
     try {
       // Get temporary user ID (in a real app, you would use authenticated user ID)
-      const userId = localStorage.getItem('userId') || 
+      const userId = localStorage.getItem('userId') ||
                     `user_${Math.random().toString(36).substring(2, 15)}`;
-      
+
       if (!localStorage.getItem('userId')) {
         localStorage.setItem('userId', userId);
       }
-      
+
       // Call the chatbot API
       const response = await axios.post(`${API_URL}/chatbot/query`, {
         query: userMessage.content,
         userId: userId
       });
-      
+
       setMessages((prev) => [
         ...prev,
         {
@@ -166,8 +165,8 @@ export default function ChatbotDialog({ open, onOpenChange }) {
                 >
                   <Avatar className={cn(
                     "h-8 w-8 rounded-full border",
-                    message.role === "assistant" 
-                      ? "bg-blue-600 text-white border-blue-600 dark:bg-blue-700 dark:border-blue-700" 
+                    message.role === "assistant"
+                      ? "bg-blue-600 text-white border-blue-600 dark:bg-blue-700 dark:border-blue-700"
                       : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700"
                   )}>
                     {message.role === "assistant" ? (

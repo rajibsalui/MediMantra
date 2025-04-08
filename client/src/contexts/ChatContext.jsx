@@ -5,9 +5,7 @@ import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+import { API_URL, SOCKET_URL } from '@/config/environment';
 
 const ChatContext = createContext();
 

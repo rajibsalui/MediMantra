@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { API_URL } from "@/config/environment";
 import {
   ArrowLeft,
   Calendar,
@@ -34,16 +35,13 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-
 export default function PatientDetailPage({ params }) {
   const router = useRouter();
   const resolvedParams = use(params); // Unwrap the params Promise
     const id = resolvedParams.id;
   const { user, isAuthenticated, loading: authLoading, token } = useAuth();
   const { doctor } = useDoctor();
-  
+
   const [patient, setPatient] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
@@ -81,36 +79,36 @@ export default function PatientDetailPage({ params }) {
 
       // Fetch patient details
       const patientResponse = await axios.get(`${API_URL}/doctors/patients/${id}`, headers);
-      
+
       if (patientResponse.data.success) {
         setPatient(patientResponse.data.data);
-        
+
         // Fetch patient appointments
         const appointmentsResponse = await axios.get(
-          `${API_URL}/doctors/patients/${id}/appointments`, 
+          `${API_URL}/doctors/patients/${id}/appointments`,
           headers
         );
-        
+
         if (appointmentsResponse.data.success) {
           setAppointments(appointmentsResponse.data.data || []);
         }
-        
+
         // Fetch patient prescriptions
         const prescriptionsResponse = await axios.get(
-          `${API_URL}/doctors/patients/${id}/prescriptions`, 
+          `${API_URL}/doctors/patients/${id}/prescriptions`,
           headers
         );
-        
+
         if (prescriptionsResponse.data.success) {
           setPrescriptions(prescriptionsResponse.data.data || []);
         }
-        
+
         // Fetch patient medical records
         const recordsResponse = await axios.get(
-          `${API_URL}/doctors/patients/${id}/medical-records`, 
+          `${API_URL}/doctors/patients/${id}/medical-records`,
           headers
         );
-        
+
         if (recordsResponse.data.success) {
           setMedicalRecords(recordsResponse.data.data || []);
         }

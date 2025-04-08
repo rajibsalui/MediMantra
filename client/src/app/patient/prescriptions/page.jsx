@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-hot-toast";
+import { API_URL } from "@/config/environment";
 import {
   Pill,
   Calendar,
@@ -33,9 +34,6 @@ import {
   XCircle,
   ExternalLink
 } from "lucide-react";
-
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function PatientPrescriptions() {
   const router = useRouter();

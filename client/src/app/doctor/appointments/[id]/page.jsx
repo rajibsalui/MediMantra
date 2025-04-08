@@ -6,6 +6,7 @@ import Link from "next/link";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { format, formatDistance } from "date-fns";
+import { API_URL } from "@/config/environment";
 
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -44,9 +45,6 @@ import {
   Edit,
   MessageSquare,
 } from "lucide-react";
-
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function AppointmentDetailPage({ params }) {
   const router = useRouter();
@@ -160,7 +158,7 @@ export default function AppointmentDetailPage({ params }) {
   // Get appointment type icon
   const getAppointmentTypeIcon = () => {
     if (!appointment) return null;
-    
+
     switch (appointment.appointmentType) {
       case "video":
         return <Video className="h-5 w-5 text-blue-500" />;
@@ -174,7 +172,7 @@ export default function AppointmentDetailPage({ params }) {
   // Get status badge component based on status
   const getStatusBadge = () => {
     if (!appointment) return null;
-    
+
     const statusConfig = {
       scheduled: { variant: "default", label: "Scheduled" },
       completed: { variant: "success", label: "Completed" },
@@ -191,9 +189,9 @@ export default function AppointmentDetailPage({ params }) {
     );
   };
 
-  const canStartVideoCall = appointment?.appointmentType === "video" && 
+  const canStartVideoCall = appointment?.appointmentType === "video" &&
     appointment?.status === "scheduled" &&
-    new Date() >= new Date(new Date(appointment.appointmentDate).setMinutes(new Date(appointment.appointmentDate).getMinutes() - 5)) && 
+    new Date() >= new Date(new Date(appointment.appointmentDate).setMinutes(new Date(appointment.appointmentDate).getMinutes() - 5)) &&
     new Date() <= new Date(new Date(appointment.appointmentDate).setMinutes(new Date(appointment.appointmentDate).getMinutes() + appointment.duration || 30));
 
   if (authLoading || loading) {
@@ -389,14 +387,14 @@ export default function AppointmentDetailPage({ params }) {
                     <span className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Reason for Visit:</span>
                     <p>{appointment.reason || "No reason provided"}</p>
                   </div>
-                  
+
                   {appointment.symptoms && (
                     <div>
                       <span className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Symptoms:</span>
                       <p>{appointment.symptoms}</p>
                     </div>
                   )}
-                  
+
                   {appointment.patientNotes && (
                     <div>
                       <span className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Patient Notes:</span>
@@ -423,14 +421,14 @@ export default function AppointmentDetailPage({ params }) {
                   className="min-h-[120px]"
                 />
                 <div className="mt-2 flex justify-end">
-                  <Button 
-                    onClick={saveAppointmentNotes} 
+                  <Button
+                    onClick={saveAppointmentNotes}
                     disabled={savingNotes}
                     size="sm"
                   >
                     {savingNotes ? (
                       <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> 
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                         Saving...
                       </>
                     ) : (
@@ -486,8 +484,8 @@ export default function AppointmentDetailPage({ params }) {
                       </DialogHeader>
                       <DialogFooter>
                         <Button variant="outline" onClick={() => {}}>Cancel</Button>
-                        <Button 
-                          variant="destructive" 
+                        <Button
+                          variant="destructive"
                           onClick={() => updateAppointmentStatus("cancelled")}
                           disabled={updatingStatus}
                         >

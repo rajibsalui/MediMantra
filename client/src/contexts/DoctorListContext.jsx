@@ -2,15 +2,13 @@
 
 import React, { createContext, useState, useContext, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
+import { API_URL } from "@/config/environment";
 
 // Create context
 const DoctorListContext = createContext();
 
 // Custom hook to use doctor list context
 export const useDoctorList = () => useContext(DoctorListContext);
-
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Create a simple cache outside component to persist between renders
 const cache = {
@@ -28,14 +26,14 @@ export const DoctorListProvider = ({ children }) => {
   const [specialties, setSpecialties] = useState([]);
   const [loading, setLoading] = useState(false); // Start with loading false to prevent immediate loading
   const [error, setError] = useState(null);
-  
+
   // Use useRef instead of state for activeRequest to avoid re-renders
   const activeRequestRef = useRef(null);
-  
+
   // Extract unique specialties from doctors list
   const extractSpecialties = useCallback((doctorsList) => {
     if (!doctorsList || !Array.isArray(doctorsList)) return [];
-    
+
     const allSpecialties = doctorsList.reduce((acc, doctor) => {
       if (doctor.specialties && Array.isArray(doctor.specialties)) {
         doctor.specialties.forEach(specialty => {
@@ -46,15 +44,15 @@ export const DoctorListProvider = ({ children }) => {
       }
       return acc;
     }, []);
-    
+
     return allSpecialties.sort();
   }, []);
-  
+
   // Check if cache is valid
   const isCacheValid = useCallback((cacheEntry) => {
     return (
-      cacheEntry?.data && 
-      cacheEntry?.timestamp && 
+      cacheEntry?.data &&
+      cacheEntry?.timestamp &&
       Date.now() - cacheEntry.timestamp < cacheEntry.expiryTime
     );
   }, []);
@@ -67,24 +65,24 @@ export const DoctorListProvider = ({ children }) => {
       setSpecialties(extractSpecialties(cache.allDoctors.data));
       return;
     }
-    
+
     // Cancel any ongoing request to prevent duplicate API calls
     if (activeRequestRef.current) {
       activeRequestRef.current.cancel("Operation canceled due to new request");
     }
-    
+
     // Create a new cancellation token
     const cancelTokenSource = axios.CancelToken.source();
     activeRequestRef.current = cancelTokenSource;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.get(`${API_URL}/doctors`, {
         cancelToken: cancelTokenSource.token
       });
-      
+
       if (response.data.success) {
         // Update cache
         cache.allDoctors = {
@@ -92,7 +90,7 @@ export const DoctorListProvider = ({ children }) => {
           timestamp: Date.now(),
           expiryTime: 5 * 60 * 1000
         };
-        
+
         setDoctors(response.data.data);
         console.log(response.data)
         // Extract and set specialties
@@ -105,7 +103,7 @@ export const DoctorListProvider = ({ children }) => {
       if (!axios.isCancel(err)) {
         console.error("Error fetching doctors:", err);
         setError("Failed to load doctors. Please try again later.");
-        
+
         // Set fallback data for development
         const fallbackData = [
           {
@@ -129,7 +127,7 @@ export const DoctorListProvider = ({ children }) => {
           },
           // Other fallback doctors...
         ];
-        
+
         setDoctors(fallbackData);
         setSpecialties(["Cardiology", "Dermatology", "Neurology", "Pediatrics", "Orthopedics"]);
       }
@@ -142,7 +140,7 @@ export const DoctorListProvider = ({ children }) => {
   // Initial fetch of doctors
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadInitialData = async () => {
       // Don't show loading indicator for initial data if cache is available
       if (isCacheValid(cache.allDoctors)) {
@@ -153,14 +151,14 @@ export const DoctorListProvider = ({ children }) => {
       } else {
         try {
           if (isMounted) setLoading(true);
-          
+
           const cancelTokenSource = axios.CancelToken.source();
           activeRequestRef.current = cancelTokenSource;
-          
+
           const response = await axios.get(`${API_URL}/doctors`, {
             cancelToken: cancelTokenSource.token
           });
-          
+
           if (response.data.success && isMounted) {
             // Update cache
             cache.allDoctors = {
@@ -168,7 +166,7 @@ export const DoctorListProvider = ({ children }) => {
               timestamp: Date.now(),
               expiryTime: 5 * 60 * 1000
             };
-            
+
             setDoctors(response.data.data);
             setSpecialties(extractSpecialties(response.data.data));
           }
@@ -182,9 +180,9 @@ export const DoctorListProvider = ({ children }) => {
         }
       }
     };
-    
+
     loadInitialData();
-    
+
     // Cleanup function to cancel any ongoing requests when component unmounts
     return () => {
       isMounted = false;
@@ -214,30 +212,30 @@ export const DoctorListProvider = ({ children }) => {
       fetchAllDoctors();
       return;
     }
-    
+
     // Check cache for this search query
     const cacheKey = query.toLowerCase().trim();
     if (isCacheValid(cache.searchResults[cacheKey])) {
       setDoctors(cache.searchResults[cacheKey].data);
       return;
     }
-    
+
     // Cancel any ongoing request
     if (activeRequestRef.current) {
       activeRequestRef.current.cancel("Operation canceled due to new request");
     }
-    
+
     const cancelTokenSource = axios.CancelToken.source();
     activeRequestRef.current = cancelTokenSource;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.get(`${API_URL}/doctors/search?query=${query}`, {
         cancelToken: cancelTokenSource.token
       });
-      
+
       if (response.data.success) {
         // Update cache
         cache.searchResults[cacheKey] = {
@@ -245,7 +243,7 @@ export const DoctorListProvider = ({ children }) => {
           timestamp: Date.now(),
           expiryTime: 2 * 60 * 1000 // 2 minutes for search results
         };
-        
+
         setDoctors(response.data.data);
       } else {
         setError(response.data.message || "Failed to search doctors");
@@ -259,10 +257,10 @@ export const DoctorListProvider = ({ children }) => {
       setLoading(false);
     }
   }, [fetchAllDoctors, isCacheValid]);
-  
+
   // Create a stable search function with debounce
-  const searchDoctors = useMemo(() => 
-    debounce(searchDoctorsImpl, 300), 
+  const searchDoctors = useMemo(() =>
+    debounce(searchDoctorsImpl, 300),
     [searchDoctorsImpl, debounce]
   );
 
@@ -277,29 +275,29 @@ export const DoctorListProvider = ({ children }) => {
       fetchAllDoctors();
       return;
     }
-    
+
     // Check cache for this specialty
     if (isCacheValid(cache.doctorsBySpecialty[specialty])) {
       setDoctors(cache.doctorsBySpecialty[specialty].data);
       return;
     }
-    
+
     // Cancel any ongoing request
     if (activeRequestRef.current) {
       activeRequestRef.current.cancel("Operation canceled due to new request");
     }
-    
+
     const cancelTokenSource = axios.CancelToken.source();
     activeRequestRef.current = cancelTokenSource;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await axios.get(`${API_URL}/doctors/specialty/${specialty}`, {
         cancelToken: cancelTokenSource.token
       });
-      
+
       if (response.data.success) {
         // Update cache
         cache.doctorsBySpecialty[specialty] = {
@@ -307,7 +305,7 @@ export const DoctorListProvider = ({ children }) => {
           timestamp: Date.now(),
           expiryTime: 5 * 60 * 1000 // 5 minutes for specialty filters
         };
-        
+
         setDoctors(response.data.data);
       } else {
         setError(response.data.message || "Failed to filter doctors");

@@ -3,15 +3,13 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { API_URL } from "@/config/environment";
 
 // Create context
 const AuthContext = createContext();
 
 // Custom hook to use auth context
 export const useAuth = () => useContext(AuthContext);
-
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -184,7 +182,7 @@ export const AuthProvider = ({ children }) => {
         // }
         axios.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
         console.log("done")
-      
+
       }
 
       // Set user with doctor profile data

@@ -18,8 +18,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Loader2, Search, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL } from "@/config/environment";
 
 export default function NewMessageModal({ open, onOpenChange }) {
   const { user } = useAuth();
@@ -28,7 +27,7 @@ export default function NewMessageModal({ open, onOpenChange }) {
   const [searchResults, setSearchResults] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(false);
-  
+
   // Search for users when query changes
   useEffect(() => {
     const searchUsers = async () => {
@@ -36,21 +35,21 @@ export default function NewMessageModal({ open, onOpenChange }) {
         setSearchResults([]);
         return;
       }
-      
+
       try {
         setLoading(true);
-        
+
         // Determine which endpoint to use based on user role
-        const endpoint = user?.role === "doctor" 
-          ? `${API_URL}/doctors/patients/search` 
+        const endpoint = user?.role === "doctor"
+          ? `${API_URL}/doctors/patients/search`
           : `${API_URL}/patients/doctors/search`;
-        
+
         const response = await axios.get(`${endpoint}?query=${searchQuery}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`
           }
         });
-        
+
         if (response.data.success) {
           setSearchResults(response.data.data);
         }
@@ -61,24 +60,24 @@ export default function NewMessageModal({ open, onOpenChange }) {
         setLoading(false);
       }
     };
-    
+
     const debounceTimer = setTimeout(searchUsers, 500);
-    
+
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, user?.role]);
-  
+
   // Handle user selection
   const handleSelectUser = (user) => {
     setSelectedUser(user);
   };
-  
+
   // Handle starting a conversation
   const handleStartConversation = async () => {
     if (!selectedUser) return;
-    
+
     try {
       const conversation = await startConversation(selectedUser._id);
-      
+
       if (conversation) {
         onOpenChange(false);
         setSearchQuery("");
@@ -88,7 +87,7 @@ export default function NewMessageModal({ open, onOpenChange }) {
       console.error("Error starting conversation:", error);
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -98,7 +97,7 @@ export default function NewMessageModal({ open, onOpenChange }) {
             Search for a {user?.role === "doctor" ? "patient" : "doctor"} to start a conversation.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -109,7 +108,7 @@ export default function NewMessageModal({ open, onOpenChange }) {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
+
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -161,7 +160,7 @@ export default function NewMessageModal({ open, onOpenChange }) {
             </div>
           ) : null}
         </div>
-        
+
         <DialogFooter>
           <Button
             variant="outline"

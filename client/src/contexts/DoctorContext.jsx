@@ -4,15 +4,13 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
 import { toast } from "react-hot-toast";
+import { API_URL } from "@/config/environment";
 
 // Create context
 const DoctorContext = createContext();
 
 // Custom hook to use doctor context
 export const useDoctor = () => useContext(DoctorContext);
-
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export const DoctorProvider = ({ children }) => {
   const { user, isAuthenticated, token } = useAuth();

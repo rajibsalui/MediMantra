@@ -18,8 +18,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Loader2, Search, User, CheckCircle, AlertCircle, Clock } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL } from "@/config/environment";
 
 export default function RequestChatModal({ open, onOpenChange }) {
   const { user } = useAuth();
@@ -30,7 +29,7 @@ export default function RequestChatModal({ open, onOpenChange }) {
   const [loading, setLoading] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [requestedDoctorIds, setRequestedDoctorIds] = useState({});
-  
+
   // Search for doctors when query changes
   useEffect(() => {
     const searchDoctors = async () => {
@@ -38,16 +37,16 @@ export default function RequestChatModal({ open, onOpenChange }) {
         setSearchResults([]);
         return;
       }
-      
+
       try {
         setLoading(true);
-        
+
         const response = await axios.get(`${API_URL}/patients/doctors/search?query=${searchQuery}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`
           }
         });
-        
+
         if (response.data.success) {
           setSearchResults(response.data.data);
         }
@@ -58,32 +57,32 @@ export default function RequestChatModal({ open, onOpenChange }) {
         setLoading(false);
       }
     };
-    
+
     const debounceTimer = setTimeout(searchDoctors, 500);
-    
+
     return () => clearTimeout(debounceTimer);
   }, [searchQuery]);
-  
+
   // Handle doctor selection
   const handleSelectDoctor = (doctor) => {
     setSelectedDoctor(doctor);
   };
-  
+
   // Handle requesting a chat
   const handleRequestChat = async () => {
     if (!selectedDoctor) return;
-    
+
     try {
       setRequesting(true);
       const success = await requestConversation(selectedDoctor._id);
-      
+
       if (success) {
         // Add to requested doctors
         setRequestedDoctorIds(prev => ({
           ...prev,
           [selectedDoctor._id]: true
         }));
-        
+
         // Clear selection
         setSelectedDoctor(null);
       }
@@ -93,7 +92,7 @@ export default function RequestChatModal({ open, onOpenChange }) {
       setRequesting(false);
     }
   };
-  
+
   // Get request status badge
   const getStatusBadge = (doctorId) => {
     // Check if we have a status for this doctor
@@ -102,11 +101,11 @@ export default function RequestChatModal({ open, onOpenChange }) {
         doc => doc._id === doctorId && requestStatus[id]
       )
     );
-    
+
     if (!conversationId) return null;
-    
+
     const status = requestStatus[conversationId];
-    
+
     if (status === 'pending') {
       return (
         <Badge variant="outline" className="flex items-center gap-1 bg-yellow-50 text-yellow-700 border-yellow-200">
@@ -129,10 +128,10 @@ export default function RequestChatModal({ open, onOpenChange }) {
         </Badge>
       );
     }
-    
+
     return null;
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -142,7 +141,7 @@ export default function RequestChatModal({ open, onOpenChange }) {
             Search for a doctor to request a chat session
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -153,7 +152,7 @@ export default function RequestChatModal({ open, onOpenChange }) {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
+
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -210,7 +209,7 @@ export default function RequestChatModal({ open, onOpenChange }) {
             </div>
           ) : null}
         </div>
-        
+
         <DialogFooter>
           <Button
             variant="outline"
