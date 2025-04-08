@@ -11,10 +11,6 @@ const nextConfig: NextConfig = {
     ],
   },
   output: 'standalone',
-  // Add this to handle build errors more gracefully
-  onError: async (err: Error) => {
-    console.error('Next.js build error:', err);
-  },
 }
 
 export default nextConfig;
