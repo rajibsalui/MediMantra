@@ -212,7 +212,7 @@ export default function AppointmentCalendar({ appointments = [], loading = false
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <TabsList className="grid grid-cols-3 mb-4">
+        <TabsList key="tabs-list" className="grid grid-cols-3 mb-4">
           <TabsTrigger value="day" className="flex items-center">
             <CalendarIcon className="w-4 h-4 mr-2" />
             Day View

@@ -93,7 +93,7 @@ export default function HealthRecordTabs({ activeFilter, records, isLoading, err
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <TabsList className="grid grid-cols-4 mb-6 bg-gray-100">
+        <TabsList key="tabs-list" className="grid grid-cols-4 mb-6 bg-gray-100">
           <TabsTrigger value="medications" disabled>Medications</TabsTrigger>
           <TabsTrigger value="allergies" disabled>Allergies</TabsTrigger>
           <TabsTrigger value="conditions" disabled>Conditions</TabsTrigger>
@@ -124,7 +124,7 @@ export default function HealthRecordTabs({ activeFilter, records, isLoading, err
 
   return (
     <Tabs defaultValue="medications" value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid grid-cols-4 mb-6 bg-gray-100">
+      <TabsList key="tabs-list" className="grid grid-cols-4 mb-6 bg-gray-100">
         <TabsTrigger value="medications" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">Medications</TabsTrigger>
         <TabsTrigger value="allergies" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">Allergies</TabsTrigger>
         <TabsTrigger value="conditions" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">Conditions</TabsTrigger>

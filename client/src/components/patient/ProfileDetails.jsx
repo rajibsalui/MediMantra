@@ -193,7 +193,7 @@ export default function ProfileDetails({ onEditClick }) {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4">
+          <TabsList key="tabs-list" className="grid grid-cols-4">
             <TabsTrigger value="personal">
               <User className="h-4 w-4 mr-2" />
               Personal

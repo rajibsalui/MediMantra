@@ -396,7 +396,7 @@ export default function DoctorProfileManager() {
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-4">
+            <TabsList key="tabs-list" className="grid grid-cols-4">
               <TabsTrigger value="personal">Personal Info</TabsTrigger>
               <TabsTrigger value="professional">Professional</TabsTrigger>
               <TabsTrigger value="practice">Practice Details</TabsTrigger>

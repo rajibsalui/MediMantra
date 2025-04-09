@@ -421,7 +421,7 @@ export default function AppointmentsPage() {
           onValueChange={handleTabChange}
           className="w-full mb-6"
         >
-          <TabsList className="grid grid-cols-5 mb-4">
+          <TabsList key="tabs-list" className="grid grid-cols-5 mb-4">
             <TabsTrigger value="upcoming" className="flex items-center">
               <CalendarIcon className="w-4 h-4 mr-2" />
               Upcoming

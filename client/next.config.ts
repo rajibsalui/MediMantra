@@ -20,9 +20,8 @@ const nextConfig: NextConfig = {
   },
   publicRuntimeConfig: config.publicRuntimeConfig,
   serverRuntimeConfig: config.serverRuntimeConfig,
-  // Additional configuration to help with environment variable issues
-  reactStrictMode: true,
-  swcMinify: true
+  // Additional configuration
+  reactStrictMode: true
 }
 
 export default nextConfig;

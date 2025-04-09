@@ -332,7 +332,7 @@ export default function ProfileManager() {
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-4">
+            <TabsList key="tabs-list" className="grid grid-cols-4">
               <TabsTrigger value="personal">Personal Info</TabsTrigger>
               <TabsTrigger value="medical">Medical Details</TabsTrigger>
               <TabsTrigger value="emergency">Emergency Contact</TabsTrigger>

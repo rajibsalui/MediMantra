@@ -175,7 +175,7 @@ export default function ScheduleManager({ availability = [], loading = false, on
         onValueChange={setActiveDay}
         className="w-full"
       >
-        <TabsList className="flex space-x-2 overflow-x-auto pb-2">
+        <TabsList key="tabs-list" className="flex space-x-2 overflow-x-auto pb-2">
           {DAYS_OF_WEEK.map((day) => {
             const daySchedule = schedule.find((item) => item.day === day);
             const isAvailable = daySchedule?.isAvailable;

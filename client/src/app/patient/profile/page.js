@@ -79,7 +79,7 @@ export default function PatientProfile() {
         </div>
 
         <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
+          <TabsList key="tabs-list" className="mb-6">
             <TabsTrigger value="profile" key="profile-tab">
               <User className="h-4 w-4 mr-2" />
               Profile

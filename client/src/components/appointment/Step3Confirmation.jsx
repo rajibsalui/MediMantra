@@ -171,7 +171,7 @@ export default function Step3Confirmation({
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="card">
-              <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 dark:bg-slate-900">
+              <TabsList key="tabs-list" className="grid w-full grid-cols-3 mb-6 bg-slate-100 dark:bg-slate-900">
                 <TabsTrigger value="card" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-400">Credit Card</TabsTrigger>
                 <TabsTrigger value="paypal" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-400">PayPal</TabsTrigger>
                 <TabsTrigger value="insurance" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-slate-900 dark:data-[state=active]:text-slate-100 data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-400">Insurance</TabsTrigger>

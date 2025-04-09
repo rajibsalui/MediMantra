@@ -278,7 +278,7 @@ export default function PrescriptionsPage() {
               onValueChange={handleTabChange}
               className="w-full"
             >
-              <TabsList className="grid grid-cols-3 mb-4">
+              <TabsList key="tabs-list" className="grid grid-cols-3 mb-4">
                 <TabsTrigger value="active" className="flex items-center">
                   <Pill className="w-4 h-4 mr-2" />
                   Active

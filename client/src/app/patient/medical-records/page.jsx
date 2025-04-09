@@ -605,7 +605,7 @@ export default function PatientMedicalRecords() {
         
         {/* Tabs */}
         <Tabs defaultValue="documents" value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+          <TabsList key="tabs-list" className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="lab_results">Lab Results</TabsTrigger>
             <TabsTrigger value="visits">Medical Visits</TabsTrigger>

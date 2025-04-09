@@ -336,7 +336,7 @@ export default function PatientDetailPage({ params }) {
           {/* Patient Details Tabs */}
           <div className="lg:col-span-2">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-4 mb-6">
+              <TabsList key="tabs-list" className="grid grid-cols-4 mb-6">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="appointments">Appointments</TabsTrigger>
                 <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>

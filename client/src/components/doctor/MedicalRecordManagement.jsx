@@ -201,7 +201,7 @@ export default function MedicalRecordManagement({ medicalRecords = [], loading =
         onValueChange={handleTabChange}
         className="w-full"
       >
-        <TabsList className="grid grid-cols-3 mb-4">
+        <TabsList key="tabs-list" className="grid grid-cols-3 mb-4">
           <TabsTrigger value="all" className="flex items-center">
             <FileText className="w-4 h-4 mr-2" />
             All Records
