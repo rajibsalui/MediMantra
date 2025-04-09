@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle, ArrowLeft } from "lucide-react";
-import { API_URL, SOCKET_URL } from '@/config/environment';
 
 
 export default function ForgotPasswordPage() {
@@ -19,14 +18,14 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!email) {
       toast.error("Please enter your email address");
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       await forgotPassword(email);
       setIsSubmitted(true);
