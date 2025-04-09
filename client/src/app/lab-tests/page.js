@@ -10,7 +10,9 @@ import BookingForm from '@/components/lab-tests/BookingForm';
 import ConfirmationModal from '@/components/lab-tests/ConfirmationModal';
 import { API_URL, SOCKET_URL } from '@/config/environment';
 
-
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 export default function LabTests() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
