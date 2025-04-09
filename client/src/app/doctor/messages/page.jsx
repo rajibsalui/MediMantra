@@ -7,6 +7,11 @@ import { useChat } from "@/contexts/ChatContext";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import ChatInterface from "@/components/chat/ChatInterface";
 import ChatRequestsList from "@/components/chat/ChatRequestsList";
+import { API_URL, SOCKET_URL } from "@/config/environment";
+
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function DoctorMessages() {
   const router = useRouter();

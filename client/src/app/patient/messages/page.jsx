@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import ChatInterface from "@/components/chat/ChatInterface";
+import { API_URL, SOCKET_URL } from "@/config/environment";
+
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function PatientMessages() {
   const router = useRouter();
