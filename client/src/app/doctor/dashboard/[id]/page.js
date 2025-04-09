@@ -29,6 +29,8 @@ import { SparklesCore } from "@/components/ui/sparkles";
 import { CardSpotlight } from "@/components/ui/card-spotlight";
 import { Badge } from "@/components/ui/badge";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
+import { API_URL, SOCKET_URL } from '@/config/environment';
+
 
 
 export default function DoctorDashboard() {

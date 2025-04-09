@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import Link from "next/link";
-import { API_URL } from "@/config/environment";
+import { API_URL, SOCKET_URL } from '@/config/environment';
+
 
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

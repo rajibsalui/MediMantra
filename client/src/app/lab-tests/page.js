@@ -8,6 +8,8 @@ import SearchBar from '@/components/lab-tests/SearchBar';
 import TestList from '@/components/lab-tests/TestList';
 import BookingForm from '@/components/lab-tests/BookingForm';
 import ConfirmationModal from '@/components/lab-tests/ConfirmationModal';
+import { API_URL, SOCKET_URL } from '@/config/environment';
+
 
 export default function LabTests() {
   const [selectedCategory, setSelectedCategory] = useState('All');

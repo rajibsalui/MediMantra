@@ -6,7 +6,8 @@ import Link from "next/link";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
-import { API_URL } from "@/config/environment";
+import { API_URL, SOCKET_URL } from '@/config/environment';
+
 
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
