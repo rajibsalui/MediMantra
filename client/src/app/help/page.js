@@ -1,12 +1,17 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { API_URL, SOCKET_URL } from '@/config/environment';
+
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function HelpPage() {
   const [activeTab, setActiveTab] = useState('patients');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFaqs, setExpandedFaqs] = useState({});
-  
+
   // Toggle FAQ expansion
   const toggleFaq = (id) => {
     setExpandedFaqs(prev => ({
@@ -14,12 +19,12 @@ export default function HelpPage() {
       [id]: !prev[id]
     }));
   };
-  
+
   // Filter help articles based on search query
   const filterContent = (items) => {
     if (!searchQuery) return items;
-    return items.filter(item => 
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    return items.filter(item =>
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.content.toLowerCase().includes(searchQuery.toLowerCase())
     );
   };
@@ -87,7 +92,7 @@ export default function HelpPage() {
       )
     }
   ];
-  
+
   // Help article data for doctors
   const doctorHelpArticles = [
     {
@@ -213,8 +218,8 @@ export default function HelpPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
             </div>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search for help articles, guides, and more..."
               className="w-full py-3 px-4 outline-none text-lg"
               value={searchQuery}
@@ -236,7 +241,7 @@ export default function HelpPage() {
             </div>
             <span className="font-medium">Getting Started</span>
           </Link>
-          
+
           <Link href="#faqs" className="flex items-center p-4 bg-green-50 border border-green-100 rounded-lg hover:bg-green-100 transition">
             <div className="rounded-full bg-green-100 p-3 mr-3">
               <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -245,7 +250,7 @@ export default function HelpPage() {
             </div>
             <span className="font-medium">Frequently Asked Questions</span>
           </Link>
-          
+
           <Link href="#video-tutorials" className="flex items-center p-4 bg-purple-50 border border-purple-100 rounded-lg hover:bg-purple-100 transition">
             <div className="rounded-full bg-purple-100 p-3 mr-3">
               <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -254,7 +259,7 @@ export default function HelpPage() {
             </div>
             <span className="font-medium">Video Tutorials</span>
           </Link>
-          
+
           <Link href="#contact-support" className="flex items-center p-4 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition">
             <div className="rounded-full bg-red-100 p-3 mr-3">
               <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -289,7 +294,7 @@ export default function HelpPage() {
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
           {activeTab === 'patients' ? 'Patient Resources' : 'Healthcare Provider Resources'}
         </h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filterContent(activeTab === 'patients' ? patientHelpArticles : doctorHelpArticles).map(article => (
             <div key={article.id} className="bg-white rounded-xl shadow-lg overflow-hidden transition-transform hover:scale-105">
@@ -301,7 +306,7 @@ export default function HelpPage() {
                   <h3 className="text-xl font-bold text-gray-800">{article.title}</h3>
                 </div>
                 <p className="text-gray-600 mb-4">{article.content}</p>
-                <Link 
+                <Link
                   href={`#${article.id}`}
                   className="inline-flex items-center font-medium text-blue-600 hover:text-blue-800"
                 >
@@ -344,7 +349,7 @@ export default function HelpPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="aspect-w-16 aspect-h-9 bg-gray-200">
               <div className="flex items-center justify-center h-full">
@@ -365,7 +370,7 @@ export default function HelpPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="aspect-w-16 aspect-h-9 bg-gray-200">
               <div className="flex items-center justify-center h-full">
@@ -404,11 +409,11 @@ export default function HelpPage() {
                 onClick={() => toggleFaq(faq.id)}
               >
                 <span className="text-lg font-medium text-gray-900">{faq.question}</span>
-                <svg 
-                  className={`w-5 h-5 text-gray-500 transform ${expandedFaqs[faq.id] ? 'rotate-180' : ''} transition-transform`} 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  className={`w-5 h-5 text-gray-500 transform ${expandedFaqs[faq.id] ? 'rotate-180' : ''} transition-transform`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
@@ -520,7 +525,7 @@ export default function HelpPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-10 lg:mt-0 lg:w-1/2">
               <div className="bg-white rounded-lg p-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Send us a message</h3>

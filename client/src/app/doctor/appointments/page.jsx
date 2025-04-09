@@ -48,8 +48,11 @@ import {
   MapPin,
 } from "lucide-react";
 
-// API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL } from "@/config/environment";
+
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function AppointmentsPage() {
   const router = useRouter();

@@ -1,6 +1,10 @@
 import { Suspense } from "react";
 import VerifyEmailContent from "./VerifyEmailContent";
 
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 export default function VerifyEmailPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

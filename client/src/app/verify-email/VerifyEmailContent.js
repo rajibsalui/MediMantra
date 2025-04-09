@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import { API_URL } from "@/config/environment";
 
 export default function VerifyEmailContent() {
   const searchParams = useSearchParams();

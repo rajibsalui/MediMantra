@@ -4,8 +4,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useAuth } from "./AuthContext";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+import { API_URL } from "@/config/environment";
 
 // Helper function to create a single time slot from start and end time
 const generateTimeSlots = (startTime, endTime) => {
