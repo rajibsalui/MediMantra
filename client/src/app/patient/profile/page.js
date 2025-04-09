@@ -11,6 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Shield, LockKeyhole, User, ArrowLeft, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { API_URL, SOCKET_URL } from '@/config/environment';
+
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function PatientProfile() {
   const router = useRouter();

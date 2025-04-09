@@ -7,6 +7,7 @@ import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePatient } from "@/contexts/PatientContext";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
+import { API_URL, SOCKET_URL } from "@/config/environment";
 import {
   Card,
   CardContent,
@@ -34,6 +35,10 @@ import {
   XCircle,
   ExternalLink
 } from "lucide-react";
+
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function PatientPrescriptions() {
   const router = useRouter();

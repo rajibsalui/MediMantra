@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, useAnimation, useInView } from 'framer-motion';
 import axios from 'axios';
 import Link from "next/link";
+import { API_URL, SOCKET_URL } from '@/config/environment';
 import {
   BackgroundBeams,
   MovingBorder,
@@ -32,6 +33,10 @@ import ResultsDisplay from '@/components/ResultsDisplay';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { API_URL } from '@/config/environment';
+
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function SymptomChecker() {
   const [loading, setLoading] = useState(false);

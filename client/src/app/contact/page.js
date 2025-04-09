@@ -1,6 +1,11 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { API_URL, SOCKET_URL } from '@/config/environment';
+
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -19,13 +24,13 @@ export default function ContactPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate form submission
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSubmitted(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
-      
+
       // Reset success message after 5 seconds
       setTimeout(() => setIsSubmitted(false), 5000);
     }, 1500);
@@ -54,13 +59,13 @@ export default function ContactPage() {
           {/* Contact Form */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Send us a message</h2>
-            
+
             {isSubmitted ? (
               <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
                 Thank you for your message! We'll get back to you shortly.
               </div>
             ) : null}
-            
+
             <form onSubmit={handleSubmit}>
               <div className="mb-6">
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -77,7 +82,7 @@ export default function ContactPage() {
                   placeholder="John Doe"
                 />
               </div>
-              
+
               <div className="mb-6">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address
@@ -93,7 +98,7 @@ export default function ContactPage() {
                   placeholder="john@example.com"
                 />
               </div>
-              
+
               <div className="mb-6">
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
                   Subject
@@ -109,7 +114,7 @@ export default function ContactPage() {
                   placeholder="How can we help you?"
                 />
               </div>
-              
+
               <div className="mb-6">
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
                   Message
@@ -125,7 +130,7 @@ export default function ContactPage() {
                   placeholder="Please describe your inquiry in detail..."
                 ></textarea>
               </div>
-              
+
               <div>
                 <button
                   type="submit"
@@ -137,12 +142,12 @@ export default function ContactPage() {
               </div>
             </form>
           </div>
-          
+
           {/* Contact Information */}
           <div className="space-y-8">
             <div className="bg-white rounded-xl shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Contact Information</h2>
-              
+
               <div className="space-y-6">
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
@@ -156,7 +161,7 @@ export default function ContactPage() {
                     <p className="text-gray-600">Mon-Fri from 8am to 6pm</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
                     <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,7 +174,7 @@ export default function ContactPage() {
                     <p className="text-gray-600">info@Mediमंत्र.com</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start">
                   <div className="flex-shrink-0">
                     <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -185,7 +190,7 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Social Media */}
               <div className="mt-8">
                 <p className="text-lg font-medium text-gray-900">Connect with us</p>
@@ -197,7 +202,7 @@ export default function ContactPage() {
                       <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
                     </svg>
                   </a>
-                  
+
                   {/* Twitter/X */}
                   <a href="#" className="text-gray-400 hover:text-blue-500">
                     <span className="sr-only">Twitter</span>
@@ -205,7 +210,7 @@ export default function ContactPage() {
                       <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                     </svg>
                   </a>
-                  
+
                   {/* LinkedIn */}
                   <a href="#" className="text-gray-400 hover:text-blue-500">
                     <span className="sr-only">LinkedIn</span>
@@ -216,13 +221,13 @@ export default function ContactPage() {
                 </div>
               </div>
             </div>
-            
+
             {/* Map */}
             <div className="bg-white rounded-xl shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Find Us</h2>
               <div className="aspect-w-16 aspect-h-9">
-                <iframe 
-                  className="w-full h-64 rounded-lg border-0" 
+                <iframe
+                  className="w-full h-64 rounded-lg border-0"
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d50470.09854009855!2d-122.43769367182565!3d37.7749295!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80859a6d00690021%3A0x4a501367f076adff!2sSan%20Francisco%2C%20CA!5e0!3m2!1sen!2sus!4v1656052619908!5m2!1sen!2sus"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
@@ -245,17 +250,17 @@ export default function ContactPage() {
             <h3 className="text-xl font-bold text-gray-800 mb-3">What is Mediमंत्र?</h3>
             <p className="text-gray-600">Mediमंत्र is an advanced AI-powered healthcare assistant designed to provide medical information, appointment scheduling, medication reminders, and health monitoring services.</p>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-3">How do I schedule a demo?</h3>
             <p className="text-gray-600">You can schedule a Mediमंत्र demo by filling out the contact form on this page or by calling our customer service team at +1 (800) 123-4567.</p>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-3">Is Mediमंत्र HIPAA compliant?</h3>
             <p className="text-gray-600">Yes, Mediमंत्र is fully HIPAA compliant. We take patient privacy and data security seriously, implementing industry-leading encryption and security protocols.</p>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-3">What support options are available?</h3>
             <p className="text-gray-600">We offer 24/7 customer support via phone, email, and live chat. Our technical team is always available to assist with any issues or questions you may have.</p>
@@ -269,14 +274,14 @@ export default function ContactPage() {
           <h2 className="text-3xl font-bold">Ready to transform your healthcare experience?</h2>
           <p className="mt-4 text-xl">Join thousands of satisfied users who have made Mediमंत्र their healthcare companion.</p>
           <div className="mt-8">
-            <Link 
-              href="/demo" 
+            <Link
+              href="/demo"
               className="inline-block bg-white text-blue-600 py-3 px-8 rounded-lg font-medium mr-4 hover:bg-gray-100 transition duration-300"
             >
               Book a Demo
             </Link>
-            <Link 
-              href="/pricing" 
+            <Link
+              href="/pricing"
               className="inline-block bg-transparent border border-white text-white py-3 px-8 rounded-lg font-medium hover:bg-white hover:text-blue-600 transition duration-300"
             >
               View Pricing

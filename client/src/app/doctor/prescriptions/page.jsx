@@ -6,8 +6,6 @@ import Link from "next/link";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
-import { API_URL } from "@/config/environment";
-
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 // import { useAuth } from "@/hooks/useAuth";
 import { useAuth } from "@/contexts/AuthContext";
-
+import { API_URL, SOCKET_URL } from "@/config/environment";
 import {
   Search,
   PlusCircle,
@@ -32,6 +30,10 @@ import {
   ChevronRight,
   User,
 } from "lucide-react";
+
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function PrescriptionsPage() {
   const router = useRouter();

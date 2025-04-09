@@ -6,6 +6,7 @@ import Link from "next/link";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { motion } from "framer-motion";
+import { API_URL, SOCKET_URL } from "@/config/environment";
 import {
   Calendar,
   Search,
@@ -23,6 +24,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 // Register GSAP plugins
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -37,12 +42,12 @@ export default function HomePage() {
   const reload = () => {
     window.location.reload(); // Reload the page
   };
-  // Reload the page when the component mounts 
+  // Reload the page when the component mounts
 
 
   // GSAP animations
   useEffect(() => {
-    // reload the page 
+    // reload the page
     // reload();
     // Set up ScrollTrigger for smooth scrolling
     gsap.registerPlugin(ScrollTrigger);
