@@ -31,6 +31,12 @@ import { useAppointment } from "@/contexts/AppointmentContext";
 import { API_URL, SOCKET_URL } from '@/config/environment';
 
 
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
+
+
 export default function PatientAppointments() {
   const router = useRouter();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
