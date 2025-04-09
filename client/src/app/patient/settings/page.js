@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { 
-  User, 
-  Shield, 
-  Bell, 
-  LockKeyhole, 
-  ArrowLeft, 
-  Save, 
+import { API_URL, SOCKET_URL } from '@/config/environment';
+import {
+  User,
+  Shield,
+  Bell,
+  LockKeyhole,
+  ArrowLeft,
+  Save,
   Loader2,
   Mail,
   Key,
@@ -43,6 +44,10 @@ const passwordSchema = yup.object({
     .oneOf([yup.ref('newPassword')], 'Passwords must match'),
 });
 
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 // Schema for email change form
 const emailSchema = yup.object({
   newEmail: yup
@@ -61,7 +66,7 @@ export default function PatientSettings() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showEmailPassword, setShowEmailPassword] = useState(false);
-  
+
   // Notification settings state
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -69,32 +74,32 @@ export default function PatientSettings() {
     medicationReminders: true,
     marketingEmails: false,
   });
-  
+
   // Privacy settings state
   const [privacySettings, setPrivacySettings] = useState({
     shareDataWithDoctors: true,
     shareDataWithResearchers: false,
     allowProfileDiscovery: true,
   });
-  
+
   // Password change form
-  const { 
-    register: registerPassword, 
-    handleSubmit: handlePasswordSubmit, 
-    formState: { errors: passwordErrors } 
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    formState: { errors: passwordErrors }
   } = useForm({
     resolver: yupResolver(passwordSchema)
   });
-  
+
   // Email change form
-  const { 
-    register: registerEmail, 
-    handleSubmit: handleEmailSubmit, 
-    formState: { errors: emailErrors } 
+  const {
+    register: registerEmail,
+    handleSubmit: handleEmailSubmit,
+    formState: { errors: emailErrors }
   } = useForm({
     resolver: yupResolver(emailSchema)
   });
-  
+
   // Handle password change
   const onPasswordChange = async (data) => {
     try {
@@ -104,7 +109,7 @@ export default function PatientSettings() {
       toast.error(error.message || 'Failed to update password');
     }
   };
-  
+
   // Handle email change
   const onEmailChange = async (data) => {
     try {
@@ -114,29 +119,29 @@ export default function PatientSettings() {
       toast.error(error.message || 'Failed to update email');
     }
   };
-  
+
   // Handle notification settings change
   const handleNotificationChange = (setting) => {
     setNotificationSettings({
       ...notificationSettings,
       [setting]: !notificationSettings[setting]
     });
-    
+
     // In a real app, you would save this to the backend
     toast.success(`${setting} setting updated`);
   };
-  
+
   // Handle privacy settings change
   const handlePrivacyChange = (setting) => {
     setPrivacySettings({
       ...privacySettings,
       [setting]: !privacySettings[setting]
     });
-    
+
     // In a real app, you would save this to the backend
     toast.success(`${setting} setting updated`);
   };
-  
+
   // Show loading state
   if (authLoading || patientLoading) {
     return (
@@ -146,13 +151,13 @@ export default function PatientSettings() {
       </div>
     );
   }
-  
+
   return (
     <DashboardLayout>
       <div className="container mx-auto py-6 px-4 md:px-6">
         <div className="flex items-center mb-8">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.back()}
             className="mr-4"
           >
@@ -161,7 +166,7 @@ export default function PatientSettings() {
           </Button>
           <h1 className="text-2xl font-bold">Settings</h1>
         </div>
-        
+
         <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="profile" key="profile-tab">
@@ -181,11 +186,11 @@ export default function PatientSettings() {
               Privacy
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="profile" className="space-y-6" key="profile-content">
             <ProfileManager />
           </TabsContent>
-          
+
           <TabsContent value="account" className="space-y-6" key="account-content">
             <Card>
               <CardHeader>
@@ -199,34 +204,34 @@ export default function PatientSettings() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="current-email">Current Email</Label>
-                      <Input 
-                        id="current-email" 
-                        value={user?.email || ''} 
-                        disabled 
+                      <Input
+                        id="current-email"
+                        value={user?.email || ''}
+                        disabled
                         className="bg-muted"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="new-email">New Email</Label>
-                      <Input 
-                        id="new-email" 
-                        type="email" 
-                        placeholder="Enter new email address" 
+                      <Input
+                        id="new-email"
+                        type="email"
+                        placeholder="Enter new email address"
                         {...registerEmail('newEmail')}
                       />
                       {emailErrors.newEmail && (
                         <p className="text-sm text-red-500">{emailErrors.newEmail.message}</p>
                       )}
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="email-password">Password</Label>
                       <div className="relative">
-                        <Input 
-                          id="email-password" 
-                          type={showEmailPassword ? "text" : "password"} 
-                          placeholder="Enter your password" 
+                        <Input
+                          id="email-password"
+                          type={showEmailPassword ? "text" : "password"}
+                          placeholder="Enter your password"
                           {...registerEmail('password')}
                         />
                         <Button
@@ -243,7 +248,7 @@ export default function PatientSettings() {
                         <p className="text-sm text-red-500">{emailErrors.password.message}</p>
                       )}
                     </div>
-                    
+
                     <Button type="submit" className="w-full">
                       {authLoading ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...</>
@@ -255,7 +260,7 @@ export default function PatientSettings() {
                 </form>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Change Password</CardTitle>
@@ -269,10 +274,10 @@ export default function PatientSettings() {
                     <div className="space-y-2">
                       <Label htmlFor="current-password">Current Password</Label>
                       <div className="relative">
-                        <Input 
-                          id="current-password" 
-                          type={showCurrentPassword ? "text" : "password"} 
-                          placeholder="Enter current password" 
+                        <Input
+                          id="current-password"
+                          type={showCurrentPassword ? "text" : "password"}
+                          placeholder="Enter current password"
                           {...registerPassword('currentPassword')}
                         />
                         <Button
@@ -289,14 +294,14 @@ export default function PatientSettings() {
                         <p className="text-sm text-red-500">{passwordErrors.currentPassword.message}</p>
                       )}
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="new-password">New Password</Label>
                       <div className="relative">
-                        <Input 
-                          id="new-password" 
-                          type={showNewPassword ? "text" : "password"} 
-                          placeholder="Enter new password" 
+                        <Input
+                          id="new-password"
+                          type={showNewPassword ? "text" : "password"}
+                          placeholder="Enter new password"
                           {...registerPassword('newPassword')}
                         />
                         <Button
@@ -313,14 +318,14 @@ export default function PatientSettings() {
                         <p className="text-sm text-red-500">{passwordErrors.newPassword.message}</p>
                       )}
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="confirm-password">Confirm New Password</Label>
                       <div className="relative">
-                        <Input 
-                          id="confirm-password" 
-                          type={showConfirmPassword ? "text" : "password"} 
-                          placeholder="Confirm new password" 
+                        <Input
+                          id="confirm-password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm new password"
                           {...registerPassword('confirmPassword')}
                         />
                         <Button
@@ -337,7 +342,7 @@ export default function PatientSettings() {
                         <p className="text-sm text-red-500">{passwordErrors.confirmPassword.message}</p>
                       )}
                     </div>
-                    
+
                     <Button type="submit" className="w-full">
                       {authLoading ? (
                         <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...</>
@@ -350,7 +355,7 @@ export default function PatientSettings() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="notifications" className="space-y-6" key="notifications-content">
             <Card>
               <CardHeader>
@@ -373,7 +378,7 @@ export default function PatientSettings() {
                     onCheckedChange={() => handleNotificationChange('emailNotifications')}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="appointment-reminders">Appointment Reminders</Label>
@@ -387,7 +392,7 @@ export default function PatientSettings() {
                     onCheckedChange={() => handleNotificationChange('appointmentReminders')}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="medication-reminders">Medication Reminders</Label>
@@ -401,7 +406,7 @@ export default function PatientSettings() {
                     onCheckedChange={() => handleNotificationChange('medicationReminders')}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="marketing-emails">Marketing Emails</Label>
@@ -424,7 +429,7 @@ export default function PatientSettings() {
               </CardFooter>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="privacy" className="space-y-6" key="privacy-content">
             <Card>
               <CardHeader>
@@ -447,7 +452,7 @@ export default function PatientSettings() {
                     onCheckedChange={() => handlePrivacyChange('shareDataWithDoctors')}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="share-with-researchers">Share Data with Researchers</Label>
@@ -461,7 +466,7 @@ export default function PatientSettings() {
                     onCheckedChange={() => handlePrivacyChange('shareDataWithResearchers')}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="profile-discovery">Profile Discovery</Label>
@@ -483,7 +488,7 @@ export default function PatientSettings() {
                 </Button>
               </CardFooter>
             </Card>
-            
+
             <Card className="border-red-200 dark:border-red-900">
               <CardHeader>
                 <CardTitle className="text-red-600 dark:text-red-400">Danger Zone</CardTitle>
@@ -501,7 +506,7 @@ export default function PatientSettings() {
                     Delete Account
                   </Button>
                 </div>
-                
+
                 <div>
                   <h3 className="font-medium">Download Your Data</h3>
                   <p className="text-sm text-muted-foreground mb-4">

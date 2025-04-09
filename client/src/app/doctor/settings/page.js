@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { API_URL, SOCKET_URL } from "@/config/environment";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { 
-  User, 
-  Shield, 
-  Bell, 
-  LockKeyhole, 
-  ArrowLeft, 
-  Save, 
+import {
+  User,
+  Shield,
+  Bell,
+  LockKeyhole,
+  ArrowLeft,
+  Save,
   Loader2,
   Mail,
   Key,
@@ -43,6 +44,10 @@ const passwordSchema = yup.object().shape({
     .required("Confirm password is required"),
 });
 
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 // Email change validation schema
 const emailSchema = yup.object().shape({
   newEmail: yup.string().email("Invalid email").required("New email is required"),
@@ -58,7 +63,7 @@ export default function DoctorSettings() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showEmailPassword, setShowEmailPassword] = useState(false);
-  
+
   // Notification settings state
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -66,34 +71,34 @@ export default function DoctorSettings() {
     patientMessages: true,
     marketingEmails: false,
   });
-  
+
   // Privacy settings state
   const [privacySettings, setPrivacySettings] = useState({
     showProfilePublicly: true,
     allowPatientReviews: true,
     shareDataWithResearchers: false,
   });
-  
+
   // Password change form
-  const { 
-    register: registerPassword, 
-    handleSubmit: handlePasswordSubmit, 
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
     formState: { errors: passwordErrors },
     reset: resetPasswordForm
   } = useForm({
     resolver: yupResolver(passwordSchema)
   });
-  
+
   // Email change form
-  const { 
-    register: registerEmail, 
-    handleSubmit: handleEmailSubmit, 
+  const {
+    register: registerEmail,
+    handleSubmit: handleEmailSubmit,
     formState: { errors: emailErrors },
     reset: resetEmailForm
   } = useForm({
     resolver: yupResolver(emailSchema)
   });
-  
+
   // Handle password change
   const onPasswordChange = async (data) => {
     try {
@@ -104,7 +109,7 @@ export default function DoctorSettings() {
       toast.error(error.message || "Failed to update password");
     }
   };
-  
+
   // Handle email change
   const onEmailChange = async (data) => {
     try {
@@ -115,7 +120,7 @@ export default function DoctorSettings() {
       toast.error(error.message || "Failed to update email");
     }
   };
-  
+
   // Handle notification setting change
   const handleNotificationChange = (setting) => {
     setNotificationSettings({
@@ -124,7 +129,7 @@ export default function DoctorSettings() {
     });
     toast.success(`${setting} setting updated`);
   };
-  
+
   // Handle privacy setting change
   const handlePrivacyChange = (setting) => {
     setPrivacySettings({
@@ -133,7 +138,7 @@ export default function DoctorSettings() {
     });
     toast.success(`${setting} setting updated`);
   };
-  
+
   // Show loading state
   if (authLoading || doctorLoading) {
     return (
@@ -143,13 +148,13 @@ export default function DoctorSettings() {
       </div>
     );
   }
-  
+
   return (
     <DashboardLayout>
       <div className="container mx-auto py-6 px-4 md:px-6">
         <div className="flex items-center mb-8">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.back()}
             className="mr-4"
           >
@@ -158,7 +163,7 @@ export default function DoctorSettings() {
           </Button>
           <h1 className="text-2xl font-bold">Settings</h1>
         </div>
-        
+
         <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="profile" key="profile-tab">
@@ -178,11 +183,11 @@ export default function DoctorSettings() {
               Privacy
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="profile" className="space-y-6" key="profile-content">
             <DoctorProfileManager />
           </TabsContent>
-          
+
           <TabsContent value="account" className="space-y-6" key="account-content">
             <Card>
               <CardHeader>
@@ -196,8 +201,8 @@ export default function DoctorSettings() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="currentPassword">Current Password</Label>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                         className="text-xs text-gray-500 hover:text-gray-700"
                       >
@@ -220,12 +225,12 @@ export default function DoctorSettings() {
                       <p className="text-red-500 text-xs mt-1">{passwordErrors.currentPassword.message}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="newPassword">New Password</Label>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className="text-xs text-gray-500 hover:text-gray-700"
                       >
@@ -248,12 +253,12 @@ export default function DoctorSettings() {
                       <p className="text-red-500 text-xs mt-1">{passwordErrors.newPassword.message}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className="text-xs text-gray-500 hover:text-gray-700"
                       >
@@ -276,7 +281,7 @@ export default function DoctorSettings() {
                       <p className="text-red-500 text-xs mt-1">{passwordErrors.confirmPassword.message}</p>
                     )}
                   </div>
-                  
+
                   <Button type="submit" className="w-full">
                     {authLoading ? (
                       <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating...</>
@@ -287,7 +292,7 @@ export default function DoctorSettings() {
                 </form>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Change Email</CardTitle>
@@ -307,7 +312,7 @@ export default function DoctorSettings() {
                       className="bg-gray-50"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="newEmail">New Email</Label>
                     <Input
@@ -320,12 +325,12 @@ export default function DoctorSettings() {
                       <p className="text-red-500 text-xs mt-1">{emailErrors.newEmail.message}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="emailPassword">Password</Label>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowEmailPassword(!showEmailPassword)}
                         className="text-xs text-gray-500 hover:text-gray-700"
                       >
@@ -348,7 +353,7 @@ export default function DoctorSettings() {
                       <p className="text-red-500 text-xs mt-1">{emailErrors.password.message}</p>
                     )}
                   </div>
-                  
+
                   <Button type="submit" className="w-full">
                     {authLoading ? (
                       <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Updating...</>
@@ -360,7 +365,7 @@ export default function DoctorSettings() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="notifications" className="space-y-6" key="notifications-content">
             <Card>
               <CardHeader>
@@ -383,7 +388,7 @@ export default function DoctorSettings() {
                     onCheckedChange={() => handleNotificationChange('emailNotifications')}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="appointment-reminders">Appointment Reminders</Label>
@@ -397,7 +402,7 @@ export default function DoctorSettings() {
                     onCheckedChange={() => handleNotificationChange('appointmentReminders')}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="patient-messages">Patient Messages</Label>
@@ -411,7 +416,7 @@ export default function DoctorSettings() {
                     onCheckedChange={() => handleNotificationChange('patientMessages')}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="marketing-emails">Marketing Emails</Label>
@@ -428,7 +433,7 @@ export default function DoctorSettings() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="privacy" className="space-y-6" key="privacy-content">
             <Card>
               <CardHeader>
@@ -451,7 +456,7 @@ export default function DoctorSettings() {
                     onCheckedChange={() => handlePrivacyChange('showProfilePublicly')}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="allow-reviews">Allow Patient Reviews</Label>
@@ -465,7 +470,7 @@ export default function DoctorSettings() {
                     onCheckedChange={() => handlePrivacyChange('allowPatientReviews')}
                   />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="share-data">Share Data with Researchers</Label>
