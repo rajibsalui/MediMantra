@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 
 // This ensures the page is only rendered on the client side
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
+export const runtime = 'experimental-edge';
 export default function Custom500() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
