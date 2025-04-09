@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import Link from "next/link";
-import { API_URL, SOCKET_URL } from '@/config/environment';
+import { API_URL } from '@/config/environment';
+
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 
 import DashboardLayout from "@/components/layouts/DashboardLayout";
@@ -53,9 +57,19 @@ export default function NewPrescriptionPage() {
     }
   }, [isAuthenticated, user, authLoading, router]);
 
+  // Store token in a ref to avoid direct localStorage access during render
+  const tokenRef = useRef("");
+
+  // Get token from localStorage only after component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      tokenRef.current = localStorage.getItem("token") || "";
+    }
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
-      if (!isAuthenticated || user?.role !== "doctor") return;
+      if (!isAuthenticated || user?.role !== "doctor" || !tokenRef.current) return;
 
       try {
         setLoading(true);
@@ -64,22 +78,19 @@ export default function NewPrescriptionPage() {
         // Fetch patients
         const patientsResponse = await axios.get(`${API_URL}/doctors/patients`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${tokenRef.current}`,
           },
         });
 
         // Fetch appointments
         const appointmentsResponse = await axios.get(`${API_URL}/doctors/appointments`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${tokenRef.current}`,
           },
         });
 
         const patientsData = patientsResponse.data.data || [];
         const appointmentsData = appointmentsResponse.data.data || [];
-
-        console.log('Patients data:', patientsData);
-        console.log('Appointments data:', appointmentsData);
 
         setPatients(patientsData);
         setAppointments(appointmentsData);
@@ -93,7 +104,7 @@ export default function NewPrescriptionPage() {
     };
 
     fetchData();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, tokenRef.current]);
 
   // Handle patient selection change
   useEffect(() => {
@@ -166,9 +177,10 @@ export default function NewPrescriptionPage() {
     try {
       setSubmitting(true);
 
+      // Use the token from ref instead of directly accessing localStorage
       const response = await axios.post(`${API_URL}/prescriptions`, data, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${tokenRef.current}`,
         },
       });
 
