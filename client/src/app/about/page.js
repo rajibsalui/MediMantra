@@ -11,6 +11,9 @@ import { LampContainer } from "@/components/ui/lamp";
 import { Spotlight } from "@/components/ui/spotlight";
 import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 import Image from "next/image";
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export default function About() {
   // Features content for hover cards

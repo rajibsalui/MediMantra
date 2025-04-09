@@ -2,6 +2,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
+
 export default function PrivacyPage() {
   const [expandedSections, setExpandedSections] = useState({});
   const [activeSection, setActiveSection] = useState('');
