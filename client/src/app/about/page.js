@@ -308,7 +308,7 @@ export default function About() {
       </section>
 
       {/* Our Approach with sticky scroll */}
-      <section className="max-w-6xl mx-auto px-4 py-24 bg-white rounded-3xl shadow-sm mx-4 md:mx-auto my-16">
+      <section className="max-w-6xl mx-auto px-4 py-24 bg-white rounded-3xl shadow-sm md:mx-auto my-16">
         <h2 className="text-3xl font-bold mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-teal-600">
           Our Medical Standards
         </h2>
