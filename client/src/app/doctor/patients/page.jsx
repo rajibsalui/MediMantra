@@ -27,6 +27,8 @@ import {
   FileText,
   Calendar,
 } from "lucide-react";
+import { API_URL, SOCKET_URL } from '@/config/environment';
+
 
 export default function PatientsPage() {
   const router = useRouter();

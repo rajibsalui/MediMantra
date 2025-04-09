@@ -28,6 +28,8 @@ import RateDoctorDialog from "@/components/appointment/RateDoctorDialog";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppointment } from "@/contexts/AppointmentContext";
+import { API_URL, SOCKET_URL } from '@/config/environment';
+
 
 export default function PatientAppointments() {
   const router = useRouter();

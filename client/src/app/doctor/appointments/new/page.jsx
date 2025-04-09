@@ -59,9 +59,10 @@ import {
   MapPin,
   Loader2,
 } from "lucide-react";
+import { API_URL, SOCKET_URL } from '@/config/environment';
 
 // API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+// const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // Form schema
 const formSchema = z.object({

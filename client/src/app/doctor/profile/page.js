@@ -18,7 +18,11 @@ import DoctorProfileDetails from "@/components/doctor/DoctorProfileDetails";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { API_URL, SOCKET_URL } from '@/config/environment';
 
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 export default function DoctorProfile() {
   const router = useRouter();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
