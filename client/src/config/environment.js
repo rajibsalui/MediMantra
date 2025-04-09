@@ -7,27 +7,30 @@
 const DEFAULT_API_URL = "http://localhost:5000/api";
 const DEFAULT_SOCKET_URL = "http://localhost:5000";
 
-// Try to get values from process.env, fallback to defaults if not available
+// Initialize with default values
 let apiUrl = DEFAULT_API_URL;
 let socketUrl = DEFAULT_SOCKET_URL;
 
 // Safely access environment variables
 try {
-  // First try process.env (for build-time env vars)
-  if (typeof process !== 'undefined' && process.env) {
-    if (process.env.NEXT_PUBLIC_API_URL) {
-      apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    }
-    if (process.env.NEXT_PUBLIC_SOCKET_URL) {
-      socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
-    }
+  // Access Next.js public environment variables
+  // These are safe to use in both client and server contexts
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (process.env.NEXT_PUBLIC_SOCKET_URL) {
+    socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
   }
 
-  // Try to load from next/config (for runtime config)
+  // For client-side only, we can try to get runtime config
+  // This is wrapped in a condition to avoid issues during SSR
   if (typeof window !== 'undefined') {
-    // Only import getConfig on the client side
-    import('next/config').then(({ default: getConfig }) => {
+    // We use a synchronous require for getConfig to avoid issues with dynamic imports during SSR
+    try {
+      // Using a safer approach that won't break SSR
+      const getConfig = require('next/config').default;
       const { publicRuntimeConfig } = getConfig() || { publicRuntimeConfig: {} };
+
       if (publicRuntimeConfig) {
         if (publicRuntimeConfig.API_URL) {
           apiUrl = publicRuntimeConfig.API_URL;
@@ -36,9 +39,10 @@ try {
           socketUrl = publicRuntimeConfig.SOCKET_URL;
         }
       }
-    }).catch(() => {
-      // Ignore errors, use defaults
-    });
+    } catch (configError) {
+      // Silently fail and use the values we already have
+      console.warn("Could not load runtime config, using environment variables or defaults");
+    }
   }
 } catch (error) {
   console.warn("Error accessing environment variables:", error);
