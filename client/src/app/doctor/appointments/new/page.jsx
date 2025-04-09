@@ -78,6 +78,10 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 export default function NewAppointmentPage() {
   const router = useRouter();
   const { user, isAuthenticated, loading: authLoading } = useAuth();

@@ -46,6 +46,10 @@ import {
   MessageSquare,
 } from "lucide-react";
 
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 export default function AppointmentDetailPage({ params }) {
   const router = useRouter();
   const resolvedParams = use(params);
