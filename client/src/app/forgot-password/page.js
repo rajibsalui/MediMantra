@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle, ArrowLeft } from "lucide-react";
 
+// This ensures the page is only rendered on the client side
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 
 export default function ForgotPasswordPage() {
   const { forgotPassword } = useAuth();
