@@ -1,16 +1,12 @@
 {
     "version": 2,
     "buildCommand": "cd client && npm install && npm run build",
-    "outputDirectory": "client/.next",
+    "outputDirectory": "client/dist",
     "installCommand": "npm install",
     "rewrites": [
       {
         "source": "/api/(.*)",
         "destination": "/server/index.js"
-      },
-      {
-        "source": "/(.*)",
-        "destination": "/client/$1"
       }
     ],
     "functions": {
