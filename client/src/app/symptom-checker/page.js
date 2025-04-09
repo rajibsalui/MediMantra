@@ -32,7 +32,7 @@ import LoadingAnimation from '@/components/LoadingAnimation';
 import ResultsDisplay from '@/components/ResultsDisplay';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { API_URL } from '@/config/environment';
+// import { API_URL } from '@/config/environment';
 
 // This ensures the page is only rendered on the client side
 export const dynamic = 'force-dynamic';
