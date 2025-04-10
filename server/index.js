@@ -127,3 +127,6 @@ process.on('unhandledRejection', (err) => {
     process.exit(1);
   });
 });
+
+// Export the Express app for serverless function
+export default app;

@@ -6,15 +6,9 @@
     "rewrites": [
       {
         "source": "/api/(.*)",
-        "destination": "/server/index.js"
+        "destination": "/api"
       }
     ],
-    "functions": {
-      "server/index.js": {
-        "memory": 1024,
-        "maxDuration": 10
-      }
-    },
     "headers": [
       {
         "source": "/(.*)",
