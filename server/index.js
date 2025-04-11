@@ -11,12 +11,6 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import connectDB from './config/dbconnect.js';
 import { cloudinary } from './config/cloudinary.config.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // Import models to ensure they're registered with Mongoose
 import './models/prescription.model.js';
@@ -25,6 +19,10 @@ import './models/testResult.model.js';
 import './models/medicalDocument.model.js';
 import './models/message.model.js';
 import './models/conversation.model.js';
+import './models/callRecord.model.js';
+
+// Import PeerJS server
+import './peerServer.js';
 
 // Routes
 import authRoutes from './routes/auth.route.js';
@@ -34,9 +32,11 @@ import chatbotRoutes from './routes/chatbot.route.js';
 import symptomRoutes from './routes/symptom.route.js';
 import prescriptionRoutes from './routes/prescription.route.js';
 import messageRoutes from './routes/message.route.js';
+import videoCallRoutes from './routes/videoCall.route.js';
 
 // Socket.io handlers
 import { setupSocketHandlers } from './socket/socketHandlers.js';
+import { setupVideoCallHandlers } from './socket/videoCallHandlers.js';
 
 // Initialize
 dotenv.config();
@@ -63,14 +63,6 @@ app.use(cors());
 // Database connection
 connectDB();
 
-// Serve static files from Next.js build
-app.use(express.static(path.join(__dirname, '../client/.next')));
-
-// Serve Next.js pages
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/.next/server/pages/index.html'));
-});
-
 // API Routes
 app.get('/api/health', (req, res) => res.status(200).json({ status: 'healthy' }));
 app.use('/api/auth', authRoutes);
@@ -80,6 +72,7 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/symptom-checker', symptomRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/video-calls', videoCallRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -99,7 +92,15 @@ app.use((err, req, res, next) => {
 });
 
 // Setup Socket.io
+console.log('Setting up Socket.io handlers...');
 setupSocketHandlers(io);
+
+// Setup Video Call Socket.io namespace
+console.log('Setting up Video Call Socket.io handlers...');
+setupVideoCallHandlers(io);
+
+// Debug available namespaces
+console.log('Available Socket.io namespaces:', Object.keys(io._nsps).join(', '));
 
 // Start server
 const server = httpServer.listen(PORT, () => {

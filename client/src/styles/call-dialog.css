@@ -1,0 +1,31 @@
+/* Call dialog styles */
+.has-incoming-call [data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Make sure the dialog is always on top */
+[role="dialog"] {
+  z-index: 9999 !important;
+}
+
+/* Add a pulsing animation to the dialog when there's an incoming call */
+.has-incoming-call [role="dialog"] {
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+  }
+}
+
+/* Make sure the dialog is visible */
+.has-incoming-call [data-radix-popper-content-wrapper] {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}

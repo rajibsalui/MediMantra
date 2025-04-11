@@ -7,7 +7,7 @@ import { useChat } from "@/contexts/ChatContext";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import ChatInterface from "@/components/chat/ChatInterface";
 import ChatRequestsList from "@/components/chat/ChatRequestsList";
-import { API_URL, SOCKET_URL } from "@/config/environment";
+// Removed unused imports
 
 // This ensures the page is only rendered on the client side
 export const dynamic = 'force-dynamic';
@@ -28,7 +28,12 @@ export default function DoctorMessages() {
   // Fetch pending requests when component mounts
   useEffect(() => {
     if (isAuthenticated && user?.role === "doctor") {
-      fetchPendingRequests();
+      // Add a small delay to ensure auth context is fully loaded
+      const timer = setTimeout(() => {
+        fetchPendingRequests();
+      }, 500);
+
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, fetchPendingRequests]);
 

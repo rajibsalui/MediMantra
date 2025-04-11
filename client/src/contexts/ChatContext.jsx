@@ -381,11 +381,18 @@ export const ChatProvider = ({ children }) => {
 
     try {
       setLoading(true);
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
       const response = await axios.get(
         `${API_URL}/messages/conversations/requests`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${token}`
           }
         }
       );
@@ -395,6 +402,7 @@ export const ChatProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error fetching pending requests:', error);
+      toast.error('Failed to load chat requests');
     } finally {
       setLoading(false);
     }

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Send, Paperclip, MoreVertical, Phone, Video, ArrowLeft } from "lucide-react";
+import { useVideoCall } from "@/contexts/VideoCallContext";
 import { formatDistanceToNow } from "date-fns";
 import ConversationList from "./ConversationList";
 import MessageBubble from "./MessageBubble";
@@ -17,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ChatInterface() {
   const { user } = useAuth();
+  const { makeCall } = useVideoCall();
   const {
     socket,
     conversations,
@@ -31,61 +33,61 @@ export default function ChatInterface() {
     isUserOnline,
     isUserTyping
   } = useChat();
-  
+
   const [messageInput, setMessageInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showConversations, setShowConversations] = useState(true);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-  
+
   // Check if on mobile
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkIfMobile();
     window.addEventListener("resize", checkIfMobile);
-    
+
     return () => {
       window.removeEventListener("resize", checkIfMobile);
     };
   }, []);
-  
+
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-  
+
   // Focus input when conversation changes
   useEffect(() => {
     if (currentConversation) {
       inputRef.current?.focus();
-      
+
       // On mobile, hide conversation list when a conversation is selected
       if (isMobile) {
         setShowConversations(false);
       }
     }
   }, [currentConversation, isMobile]);
-  
+
   // Handle conversation selection
   const handleSelectConversation = (conversation) => {
     setCurrentConversation(conversation);
     fetchMessages(conversation._id);
   };
-  
+
   // Handle sending a message
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !currentConversation) return;
-    
+
     setIsSending(true);
     const receiverId = currentConversation.participant._id;
-    
+
     // Try to send via socket first
     const sent = sendMessage(receiverId, messageInput.trim());
-    
+
     // If socket fails, use HTTP fallback
     if (!sent) {
       await sendMessageHttp(receiverId, messageInput.trim());
@@ -95,11 +97,11 @@ export default function ChatInterface() {
     //   receiverId: selectedChat._id,
     //   message
     // });
-    
+
     setMessageInput("");
     setIsSending(false);
   };
-  
+
   // Handle input keydown (send on Enter, but allow Shift+Enter for new line)
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -107,27 +109,27 @@ export default function ChatInterface() {
       handleSendMessage();
     }
   };
-  
+
   // Handle typing indicator
   const handleInputChange = (e) => {
     setMessageInput(e.target.value);
-    
+
     if (currentConversation) {
       sendTypingStatus(currentConversation.participant._id, e.target.value.length > 0);
     }
   };
-  
+
   // Back button for mobile view
   const handleBackToList = () => {
     setShowConversations(true);
   };
-  
+
   return (
     <div className="flex h-[calc(100vh-12rem)] rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
       {/* Conversation List - hidden on mobile when a conversation is selected */}
       {(showConversations || !isMobile) && (
         <div className={`${isMobile ? 'w-full' : 'w-1/3 border-r border-slate-200 dark:border-slate-800'}`}>
-          <ConversationList 
+          <ConversationList
             conversations={conversations}
             currentConversation={currentConversation}
             onSelectConversation={handleSelectConversation}
@@ -135,7 +137,7 @@ export default function ChatInterface() {
           />
         </div>
       )}
-      
+
       {/* Chat Area - full width on mobile when a conversation is selected */}
       {(!showConversations || !isMobile) && (
         <div className={`${isMobile ? 'w-full' : 'w-2/3'} flex flex-col`}>
@@ -145,9 +147,9 @@ export default function ChatInterface() {
               <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {isMobile && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={handleBackToList}
                       className="mr-1"
                     >
@@ -155,8 +157,8 @@ export default function ChatInterface() {
                     </Button>
                   )}
                   <Avatar className="h-10 w-10 border border-slate-200 dark:border-slate-700">
-                    <img 
-                      src={currentConversation.participant.profileImage || "/images/avatar-placeholder.png"} 
+                    <img
+                      src={currentConversation.participant.profileImage || "/images/avatar-placeholder.png"}
                       alt={currentConversation.participant.firstName}
                       onError={(e) => {
                         e.target.src = "/images/avatar-placeholder.png";
@@ -182,10 +184,34 @@ export default function ChatInterface() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (currentConversation && currentConversation.participant) {
+                        makeCall(
+                          currentConversation.participant._id,
+                          `${currentConversation.participant.firstName} ${currentConversation.participant.lastName}`,
+                          'audio'
+                        );
+                      }
+                    }}
+                  >
                     <Phone className="h-5 w-5" />
                   </Button>
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (currentConversation && currentConversation.participant) {
+                        makeCall(
+                          currentConversation.participant._id,
+                          `${currentConversation.participant.firstName} ${currentConversation.participant.lastName}`,
+                          'video'
+                        );
+                      }
+                    }}
+                  >
                     <Video className="h-5 w-5" />
                   </Button>
                   <Button variant="ghost" size="icon">
@@ -193,7 +219,7 @@ export default function ChatInterface() {
                   </Button>
                 </div>
               </div>
-              
+
               {/* Messages Area */}
               <ScrollArea className="flex-1 p-4">
                 {loading ? (
@@ -228,7 +254,7 @@ export default function ChatInterface() {
                   </div>
                 )}
               </ScrollArea>
-              
+
               {/* Message Input */}
               <div className="p-4 border-t border-slate-200 dark:border-slate-800">
                 <div className="flex items-end gap-2">
