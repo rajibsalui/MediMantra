@@ -36,8 +36,9 @@ const chatbotController = {
         max_tokens: aiConfig.defaultParams.max_tokens
       });
 
-      const aiMessage = response.choices[0]?.message?.content || "I'm sorry, I couldn't process your request.";
-      
+      const rawaiMessage = response.choices[0]?.message?.content || "I'm sorry, I couldn't process your request.";
+      // remove  all special characters from the response
+      const aiMessage = rawaiMessage.replace(/[^\w\s.,?!'-]/g, ''); 
       // Store the conversation exchange
       chatMemory.addExchange(userId, { role: "user", content: query });
       chatMemory.addExchange(userId, { role: "assistant", content: aiMessage });

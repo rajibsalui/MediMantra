@@ -28,6 +28,7 @@ export const AuthProvider = ({ children }) => {
           axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
 
           // Fetch current user
+          console.log('Attempting to fetch user from:', `${API_URL}/auth/current-user`);
           const { data } = await axios.get(`${API_URL}/auth/current-user`);
 
           localStorage.setItem("Role", data.data.role || data.user.role);
@@ -199,7 +200,6 @@ export const AuthProvider = ({ children }) => {
 
 
       return data;
-      console.log("done")
 
     } catch (error) {
       const message = error.response?.data?.message || "Doctor login failed";

@@ -1,0 +1,132 @@
+[
+  {
+    "firstName": "Purab",
+    "lastName": "Cherian",
+    "email": "ibaria@hotmail.com",
+    "password": "2AlsAdz4+F",
+    "phone": "4986305966",
+    "dateOfBirth": "1970-10-26",
+    "gender": "female",
+    "address": {
+      "street": "08/18, Kohli Nagar",
+      "city": "Mango",
+      "state": "Haryana",
+      "zipCode": "716057"
+    },
+    "medicalInformation": {
+      "allergies": "Dust",
+      "chronicConditions": "None",
+      "currentMedications": "None"
+    },
+    "emergencyContact": {
+      "name": "Sara Khatri",
+      "phone": "05962844262",
+      "relationship": "Sibling"
+    },
+    "role": "patient"
+  },
+  {
+    "firstName": "Zara",
+    "lastName": "Kannan",
+    "email": "gababhamini@hotmail.com",
+    "password": "K8jQrcm!!d",
+    "phone": "3667554013",
+    "dateOfBirth": "1981-07-13",
+    "gender": "male",
+    "address": {
+      "street": "317\nSaxena Road",
+      "city": "Durg",
+      "state": "Chhattisgarh",
+      "zipCode": "015995"
+    },
+    "medicalInformation": {
+      "allergies": "None",
+      "chronicConditions": "None",
+      "currentMedications": "Metformin"
+    },
+    "emergencyContact": {
+      "name": "Armaan Korpal",
+      "phone": "1449727838",
+      "relationship": "Friend"
+    },
+    "role": "patient"
+  },
+  {
+    "firstName": "Shaan",
+    "lastName": "Sahni",
+    "email": "aaravkulkarni@hotmail.com",
+    "password": "J_V7Ky#y9P",
+    "phone": "1126294763",
+    "dateOfBirth": "2003-12-20",
+    "gender": "female",
+    "address": {
+      "street": "612\nDixit Ganj",
+      "city": "Guntakal",
+      "state": "Odisha",
+      "zipCode": "739446"
+    },
+    "medicalInformation": {
+      "allergies": "None",
+      "chronicConditions": "None",
+      "currentMedications": "Metformin"
+    },
+    "emergencyContact": {
+      "name": "Romil Roy",
+      "phone": "05588096695",
+      "relationship": "Father"
+    },
+    "role": "patient"
+  },
+  {
+    "firstName": "Abram",
+    "lastName": "Jani",
+    "email": "sidhutrisha@cherian.com",
+    "password": "p$#5CQPeBs",
+    "phone": "9133660175",
+    "dateOfBirth": "1960-11-19",
+    "gender": "female",
+    "address": {
+      "street": "57\nBasu Ganj",
+      "city": "Panihati",
+      "state": "Meghalaya",
+      "zipCode": "652272"
+    },
+    "medicalInformation": {
+      "allergies": "Peanuts",
+      "chronicConditions": "Asthma",
+      "currentMedications": "Albuterol"
+    },
+    "emergencyContact": {
+      "name": "Aniruddh Saxena",
+      "phone": "4871464914",
+      "relationship": "Father"
+    },
+    "role": "patient"
+  },
+  {
+    "firstName": "Jayant",
+    "lastName": "Sidhu",
+    "email": "stara@hotmail.com",
+    "password": "k&Ci7Lt4zL",
+    "phone": "3268868304",
+    "dateOfBirth": "1995-11-29",
+    "gender": "female",
+    "address": {
+      "street": "11/474\nBhattacharyya Road",
+      "city": "Morena",
+      "state": "Bihar",
+      "zipCode": "366803"
+    },
+    "medicalInformation": {
+      "allergies": "Pollen",
+      "chronicConditions": "Diabetes",
+      "currentMedications": "Lisinopril"
+    },
+    "emergencyContact": {
+      "name": "Anya Joshi",
+      "phone": "+919405273065",
+      "relationship": "Mother"
+    },
+    "role": "patient"
+  }
+]
